@@ -1,0 +1,2 @@
+# segreport
+Segreport News Portal

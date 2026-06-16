@@ -1,26 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #F7F7F5;
+  --white: #FFFFFF;
+  --ink: #1A1A18;
+  --ink-2: #3D3D3A;
+  --ink-3: #6B6B67;
+  --ink-4: #A8A8A3;
+  --border: rgba(0,0,0,.08);
+  --green: #0D6E4F;
+  --green-2: #12956A;
+  --green-bg: #E6F2ED;
+  --amber: #C07A00;
+  --amber-bg: #FDF4E3;
+  --red: #C0392B;
+  --red-bg: #FDECEA;
+  --blue: #1A56A0;
+  --blue-bg: #EAF1FB;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.animate-ticker {
+  animation: ticker-scroll 45s linear infinite;
+}
+
+.animate-blink {
+  animation: blink-dot 1.6s ease-in-out infinite;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ticker,
+  .animate-blink {
+    animation: none;
+  }
 }

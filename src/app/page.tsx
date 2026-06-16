@@ -1,65 +1,162 @@
-import Image from "next/image";
+import LeadStory from "@/components/home/LeadStory";
+import NewsList from "@/components/home/NewsList";
+import NewsGrid from "@/components/home/NewsGrid";
+import ThermoWidget from "@/components/sidebar/ThermoWidget";
+import NewsletterWidget from "@/components/sidebar/NewsletterWidget";
+import RankingWidget from "@/components/sidebar/RankingWidget";
+import CircularesWidget from "@/components/sidebar/CircularesWidget";
+import PremiumWidget from "@/components/sidebar/PremiumWidget";
+
+function AdNative() {
+  return (
+    <section
+      aria-label="Publicidade"
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        borderRadius: 10,
+        border: "1px solid var(--border)",
+        background: "var(--white)",
+        padding: 14,
+        margin: "28px 0",
+      }}
+    >
+      <span
+        style={{
+          position: "absolute",
+          top: 6,
+          right: 10,
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 8,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "var(--ink-4)",
+        }}
+      >
+        Publicidade
+      </span>
+      <span
+        aria-hidden="true"
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 8,
+          background: "var(--green)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          fontFamily: "'Poppins', sans-serif",
+          fontSize: 14,
+          fontWeight: 800,
+          color: "#fff",
+        }}
+      >
+        S
+      </span>
+      <p
+        style={{
+          flex: 1,
+          fontFamily: "'Poppins', sans-serif",
+          fontSize: 13,
+          color: "var(--ink-2)",
+          lineHeight: 1.4,
+        }}
+      >
+        Conteúdo patrocinado · Soluções de resseguro sob medida para a sua carteira.
+      </p>
+      <a
+        href="#"
+        style={{
+          flexShrink: 0,
+          borderRadius: 999,
+          background: "var(--green)",
+          padding: "6px 14px",
+          fontFamily: "'Poppins', sans-serif",
+          fontSize: 13,
+          fontWeight: 600,
+          color: "#fff",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Saiba mais
+      </a>
+    </section>
+  );
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 20,
+      }}
+    >
+      <h2
+        style={{
+          fontFamily: "'DM Mono', monospace",
+          fontSize: 11,
+          fontWeight: 500,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          color: "var(--ink-3)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {children}
+      </h2>
+      <span style={{ flex: 1, height: 1, background: "var(--border)" }} />
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div style={{ maxWidth: 1240, margin: "0 auto", padding: "28px 20px 100px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr",
+          gap: 32,
+        }}
+        className="lg:!grid-cols-[1fr_320px]"
+      >
+        {/* Coluna principal */}
+        <main>
+          <LeadStory />
+
+          <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "28px 0" }} />
+
+          <section aria-label="Últimas notícias">
+            <SectionLabel>Últimas notícias</SectionLabel>
+            <NewsList />
+          </section>
+
+          <AdNative />
+
+          <section aria-label="Destaques do dia">
+            <SectionLabel>Destaques do dia</SectionLabel>
+            <NewsGrid />
+          </section>
+        </main>
+
+        {/* Sidebar */}
+        <aside
+          className="hidden lg:flex"
+          style={{ flexDirection: "column", gap: 24 }}
+        >
+          <ThermoWidget />
+          <NewsletterWidget />
+          <RankingWidget />
+          <CircularesWidget />
+          <PremiumWidget />
+        </aside>
+      </div>
     </div>
   );
 }

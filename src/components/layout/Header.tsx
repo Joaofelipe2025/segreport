@@ -266,7 +266,7 @@ export default function Header() {
 
           <Link
             href="/login"
-            className="hidden lg:block"
+            className="hidden lg:block hover:border-[var(--green)]"
             style={{
               padding: "6px 16px",
               borderRadius: 999,
@@ -277,8 +277,6 @@ export default function Header() {
               color: "var(--ink)",
               transition: "border-color 0.15s",
             }}
-            onMouseOver={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--green)"; }}
-            onMouseOut={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)"; }}
           >
             Entrar
           </Link>

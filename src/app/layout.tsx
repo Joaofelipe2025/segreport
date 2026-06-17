@@ -4,7 +4,6 @@ import Header from '@/components/layout/Header'
 import Ticker from '@/components/layout/Ticker'
 import PulseStrip from '@/components/layout/PulseStrip'
 import CategoryTabs from '@/components/layout/CategoryTabs'
-import BottomNav from '@/components/layout/BottomNav'
 import Footer from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
@@ -33,7 +32,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CategoryTabs />
         <main id="main">{children}</main>
         <Footer />
-        <BottomNav />
       </body>
     </html>
   )

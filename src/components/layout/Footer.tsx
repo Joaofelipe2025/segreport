@@ -29,35 +29,37 @@ export default function Footer() {
   return (
     <footer className="bg-[#1A1A18] text-white">
       <div className="mx-auto max-w-[1240px] px-5 py-12 md:px-8">
-        <div className="flex flex-col gap-10 md:flex-row md:justify-between">
-          <div className="flex max-w-xs flex-col gap-3">
+
+        {/* Top row: brand + nav columns */}
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-5 md:gap-10">
+
+          {/* Brand — spans full row on mobile */}
+          <div className="col-span-2 flex flex-col gap-3 sm:col-span-3 md:col-span-1">
             <Link href="/" className="font-sans text-xl font-extrabold tracking-tight text-white">
               Seg<span className="italic text-[#12956A]">report</span>
             </Link>
-            <p className="font-sans text-sm text-white/60">
-              Notícias, dados e ferramentas para o mercado segurador
-              brasileiro.
+            <p className="font-sans text-sm leading-relaxed text-white/60">
+              Notícias, dados e ferramentas para o mercado segurador brasileiro.
             </p>
           </div>
 
+          {/* Notícias */}
           <nav aria-label="Notícias por categoria" className="flex flex-col gap-3">
             <h2 className="font-mono text-[11px] font-medium uppercase tracking-wide text-white/40">
               Notícias
             </h2>
             <ul className="flex flex-col gap-2">
-              {CATEGORIES.map((category) => (
-                <li key={category.key}>
-                  <Link
-                    href={`/${category.key}`}
-                    className="font-sans text-sm text-white/70 transition-colors hover:text-white"
-                  >
-                    {category.label}
+              {CATEGORIES.map((cat) => (
+                <li key={cat.key}>
+                  <Link href={`/${cat.key}`} className="font-sans text-sm text-white/70 transition-colors hover:text-white">
+                    {cat.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </nav>
 
+          {/* Ferramentas */}
           <nav aria-label="Ferramentas" className="flex flex-col gap-3">
             <h2 className="font-mono text-[11px] font-medium uppercase tracking-wide text-white/40">
               Ferramentas
@@ -65,10 +67,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-2">
               {TOOLS_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="font-sans text-sm text-white/70 transition-colors hover:text-white"
-                  >
+                  <Link href={link.href} className="font-sans text-sm text-white/70 transition-colors hover:text-white">
                     {link.label}
                   </Link>
                 </li>
@@ -76,6 +75,7 @@ export default function Footer() {
             </ul>
           </nav>
 
+          {/* Empresa */}
           <nav aria-label="Empresa" className="flex flex-col gap-3">
             <h2 className="font-mono text-[11px] font-medium uppercase tracking-wide text-white/40">
               Empresa
@@ -83,10 +83,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-2">
               {COMPANY_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="font-sans text-sm text-white/70 transition-colors hover:text-white"
-                  >
+                  <Link href={link.href} className="font-sans text-sm text-white/70 transition-colors hover:text-white">
                     {link.label}
                   </Link>
                 </li>
@@ -94,6 +91,7 @@ export default function Footer() {
             </ul>
           </nav>
 
+          {/* Legal */}
           <nav aria-label="Legal" className="flex flex-col gap-3">
             <h2 className="font-mono text-[11px] font-medium uppercase tracking-wide text-white/40">
               Legal
@@ -101,10 +99,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-2">
               {LEGAL_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="font-sans text-sm text-white/70 transition-colors hover:text-white"
-                  >
+                  <Link href={link.href} className="font-sans text-sm text-white/70 transition-colors hover:text-white">
                     {link.label}
                   </Link>
                 </li>
@@ -113,14 +108,18 @@ export default function Footer() {
           </nav>
         </div>
 
-        <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-8 md:max-w-sm">
-          <h2 className="font-mono text-[11px] font-medium uppercase tracking-wide text-[#12956A]">
+        {/* Newsletter */}
+        <div className="mt-10 border-t border-white/10 pt-8">
+          <h2 className="mb-3 font-mono text-[11px] font-medium uppercase tracking-wide text-[#12956A]">
             Newsletter semanal
           </h2>
-          <FooterNewsletter />
+          <div className="max-w-md">
+            <FooterNewsletter />
+          </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-6 font-mono text-[11px] text-white/40 sm:flex-row sm:items-center sm:justify-between">
+        {/* Bottom bar */}
+        <div className="mt-8 flex flex-col gap-2 border-t border-white/10 pt-6 font-mono text-[11px] text-white/40 sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 Segreport. Todos os direitos reservados.</p>
           <p>Dados: SUSEP · BCB · IBGE</p>
         </div>

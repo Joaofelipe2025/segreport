@@ -5,6 +5,7 @@ import Ticker from '@/components/layout/Ticker'
 import PulseStrip from '@/components/layout/PulseStrip'
 import CategoryTabs from '@/components/layout/CategoryTabs'
 import BottomNav from '@/components/layout/BottomNav'
+import Footer from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
   title: 'Segreport — Inteligência do Mercado Segurador',
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PulseStrip />
         <CategoryTabs />
         <main id="main">{children}</main>
+        <Footer />
         <BottomNav />
       </body>
     </html>

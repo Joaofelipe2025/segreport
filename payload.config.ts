@@ -39,7 +39,7 @@ export default buildConfig({
       connectionTimeoutMillis: 10000,
     },
     schemaName: "payload",
-    push: true,
+    push: false,
   }),
   sharp,
 });

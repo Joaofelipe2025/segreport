@@ -1,6 +1,6 @@
 "use client";
 import { useActionState } from "react";
-import { subscribeNewsletterAction } from "@/app/actions/newsletter";
+import { subscribeNewsletterAction } from "@/app/(app)/actions/newsletter";
 
 export default function NewsletterWidget() {
   const [state, formAction, pending] = useActionState(subscribeNewsletterAction, null);

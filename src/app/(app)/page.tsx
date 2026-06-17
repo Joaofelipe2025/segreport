@@ -218,7 +218,7 @@ function AdNative() {
 /* ─── página principal ────────────────────────────────────── */
 export default function Home() {
   return (
-    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 20px 120px" }} className="lg:px-10">
+    <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 20px 48px" }} className="lg:px-10">
       <div style={{ display: "grid", gap: 40 }} className="lg:grid-cols-[1fr_360px]">
 
         {/* ── COLUNA PRINCIPAL ── */}
@@ -400,6 +400,6 @@ export default function Home() {
           <CircularesWidget />
         </aside>
       </div>
-    </div>
+    </main>
   );
 }

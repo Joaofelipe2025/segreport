@@ -21,16 +21,24 @@
   --blue-bg: #EAF1FB;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'Poppins', sans-serif;
-  background: var(--bg);
-  color: var(--ink);
-  -webkit-font-smoothing: antialiased;
+/*
+  Colocar o reset em @layer base garante que as utilities do Tailwind v4
+  (que ficam em @layer utilities) possam sobrescrever margin/padding normalmente.
+  CSS fora de layers sempre vence layers — por isso o * { margin: 0 } unlayered
+  quebrava mx-auto, px-4, py-8 etc.
+*/
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
 }
-a { color: inherit; text-decoration: none; }
-button { font-family: inherit; cursor: pointer; border: none; background: none; }
 
 @keyframes ticker-scroll {
   from { transform: translateX(0); }

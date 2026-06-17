@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CATEGORIES } from "@/lib/categories";
+import FooterNewsletter from "./FooterNewsletter";
 
 interface FooterLink {
   label: string;
@@ -116,25 +117,7 @@ export default function Footer() {
           <h2 className="font-mono text-[11px] font-medium uppercase tracking-wide text-[#12956A]">
             Newsletter semanal
           </h2>
-          <form className="flex flex-col gap-2 sm:flex-row">
-            <label htmlFor="footer-newsletter-email" className="sr-only">
-              E-mail
-            </label>
-            <input
-              id="footer-newsletter-email"
-              name="email"
-              type="email"
-              required
-              placeholder="seu@email.com"
-              className="flex-1 rounded-full border border-white/15 bg-white/5 px-4 py-2 font-sans text-sm text-white placeholder:text-white/40 focus:border-[#12956A] focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="rounded-full bg-[#0D6E4F] px-4 py-2 font-sans text-sm font-medium text-white transition-opacity hover:opacity-90"
-            >
-              Assinar
-            </button>
-          </form>
+          <FooterNewsletter />
         </div>
 
         <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-6 font-mono text-[11px] text-white/40 sm:flex-row sm:items-center sm:justify-between">

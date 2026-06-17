@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import LoginForm from "./LoginForm";
 
 export const metadata: Metadata = {
   title: "Entrar | Segreport",
@@ -48,57 +49,7 @@ export default function LoginPage() {
           Entrar
         </h1>
 
-        <form className="mt-6 flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="email" className="font-sans text-[13px] font-medium text-[#3D3D3A]">
-              E-mail
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              autoComplete="email"
-              placeholder="seuemail@exemplo.com"
-              className="rounded-lg border border-[rgba(0,0,0,.08)] px-3 py-2.5 font-sans text-[14px] text-[#1A1A18] outline-none focus:border-[#0D6E4F]"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="senha" className="font-sans text-[13px] font-medium text-[#3D3D3A]">
-              Senha
-            </label>
-            <input
-              type="password"
-              id="senha"
-              name="senha"
-              required
-              autoComplete="current-password"
-              placeholder="••••••••"
-              className="rounded-lg border border-[rgba(0,0,0,.08)] px-3 py-2.5 font-sans text-[14px] text-[#1A1A18] outline-none focus:border-[#0D6E4F]"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <Link href="#" className="font-sans text-sm text-[#0D6E4F] hover:underline">
-              Esqueci minha senha
-            </Link>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full rounded-full bg-[#0D6E4F] px-4 py-2.5 font-sans text-[14px] font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            Entrar
-          </button>
-
-          <p className="text-center font-sans text-[13px] text-[#3D3D3A]">
-            Não tem uma conta?{" "}
-            <Link href="/cadastro" className="font-medium text-[#0D6E4F] hover:underline">
-              Criar conta
-            </Link>
-          </p>
-        </form>
+        <LoginForm />
 
         <div className="my-6 flex items-center gap-3" role="presentation">
           <span className="h-px flex-1 bg-[rgba(0,0,0,.08)]" />

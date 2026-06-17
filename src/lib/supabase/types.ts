@@ -29,6 +29,7 @@ export interface Database {
           role?: "reader" | "editor" | "admin";
           updated_at?: string;
         };
+        Relationships: [];
       };
       categories: {
         Row: {
@@ -52,6 +53,7 @@ export interface Database {
           emoji?: string;
           slug?: string;
         };
+        Relationships: [];
       };
       authors: {
         Row: {
@@ -79,6 +81,7 @@ export interface Database {
           email?: string | null;
           twitter_handle?: string | null;
         };
+        Relationships: [];
       };
       articles: {
         Row: {
@@ -134,6 +137,20 @@ export interface Database {
           published_at?: string | null;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "articles_category_id_fkey";
+            columns: ["category_id"];
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "articles_author_id_fkey";
+            columns: ["author_id"];
+            referencedRelation: "authors";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       article_views: {
         Row: {
@@ -152,6 +169,7 @@ export interface Database {
           viewed_at?: string;
         };
         Update: never;
+        Relationships: [];
       };
       newsletter_subscribers: {
         Row: {
@@ -177,6 +195,7 @@ export interface Database {
           status?: "active" | "unsubscribed";
           unsubscribed_at?: string | null;
         };
+        Relationships: [];
       };
       circulares_susep: {
         Row: {
@@ -207,6 +226,7 @@ export interface Database {
           is_new?: boolean;
           category_key?: string | null;
         };
+        Relationships: [];
       };
       market_data: {
         Row: {
@@ -230,6 +250,7 @@ export interface Database {
           trend?: "positive" | "negative" | "neutral";
           updated_at?: string;
         };
+        Relationships: [];
       };
       subscriptions: {
         Row: {
@@ -271,14 +292,18 @@ export interface Database {
           cancelled_at?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
     Functions: {
       increment_article_views: {
         Args: { p_article_id: string };
         Returns: void;
       };
     };
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
 

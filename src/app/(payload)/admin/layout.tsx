@@ -1,5 +1,4 @@
-import { handleServerFunctions } from "@payloadcms/next/utilities";
-import { RootLayout } from "@payloadcms/next/layouts";
+import { handleServerFunctions, RootLayout } from "@payloadcms/next/layouts";
 import { importMap } from "./importMap";
 import config from "@payload-config";
 import type { ServerFunctionClient } from "payload";

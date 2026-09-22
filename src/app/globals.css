@@ -1,75 +1,189 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-
 @import "tailwindcss";
 
-:root {
-  --bg: #F7F7F5;
-  --white: #FFFFFF;
-  --ink: #1A1A18;
-  --ink-2: #3D3D3A;
-  --ink-3: #6B6B67;
-  --ink-4: #A8A8A3;
-  --border: rgba(0,0,0,.08);
-  --green: #0D6E4F;
-  --green-2: #12956A;
-  --green-bg: #E6F2ED;
-  --amber: #C07A00;
-  --amber-bg: #FDF4E3;
-  --red: #C0392B;
-  --red-bg: #FDECEA;
-  --blue: #1A56A0;
-  --blue-bg: #EAF1FB;
+/* ============================================================================
+   SegReport — Design Tokens
+   Paleta aprovada no brainstorming: verde-escuro + lima.
+   REGRA DE ACESSIBILIDADE: lima (#C5F24B) tem contraste ~1.5:1 sobre branco.
+   Lima é SUPERFÍCIE (fundo de botão/badge) ou TEXTO SOBRE ESCURO — nunca
+   texto sobre fundo claro. Sobre claro, use --color-forest-700.
+   ========================================================================= */
+
+@theme {
+  /* Verde-escuro — base institucional */
+  --color-forest-900: #0e1f14;
+  --color-forest-800: #16301f;
+  --color-forest-700: #1e4029;
+  --color-forest-600: #2f5c3e;
+  --color-forest-500: #467a56;
+  --color-forest-300: #a8c4b4;
+  --color-forest-200: #d6e5dc;
+  --color-forest-100: #e8f3ec;
+
+  /* Lima — sinal de dado exclusivo e de ação */
+  --color-lime-500: #b2e02f;
+  --color-lime-400: #c5f24b;
+  --color-lime-300: #d6f77e;
+  --color-lime-100: #eefcc9;
+
+  /* Papel e tinta */
+  --color-paper: #f7f8f5;
+  --color-ink: #1a1a18;
+  --color-ink-2: #3d3d3a;
+  --color-ink-3: #6b6b67;
+  --color-ink-4: #a8a8a3;
+  --color-hairline: rgba(0, 0, 0, 0.09);
+
+  /* Semânticas de variação de mercado */
+  --color-up: #3fa86b;
+  --color-down: #e5484d;
+
+  /* Níveis de impacto do Radar */
+  --color-impact-critical: #e5484d;
+  --color-impact-high: #e8863c;
+  --color-impact-medium: #e8c63c;
+  --color-impact-low: #7a9aa8;
+
+  /* Tipografia */
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
+
+  /* Escala tipográfica editorial */
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.08;
+  --text-display--letter-spacing: -0.03em;
+  --text-headline: 1.75rem;
+  --text-headline--line-height: 1.15;
+  --text-headline--letter-spacing: -0.02em;
+
+  /* Grade do Hub — 12 colunas, alturas travadas por linha.
+     É o que impede o vão branco do protótipo (imagem 5). */
+  --spacing-gutter: 1.5rem;
 }
 
-/*
-  Colocar o reset em @layer base garante que as utilities do Tailwind v4
-  (que ficam em @layer utilities) possam sobrescrever margin/padding normalmente.
-  CSS fora de layers sempre vence layers — por isso o * { margin: 0 } unlayered
-  quebrava mx-auto, px-4, py-8 etc.
-*/
 @layer base {
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: 'Poppins', sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    -webkit-font-smoothing: antialiased;
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
-  a { color: inherit; text-decoration: none; }
-  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: inherit;
+  }
+
+  /* Foco visível — o lima só funciona como anel sobre qualquer fundo
+     porque é traço, não texto. */
+  :focus-visible {
+    outline: 2px solid var(--color-lime-500);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  ::selection {
+    background: var(--color-lime-400);
+    color: var(--color-forest-800);
+  }
 }
+
+@layer utilities {
+  /* Equilibra quebras de linha em manchetes — evita órfã de uma palavra */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Corta o texto em N linhas */
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Sublinhado que cresce no hover — usado nas manchetes */
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    transition: background-size 0.25s ease;
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+}
+
+/* ---- Animações ---------------------------------------------------------- */
 
 @keyframes ticker-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
-@keyframes blink-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
 }
 
 .animate-ticker {
-  animation: ticker-scroll 45s linear infinite;
+  animation: ticker-scroll 60s linear infinite;
 }
-
-.animate-blink {
-  animation: blink-dot 1.6s ease-in-out infinite;
+.animate-ticker:hover {
+  animation-play-state: paused;
 }
-
-.no-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+.animate-pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-ticker,
-  .animate-blink {
+  .animate-pulse-dot {
     animation: none;
+  }
+  html {
+    scroll-behavior: auto;
   }
 }

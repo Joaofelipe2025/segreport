@@ -24,7 +24,7 @@ export default async function MarketStrip() {
   );
 
   return (
-    <section className="rounded-xl bg-forest-800 px-5 py-6 text-white sm:px-7 sm:py-8">
+    <section className="rounded-xl bg-gradient-to-br from-forest-800 to-forest-900 px-4 py-5 text-white ring-1 ring-white/8 sm:px-7 sm:py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-lime-400">

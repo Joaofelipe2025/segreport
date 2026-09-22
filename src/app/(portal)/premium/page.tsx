@@ -73,13 +73,13 @@ export default function PremiumPage() {
   return (
     <>
       <section className="bg-forest-800 text-white">
-        <div className="mx-auto max-w-[1400px] px-4 py-14 text-center lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-[1400px] px-4 py-10 text-center sm:py-14 lg:px-8 lg:py-20">
           <span className="inline-flex items-center gap-2 rounded-full bg-forest-700 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-lime-400">
             <LockIcon className="h-3 w-3" />
             Hub Inteligência
           </span>
 
-          <h1 className="mx-auto mt-6 max-w-3xl text-balance text-4xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-[52px]">
+          <h1 className="mx-auto mt-6 max-w-3xl text-balance text-[32px] font-bold leading-[1.08] tracking-[-0.03em] sm:text-[52px]">
             O dado do mercado segurador,{" "}
             <span className="text-lime-400">rastreável até a fonte</span>
           </h1>

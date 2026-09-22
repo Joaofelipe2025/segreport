@@ -3,6 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+/**
+ * Navegação entre as seções do Hub.
+ *
+ * Tratamento de aba com filete inferior em vez de retângulo preenchido: o
+ * preenchido criava sete blocos disputando atenção com o conteúdo logo
+ * abaixo. O filete marca posição sem competir, e é a convenção que o leitor
+ * já conhece de painel de dados.
+ *
+ * Em tela estreita a faixa rola horizontalmente com pistas de recorte nas
+ * bordas, preservando todas as seções sem quebrar em duas linhas.
+ */
+
 const TABS = [
   { href: "/hub", label: "Dashboard", icon: HomeIcon, exact: true },
   { href: "/hub/indicadores", label: "Indicadores", icon: TrendIcon },
@@ -17,35 +29,65 @@ export default function HubTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="sticky top-0 z-30 border-b border-hairline bg-white/95 backdrop-blur">
-      <nav
-        aria-label="Seções do Hub Inteligência"
-        className="no-scrollbar mx-auto flex max-w-[1400px] gap-1 overflow-x-auto px-4 lg:px-8"
-      >
-        {TABS.map(({ href, label, icon: Icon, exact }) => {
-          const active = exact ? pathname === href : pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-3 text-sm font-semibold transition-colors ${
-                active
-                  ? "bg-forest-800 text-white"
-                  : "text-ink-3 hover:bg-forest-100 hover:text-forest-800"
-              }`}
-            >
-              <Icon />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
+    <div className="sticky top-0 z-30 border-b border-hairline bg-white/92 backdrop-blur-md">
+      <div className="relative mx-auto max-w-[1400px]">
+        <nav
+          aria-label="Seções do Hub Inteligência"
+          className="no-scrollbar flex gap-0.5 overflow-x-auto px-4 lg:px-8"
+        >
+          {TABS.map(({ href, label, icon: Icon, exact }) => {
+            const active = exact ? pathname === href : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`group relative flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3.5 text-[13px] font-semibold transition-colors sm:px-4 sm:text-sm ${
+                  active
+                    ? "text-forest-800"
+                    : "text-ink-3 hover:text-forest-700"
+                }`}
+              >
+                <span
+                  className={`transition-colors ${active ? "text-forest-700" : "text-ink-4 group-hover:text-forest-600"}`}
+                >
+                  <Icon />
+                </span>
+                {label}
+
+                <span
+                  className={`absolute inset-x-1.5 bottom-0 h-[3px] rounded-t-full transition-all duration-300 ${
+                    active
+                      ? "bg-lime-400 opacity-100"
+                      : "bg-forest-300 opacity-0 group-hover:opacity-40"
+                  }`}
+                />
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Pistas de recorte: avisam que a faixa continua fora da tela */}
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent lg:hidden"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-white to-transparent lg:hidden"
+          aria-hidden="true"
+        />
+      </div>
     </div>
   );
 }
 
-const S = { className: "h-4 w-4", fill: "none", stroke: "currentColor", strokeWidth: 2, "aria-hidden": true } as const;
+const S = {
+  className: "h-4 w-4",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  "aria-hidden": true,
+} as const;
 
 function HomeIcon() {
   return (

@@ -57,8 +57,8 @@ export default function AnunciePage() {
   return (
     <>
       <section className="bg-forest-800 text-white">
-        <div className="mx-auto max-w-[1400px] px-4 py-14 lg:px-8 lg:py-20">
-          <h1 className="max-w-3xl text-balance text-4xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-[52px]">
+        <div className="mx-auto max-w-[1400px] px-4 py-10 sm:py-14 lg:px-8 lg:py-20">
+          <h1 className="max-w-3xl text-balance text-[32px] font-bold leading-[1.08] tracking-[-0.03em] sm:text-[52px]">
             Fale com quem <span className="text-lime-400">decide</span> no mercado
             segurador
           </h1>

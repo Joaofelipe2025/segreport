@@ -47,8 +47,20 @@ export function LeadCard({ article }: { article: Article }) {
   );
 }
 
-/** Destaque secundário: imagem com texto sobreposto, formato compacto. */
-export function OverlayCard({ article }: { article: Article }) {
+/**
+ * Destaque secundário: imagem com texto sobreposto, formato compacto.
+ *
+ * `priority` existe porque em telas estreitas a vitrine empilha e o primeiro
+ * destaque secundário pode ser o maior elemento da dobra — sem prioridade,
+ * ele entra na fila normal e atrasa o LCP.
+ */
+export function OverlayCard({
+  article,
+  priority = false,
+}: {
+  article: Article;
+  priority?: boolean;
+}) {
   return (
     <article className="group relative flex-1 overflow-hidden rounded-xl bg-forest-800">
       <Link href={`/noticias/${article.slug}`} className="block h-full">
@@ -57,6 +69,7 @@ export function OverlayCard({ article }: { article: Article }) {
             src={article.image}
             alt={article.imageAlt}
             fill
+            priority={priority}
             sizes="(max-width: 1024px) 100vw, 33vw"
             className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
           />

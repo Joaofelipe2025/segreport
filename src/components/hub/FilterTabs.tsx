@@ -36,8 +36,11 @@ export default function FilterTabs({
   };
 
   return (
+    // `max-w-full` + rolagem horizontal: com sete ramos, envolver em duas
+    // linhas num celular empurra o conteúdo para baixo e quebra o ritmo da
+    // página. Rolar mantém o grupo como uma peça só.
     <div
-      className={`inline-flex flex-wrap gap-1 rounded-lg p-1 ${
+      className={`no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-lg p-1 ${
         variant === "lime" ? "bg-forest-100" : "bg-forest-800"
       }`}
       role="group"
@@ -49,14 +52,12 @@ export default function FilterTabs({
             key={option.value || "todos"}
             href={buildHref(option.value)}
             aria-current={isActive ? "true" : undefined}
-            className={`rounded-md px-3.5 py-2 text-xs font-bold transition-colors sm:text-[13px] ${
+            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-xs font-bold transition-colors sm:px-3.5 sm:text-[13px] ${
               isActive
-                ? variant === "lime"
-                  ? "bg-lime-400 text-forest-800"
-                  : "bg-lime-400 text-forest-800"
+                ? "bg-lime-400 text-forest-800 shadow-[0_2px_8px_rgba(178,224,47,0.25)]"
                 : variant === "lime"
                   ? "text-forest-700 hover:bg-forest-200"
-                  : "text-forest-200 hover:bg-forest-700"
+                  : "text-forest-200 hover:bg-white/8"
             }`}
           >
             {option.label}

@@ -58,7 +58,7 @@ export default async function IndicadoresPage(
   return (
     <div className="space-y-8">
       <header>
-        <h2 className="text-2xl font-bold tracking-[-0.02em] text-ink">
+        <h2 className="text-xl font-bold tracking-[-0.02em] text-ink sm:text-2xl">
           Indicadores por ramo
         </h2>
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-3">
@@ -67,7 +67,7 @@ export default async function IndicadoresPage(
         </p>
       </header>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
         <FilterTabs
           options={PERIOD_OPTIONS}
           active={period}
@@ -90,8 +90,8 @@ export default async function IndicadoresPage(
           Nenhum indicador para este recorte.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {visible.map(({ definition, value, deltaPp, locked }) =>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+          {visible.map(({ definition, value, deltaPp, series: spark, locked }) =>
             locked ? (
               <LockedKpiCard key={definition.key} definition={definition} />
             ) : (
@@ -100,6 +100,7 @@ export default async function IndicadoresPage(
                 definition={definition}
                 value={value}
                 deltaPp={deltaPp}
+                series={spark}
                 period={CURRENT_PERIOD}
               />
             )
@@ -112,6 +113,7 @@ export default async function IndicadoresPage(
           series={series}
           label={chartTarget.definition.label}
           unit={chartTarget.definition.unit}
+          source={chartTarget.definition.source}
         />
       )}
 

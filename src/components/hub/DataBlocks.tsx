@@ -3,18 +3,24 @@ import type { IndicatorDefinition, IndicatorValue } from "@/lib/types";
 import { formatIndicator, formatDelta, formatMonthYear, trendOf } from "@/lib/format";
 import { LockIcon } from "@/components/ui/Badge";
 import { PRO_BENEFITS } from "@/lib/tier";
+import Sparkline from "./Sparkline";
 
 /**
  * Blocos de dado do Hub.
  *
- * Todos compartilham `min-h` por família. No tratamento híbrido — cards
- * escuros sobre página clara — blocos de alturas diferentes viram ilhas
- * soltas e abrem o vão branco que aparece no protótipo. Altura travada por
- * linha faz os blocos formarem faixas alinhadas.
+ * Duas regras de composição sustentam o tratamento híbrido — blocos escuros
+ * sobre página clara:
+ *
+ * 1. ALTURA TRAVADA por família. Blocos de alturas diferentes viram ilhas
+ *    soltas e abrem o vão branco que aparece no protótipo.
+ * 2. SUPERFÍCIE COM PROFUNDIDADE. Cor chapada sobre fundo claro lê como
+ *    retângulo colado. Gradiente sutil mais anel de 1px dão a sensação de
+ *    peça apoiada na página.
  */
 
-const CARD = "rounded-xl bg-forest-800 text-white";
-const CARD_MIN = "min-h-[148px]";
+/** Superfície padrão dos blocos escuros. */
+const SURFACE =
+  "rounded-xl bg-gradient-to-br from-forest-800 to-forest-900 text-white ring-1 ring-white/8";
 
 /** Cartão de indicador com valor liberado. */
 export function KpiCard({
@@ -22,41 +28,60 @@ export function KpiCard({
   value,
   deltaPp,
   period,
+  series = [],
 }: {
   definition: IndicatorDefinition;
   value: number | null;
   deltaPp: number | null;
   period: string;
+  series?: number[];
 }) {
   const trend = trendOf(deltaPp);
 
+  const trendStyles =
+    trend === "up"
+      ? "bg-up/15 text-up"
+      : trend === "down"
+        ? "bg-down/15 text-down"
+        : "bg-white/8 text-forest-300";
+
   return (
-    <article className={`${CARD} ${CARD_MIN} flex flex-col justify-between p-5`}>
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-semibold text-forest-200">{definition.label}</p>
-        <span className="shrink-0 rounded bg-forest-700 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-forest-300">
+    <article
+      className={`${SURFACE} group relative flex min-h-[172px] flex-col justify-between overflow-hidden p-4 transition-all duration-300 hover:ring-lime-400/30 sm:p-5`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[13px] font-semibold leading-snug text-forest-200">
+          {definition.label}
+        </p>
+        <span className="shrink-0 rounded bg-white/8 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-forest-300">
           {definition.window}
         </span>
       </div>
 
-      <div>
-        <p className="font-mono text-[34px] font-bold leading-none tracking-[-0.03em] text-lime-400">
-          {formatIndicator(value, definition.unit)}
-        </p>
-
-        <div className="mt-3 flex items-center gap-2 text-xs">
+      <div className="mt-3">
+        <div className="flex items-end gap-2">
+          <p className="font-mono text-[30px] font-bold leading-none tracking-[-0.035em] text-lime-400 tabular-nums sm:text-[34px]">
+            {formatIndicator(value, definition.unit)}
+          </p>
           <span
-            className={`font-semibold ${
-              trend === "up" ? "text-up" : trend === "down" ? "text-down" : "text-forest-300"
-            }`}
+            className={`mb-0.5 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${trendStyles}`}
           >
+            <TrendGlyph trend={trend} />
             {formatDelta(deltaPp)}
           </span>
-          <span className="text-forest-500">vs. período anterior</span>
         </div>
 
-        <p className="mt-2.5 truncate text-[10px] text-forest-500" title={definition.source}>
-          {definition.source} · <span className="capitalize">{formatMonthYear(period)}</span>
+        {series.length > 1 && (
+          <div className="mt-3 -mx-1 opacity-80 transition-opacity duration-300 group-hover:opacity-100">
+            <Sparkline values={series} />
+          </div>
+        )}
+
+        <p
+          className="mt-2.5 truncate text-[10px] leading-relaxed text-forest-500"
+          title={`${definition.source} · ${formatMonthYear(period)}`}
+        >
+          {definition.source}
         </p>
       </div>
     </article>
@@ -67,111 +92,236 @@ export function KpiCard({
  * Cartão de indicador restrito.
  *
  * O rótulo, o ramo e a fonte são públicos; o número nunca chega ao navegador
- * — a camada de dados devolve `null`. O que o cartão faz é nomear o que está
- * faltando, que converte melhor do que borrar um valor.
+ * — a camada de dados devolve `null`. O cartão nomeia o que está faltando,
+ * que converte melhor do que borrar um valor.
  */
 export function LockedKpiCard({ definition }: { definition: IndicatorDefinition }) {
   return (
-    <article
-      className={`${CARD_MIN} flex flex-col justify-between rounded-xl border border-dashed border-lime-400/35 bg-forest-800/90 p-5 text-white`}
+    <Link
+      href="/premium"
+      className="group relative flex min-h-[172px] flex-col justify-between overflow-hidden rounded-xl bg-forest-800/70 p-4 text-white ring-1 ring-inset ring-dashed ring-lime-400/25 transition-all duration-300 hover:bg-forest-800 hover:ring-lime-400/50 sm:p-5"
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-semibold text-forest-200">{definition.label}</p>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-lime-400/15 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-lime-400">
-          <LockIcon className="h-2.5 w-2.5" />
-          {definition.minTier === "corporate" ? "Corporate" : "PRO"}
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[13px] font-semibold leading-snug text-forest-300">
+          {definition.label}
+        </p>
+        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-lime-400/12 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em] text-lime-400">
+          <LockIcon className="h-2 w-2" />
+          {definition.minTier === "corporate" ? "Corp" : "PRO"}
         </span>
       </div>
 
-      <div>
-        <p className="font-mono text-[34px] font-bold leading-none tracking-[-0.03em] text-forest-600">
+      <div className="mt-3">
+        {/* Traços no lugar do número: sinaliza dado existente e indisponível,
+            sem sugerir zero nem expor o valor real. */}
+        <p className="font-mono text-[30px] font-bold leading-none tracking-[-0.035em] text-forest-600 sm:text-[34px]">
           ———
         </p>
-        <Link
-          href="/premium"
-          className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-lime-400 transition-colors hover:text-lime-300"
-        >
+
+        <div className="mt-3 flex h-7 items-center">
+          <div className="h-px w-full bg-gradient-to-r from-lime-400/30 via-forest-600/40 to-transparent" />
+        </div>
+
+        <p className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-lime-400 transition-transform duration-300 group-hover:translate-x-0.5">
           Liberar indicador
           <span aria-hidden="true">→</span>
-        </Link>
-        <p className="mt-2.5 truncate text-[10px] text-forest-500">{definition.source}</p>
+        </p>
       </div>
-    </article>
+    </Link>
   );
 }
 
 /**
- * Gráfico de série temporal em colunas.
+ * Gráfico de série temporal em área.
  *
- * SVG puro, sem biblioteca: são até 24 pontos e uma escala linear, então
- * trazer uma dependência de gráfico custaria mais em bundle do que entrega
- * em recurso. Renderiza no servidor, sem JavaScript no cliente.
+ * A versão anterior usava colunas soltas, sem eixo nem grade — barra é forma
+ * de comparar categorias, não de mostrar continuidade no tempo. Área com
+ * linha de referência comunica a trajetória, que é o que o leitor quer ver.
+ *
+ * SVG gerado no servidor: são poucas dezenas de pontos e uma escala linear,
+ * então uma biblioteca de gráfico custaria mais em peso do que entrega.
  */
 export function SeriesChart({
   series,
   label,
   unit,
+  source,
 }: {
   series: IndicatorValue[];
   label: string;
   unit: IndicatorDefinition["unit"];
+  source?: string;
 }) {
-  if (series.length === 0) {
+  if (series.length < 2) {
     return (
-      <div className={`${CARD} flex min-h-[260px] items-center justify-center p-6`}>
-        <p className="text-sm text-forest-300">
-          Série histórica disponível para assinantes PRO.
-        </p>
-      </div>
+      <section className={`${SURFACE} flex min-h-[280px] items-center justify-center p-6`}>
+        <div className="max-w-xs text-center">
+          <LockIcon className="mx-auto h-5 w-5 text-lime-400" />
+          <p className="mt-3 text-sm font-semibold">Série histórica no plano PRO</p>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-forest-300">
+            Assinantes acompanham 60 meses de evolução e exportam os dados.
+          </p>
+        </div>
+      </section>
     );
   }
 
+  const width = 1000;
+  const height = 240;
+  const padLeft = 44;
+  const padRight = 12;
+  const padTop = 16;
+  const padBottom = 28;
+
   const values = series.map((p) => p.value);
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const span = max - min || 1;
-  // Respiro de 12% acima e abaixo para a coluna mais alta não encostar no topo.
-  const floor = min - span * 0.12;
-  const ceiling = max + span * 0.12;
-  const range = ceiling - floor;
+  const rawMax = Math.max(...values);
+  const rawMin = Math.min(...values);
+  const spread = rawMax - rawMin || 1;
+  const max = rawMax + spread * 0.15;
+  const min = Math.max(0, rawMin - spread * 0.15);
+  const range = max - min || 1;
+
+  const plotW = width - padLeft - padRight;
+  const plotH = height - padTop - padBottom;
+
+  const points = series.map((point, index) => {
+    const x = padLeft + (index / (series.length - 1)) * plotW;
+    const y = padTop + (1 - (point.value - min) / range) * plotH;
+    return { x, y, point };
+  });
+
+  const line = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+    .join(" ");
+  const area = `${line} L${padLeft + plotW},${padTop + plotH} L${padLeft},${padTop + plotH} Z`;
+
+  // Quatro linhas de grade — o suficiente para dar referência sem poluir.
+  const gridLines = [0, 1, 2, 3].map((i) => {
+    const ratio = i / 3;
+    return {
+      y: padTop + ratio * plotH,
+      value: max - ratio * range,
+    };
+  });
+
+  // No máximo seis rótulos no eixo do tempo, para não sobrepor em tela estreita.
+  const labelStep = Math.max(1, Math.ceil(series.length / 6));
 
   return (
-    <section className={`${CARD} p-5 sm:p-6`}>
-      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-base font-bold">Evolução Temporal</h3>
-        <p className="text-xs text-forest-300">
-          {label} · últimos {series.length} meses
-        </p>
+    <section className={`${SURFACE} overflow-hidden`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/8 px-4 py-4 sm:px-6">
+        <div>
+          <h3 className="text-[15px] font-bold">Evolução Temporal</h3>
+          <p className="mt-0.5 text-xs text-forest-300">
+            {label} · {series.length} meses
+          </p>
+        </div>
+        {source && (
+          <p className="font-mono text-[10px] uppercase tracking-wide text-forest-500">
+            {source}
+          </p>
+        )}
       </div>
 
-      <div className="flex h-[200px] items-end gap-[3px]" role="img" aria-label={`Série de ${label}`}>
-        {series.map((point, index) => {
-          const height = ((point.value - floor) / range) * 100;
-          const isLast = index >= series.length - 3;
-          return (
-            <div
-              key={point.period}
-              className="group relative flex-1"
-              style={{ height: "100%" }}
-            >
-              <div
-                className={`absolute bottom-0 w-full rounded-t-[2px] transition-colors ${
-                  isLast ? "bg-lime-400" : "bg-forest-600 group-hover:bg-forest-500"
-                }`}
-                style={{ height: `${height}%` }}
+      <div className="px-2 py-4 sm:px-4">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="h-[200px] w-full sm:h-[260px]"
+          role="img"
+          aria-label={`Evolução de ${label} ao longo de ${series.length} meses`}
+        >
+          <defs>
+            <linearGradient id="area-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-lime-400)" stopOpacity="0.30" />
+              <stop offset="100%" stopColor="var(--color-lime-400)" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+
+          {/* Grade e escala vertical */}
+          {gridLines.map((grid) => (
+            <g key={grid.y}>
+              <line
+                x1={padLeft}
+                y1={grid.y}
+                x2={width - padRight}
+                y2={grid.y}
+                stroke="currentColor"
+                strokeWidth="1"
+                className="text-white/8"
               />
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded bg-forest-900 px-2 py-1 font-mono text-[10px] text-lime-400 group-hover:block">
-                {formatIndicator(point.value, unit)}
-              </span>
-            </div>
-          );
-        })}
+              <text
+                x={padLeft - 8}
+                y={grid.y + 4}
+                textAnchor="end"
+                className="fill-forest-500 font-mono text-[11px]"
+              >
+                {grid.value.toFixed(0)}
+              </text>
+            </g>
+          ))}
+
+          <path d={area} fill="url(#area-fill)" />
+          <path
+            d={line}
+            fill="none"
+            stroke="var(--color-lime-400)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Marcador só no ponto mais recente — o que importa na leitura */}
+          <circle
+            cx={points[points.length - 1].x}
+            cy={points[points.length - 1].y}
+            r="5"
+            fill="var(--color-lime-400)"
+          />
+          <circle
+            cx={points[points.length - 1].x}
+            cy={points[points.length - 1].y}
+            r="10"
+            fill="var(--color-lime-400)"
+            opacity="0.2"
+          />
+
+          {/* Eixo do tempo */}
+          {points.map((p, index) =>
+            index % labelStep === 0 || index === points.length - 1 ? (
+              <text
+                key={p.point.period}
+                x={p.x}
+                y={height - 8}
+                textAnchor="middle"
+                className="fill-forest-500 font-mono text-[11px] uppercase"
+              >
+                {new Date(p.point.period)
+                  .toLocaleDateString("pt-BR", { month: "short", year: "2-digit" })
+                  .replace(".", "")}
+              </text>
+            ) : null
+          )}
+        </svg>
       </div>
 
-      <div className="mt-3 flex justify-between font-mono text-[10px] uppercase text-forest-500">
-        <span className="capitalize">{formatMonthYear(series[0].period)}</span>
-        <span className="capitalize">
-          {formatMonthYear(series[series.length - 1].period)}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-white/8 px-4 py-3 text-[11px] sm:px-6">
+        <span className="text-forest-300">
+          Mínimo{" "}
+          <strong className="font-mono text-white tabular-nums">
+            {formatIndicator(rawMin, unit)}
+          </strong>
+        </span>
+        <span className="text-forest-300">
+          Máximo{" "}
+          <strong className="font-mono text-white tabular-nums">
+            {formatIndicator(rawMax, unit)}
+          </strong>
+        </span>
+        <span className="text-forest-300">
+          Atual{" "}
+          <strong className="font-mono text-lime-400 tabular-nums">
+            {formatIndicator(values[values.length - 1], unit)}
+          </strong>
         </span>
       </div>
     </section>
@@ -182,7 +332,7 @@ export function SeriesChart({
  * Bloco de conversão.
  *
  * Aparece onde o dado foi cortado, listando item a item o que o assinante
- * recebe. É a "amostra honesta": o leitor viu dado real acima e sabe
+ * recebe — a "amostra honesta": o leitor viu dado real acima e sabe
  * exatamente o que está do outro lado.
  */
 export function UpsellBlock({
@@ -196,28 +346,34 @@ export function UpsellBlock({
 }) {
   return (
     <div
-      className={`rounded-xl border border-dashed border-lime-400/40 bg-forest-800 text-white ${
-        compact ? "p-5" : "p-6 sm:p-7"
+      className={`relative overflow-hidden rounded-xl bg-gradient-to-br from-forest-800 to-forest-900 text-white ring-1 ring-lime-400/25 ${
+        compact ? "p-5" : "p-5 sm:p-7"
       }`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-5">
+      {/* Brilho decorativo no canto — dá foco sem pedir atenção */}
+      <div
+        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-lime-400/10 blur-3xl"
+        aria-hidden="true"
+      />
+
+      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-xl">
           <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-lime-400">
             <LockIcon className="h-3 w-3" />
             Exclusivo para assinantes
           </p>
-          <h3 className="mt-2.5 text-lg font-bold leading-snug">{headline}</h3>
+          <h3 className="mt-2.5 text-balance text-lg font-bold leading-snug sm:text-xl">
+            {headline}
+          </h3>
           {detail && (
-            <p className="mt-1.5 text-sm leading-relaxed text-forest-200">{detail}</p>
+            <p className="mt-2 text-sm leading-relaxed text-forest-200">{detail}</p>
           )}
 
           {!compact && (
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
               {PRO_BENEFITS.map((benefit) => (
                 <li key={benefit} className="flex gap-2 text-[13px] text-forest-200">
-                  <svg viewBox="0 0 16 16" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-lime-400" fill="none" stroke="currentColor" strokeWidth="2.4">
-                    <path d="m3 8.5 3.5 3.5L13 5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <CheckGlyph />
                   {benefit}
                 </li>
               ))}
@@ -227,7 +383,7 @@ export function UpsellBlock({
 
         <Link
           href="/premium"
-          className="shrink-0 rounded-full bg-lime-400 px-6 py-3 text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
+          className="shrink-0 self-start rounded-full bg-lime-400 px-6 py-3 text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-all hover:bg-lime-500 hover:shadow-[0_8px_24px_rgba(178,224,47,0.35)] lg:self-center"
         >
           Assinar PRO
         </Link>
@@ -239,22 +395,55 @@ export function UpsellBlock({
 /** Painel escuro genérico, usado para listas e tabelas do Hub. */
 export function DataPanel({
   title,
+  subtitle,
   action,
   children,
   className = "",
 }: {
   title: string;
+  subtitle?: string;
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <section className={`${CARD} overflow-hidden ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 sm:px-6">
-        <h3 className="text-base font-bold">{title}</h3>
+    <section className={`${SURFACE} overflow-hidden ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/8 px-4 py-4 sm:px-6">
+        <div className="min-w-0">
+          <h3 className="text-[15px] font-bold leading-snug">{title}</h3>
+          {subtitle && (
+            <p className="mt-0.5 text-xs text-forest-300">{subtitle}</p>
+          )}
+        </div>
         {action}
       </div>
       {children}
     </section>
+  );
+}
+
+// ---------------------------------------------------------------- glifos
+
+function TrendGlyph({ trend }: { trend: "up" | "down" | "flat" }) {
+  if (trend === "flat") return <span aria-hidden="true">–</span>;
+  return (
+    <svg viewBox="0 0 10 10" className="h-2 w-2" fill="currentColor" aria-hidden="true">
+      <path d={trend === "up" ? "M5 1l4 7H1z" : "M5 9L1 2h8z"} />
+    </svg>
+  );
+}
+
+function CheckGlyph() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className="mt-0.5 h-3.5 w-3.5 shrink-0 text-lime-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      aria-hidden="true"
+    >
+      <path d="m3 8.5 3.5 3.5L13 5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

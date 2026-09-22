@@ -35,19 +35,23 @@ export default async function HomePage() {
   const flash = await getFlashPosts(4);
 
   return (
-    <div className="mx-auto max-w-[1400px] px-4 py-6 lg:px-8 lg:py-8">
+    <div className="mx-auto max-w-[1400px] px-4 py-5 sm:py-6 lg:px-8 lg:py-8">
       {/* ---- Vitrine: manchete + dois destaques ---------------------------- */}
-      <section className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <section className="grid gap-3 sm:gap-4 lg:grid-cols-[2fr_1fr]">
         <LeadCard article={lead} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          {secondary.map((article) => (
-            <OverlayCard key={article.slug} article={article} />
+          {secondary.map((article, index) => (
+            <OverlayCard
+              key={article.slug}
+              article={article}
+              priority={index === 0}
+            />
           ))}
         </div>
       </section>
 
       {/* ---- Faixa de cinco cartões ---------------------------------------- */}
-      <section className="mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+      <section className="mt-7 grid grid-cols-2 gap-4 sm:mt-8 sm:gap-5 sm:grid-cols-3 lg:grid-cols-5">
         {strip.map((article) => (
           <StripCard key={article.slug} article={article} />
         ))}
@@ -59,7 +63,7 @@ export default async function HomePage() {
       </div>
 
       {/* ---- Corpo editorial + coluna lateral ------------------------------ */}
-      <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_340px] lg:gap-12">
+      <div className="mt-10 grid gap-9 sm:mt-12 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
         <div className="min-w-0">
           <section>
             <SectionHeading title="Últimas Notícias" href="/noticias" />
@@ -81,7 +85,7 @@ export default async function HomePage() {
               linkLabel="Ver todas"
               icon={<CameraIcon />}
             />
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {flash.map((post) => (
                 <Link
                   key={post.slug}

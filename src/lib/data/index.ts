@@ -117,6 +117,8 @@ export async function getIndicators(tier: Tier): Promise<
     definition: IndicatorDefinition;
     value: number | null;
     deltaPp: number | null;
+    /** Últimos 12 pontos, para a sparkline do cartão. Vazio se bloqueado. */
+    series: number[];
     locked: boolean;
   }>
 > {
@@ -127,6 +129,9 @@ export async function getIndicators(tier: Tier): Promise<
       definition,
       value: allowed ? (latest?.value ?? null) : null,
       deltaPp: allowed ? (latest?.deltaPp ?? null) : null,
+      series: allowed
+        ? (INDICATOR_SERIES[definition.key] ?? []).slice(-12).map((p) => p.value)
+        : [],
       locked: !allowed,
     };
   });

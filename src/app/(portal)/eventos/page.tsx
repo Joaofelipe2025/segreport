@@ -34,7 +34,7 @@ export default async function EventsPage() {
     <>
       {/* Hero escuro, como no protótipo */}
       <section className="bg-forest-800 text-white">
-        <div className="mx-auto max-w-[1400px] px-4 py-14 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-[1400px] px-4 py-10 sm:py-14 lg:px-8 lg:py-20">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-2xl">
               <span className="inline-flex items-center gap-2 rounded-full bg-forest-700 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.1em] text-lime-400">
@@ -42,7 +42,7 @@ export default async function EventsPage() {
                 Agenda 2026
               </span>
 
-              <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-[-0.03em] sm:text-[52px]">
+              <h1 className="mt-5 text-[32px] font-bold leading-[1.08] tracking-[-0.03em] sm:text-[52px]">
                 Os Principais Eventos do
                 <br />
                 <span className="text-lime-400">Setor de Seguros</span>

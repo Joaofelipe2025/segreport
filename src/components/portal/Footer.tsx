@@ -6,9 +6,11 @@ export default function Footer() {
 
   return (
     <footer className="mt-20 bg-forest-900 text-forest-300">
-      <div className="mx-auto max-w-[1400px] px-4 py-14 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-          <div>
+      <div className="mx-auto max-w-[1400px] px-4 py-10 sm:py-14 lg:px-8">
+        {/* Em telas médias as quatro colunas viram duas: empilhar tudo numa
+            coluna só deixa o rodapé com quase mil pixels de altura no celular. */}
+        <div className="grid gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="sm:col-span-2 lg:col-span-1">
             <p className="text-2xl font-extrabold italic tracking-[-0.03em] text-white">
               segreport
             </p>

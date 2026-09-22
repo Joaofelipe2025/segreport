@@ -18,9 +18,9 @@ export default async function AlertasPage() {
   const isFree = tier === "free";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <header>
-        <h2 className="text-2xl font-bold tracking-[-0.02em] text-ink">
+        <h2 className="text-xl font-bold tracking-[-0.02em] text-ink sm:text-2xl">
           Alertas de indicador
         </h2>
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-3">

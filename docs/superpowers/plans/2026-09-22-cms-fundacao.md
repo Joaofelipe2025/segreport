@@ -107,7 +107,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    setupFiles: ["dotenv/config"],
+    setupFiles: ["tests/setup.ts"],
     // Testes de RLS compartilham o mesmo banco. Rodar em paralelo faria
     // transações concorrentes disputarem as mesmas linhas semeadas.
     fileParallelism: false,
@@ -115,6 +115,14 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
   },
 });
+```
+
+Criar `tests/setup.ts`, que carrega explicitamente `.env.test` — `dotenv/config` leria `.env`, e apontar a suíte para o ambiente da aplicação a faria escrever no banco real:
+
+```ts
+import { config } from "dotenv";
+
+config({ path: ".env.test" });
 ```
 
 Criar `.env.test.example`:

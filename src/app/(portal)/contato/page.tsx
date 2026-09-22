@@ -16,28 +16,28 @@ export default function ContatoPage() {
 
         <form className="mt-9 space-y-4 rounded-2xl border border-hairline bg-white p-7">
           <div>
-            <label htmlFor="contato-nome" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-2">
+            <label htmlFor="contato-nome" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-2">
               Nome
             </label>
             <input id="contato-nome" name="nome" type="text"
               className="w-full rounded-lg border border-hairline bg-paper px-4 py-3 text-sm outline-none focus:border-forest-500 focus:bg-white" />
           </div>
           <div>
-            <label htmlFor="contato-email" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-2">
+            <label htmlFor="contato-email" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-2">
               E-mail
             </label>
             <input id="contato-email" name="email" type="email"
               className="w-full rounded-lg border border-hairline bg-paper px-4 py-3 text-sm outline-none focus:border-forest-500 focus:bg-white" />
           </div>
           <div>
-            <label htmlFor="contato-msg" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-2">
+            <label htmlFor="contato-msg" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-2">
               Mensagem
             </label>
             <textarea id="contato-msg" name="mensagem" rows={5}
               className="w-full rounded-lg border border-hairline bg-paper px-4 py-3 text-sm outline-none focus:border-forest-500 focus:bg-white" />
           </div>
           <button type="button"
-            className="w-full rounded-lg bg-forest-800 py-3.5 text-xs font-extrabold uppercase tracking-[0.08em] text-white transition-colors hover:bg-forest-700">
+            className="w-full rounded-lg bg-forest-800 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-forest-700">
             Enviar mensagem
           </button>
         </form>

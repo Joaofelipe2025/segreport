@@ -53,7 +53,7 @@ export function KpiCard({
         <p className="text-[13px] font-semibold leading-snug text-forest-200">
           {definition.label}
         </p>
-        <span className="shrink-0 rounded bg-white/8 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-forest-300">
+        <span className="shrink-0 rounded bg-white/8 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-forest-300">
           {definition.window}
         </span>
       </div>
@@ -64,7 +64,7 @@ export function KpiCard({
             {formatIndicator(value, definition.unit)}
           </p>
           <span
-            className={`mb-0.5 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${trendStyles}`}
+            className={`mb-0.5 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${trendStyles}`}
           >
             <TrendGlyph trend={trend} />
             {formatDelta(deltaPp)}
@@ -105,7 +105,7 @@ export function LockedKpiCard({ definition }: { definition: IndicatorDefinition 
         <p className="text-[13px] font-semibold leading-snug text-forest-300">
           {definition.label}
         </p>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-lime-400/12 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em] text-lime-400">
+        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-lime-400/12 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-lime-400">
           <LockIcon className="h-2 w-2" />
           {definition.minTier === "corporate" ? "Corp" : "PRO"}
         </span>
@@ -122,7 +122,7 @@ export function LockedKpiCard({ definition }: { definition: IndicatorDefinition 
           <div className="h-px w-full bg-gradient-to-r from-lime-400/30 via-forest-600/40 to-transparent" />
         </div>
 
-        <p className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-lime-400 transition-transform duration-300 group-hover:translate-x-0.5">
+        <p className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-semibold text-lime-400 transition-transform duration-300 group-hover:translate-x-0.5">
           Liberar indicador
           <span aria-hidden="true">→</span>
         </p>
@@ -211,7 +211,7 @@ export function SeriesChart({
     <section className={`${SURFACE} overflow-hidden`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/8 px-4 py-4 sm:px-6">
         <div>
-          <h3 className="text-[15px] font-bold">Evolução Temporal</h3>
+          <h3 className="text-[15px] font-semibold">Evolução Temporal</h3>
           <p className="mt-0.5 text-xs text-forest-300">
             {label} · {series.length} meses
           </p>
@@ -358,7 +358,7 @@ export function UpsellBlock({
 
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-xl">
-          <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-lime-400">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-lime-400">
             <LockIcon className="h-3 w-3" />
             Exclusivo para assinantes
           </p>
@@ -383,7 +383,7 @@ export function UpsellBlock({
 
         <Link
           href="/premium"
-          className="shrink-0 self-start rounded-full bg-lime-400 px-6 py-3 text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-all hover:bg-lime-500 hover:shadow-[0_8px_24px_rgba(178,224,47,0.35)] lg:self-center"
+          className="shrink-0 self-start rounded-full bg-lime-400 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-forest-800 transition-all hover:bg-lime-500 hover:shadow-[0_8px_24px_rgba(178,224,47,0.35)] lg:self-center"
         >
           Assinar PRO
         </Link>
@@ -410,7 +410,7 @@ export function DataPanel({
     <section className={`${SURFACE} overflow-hidden ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/8 px-4 py-4 sm:px-6">
         <div className="min-w-0">
-          <h3 className="text-[15px] font-bold leading-snug">{title}</h3>
+          <h3 className="text-[15px] font-semibold leading-snug">{title}</h3>
           {subtitle && (
             <p className="mt-0.5 text-xs text-forest-300">{subtitle}</p>
           )}

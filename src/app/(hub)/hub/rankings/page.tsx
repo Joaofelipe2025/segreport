@@ -95,19 +95,19 @@ function RankingTable({
 
         <thead>
           <tr className="border-b border-white/8 text-[10px] uppercase tracking-[0.08em] text-forest-500">
-            <th scope="col" className="w-10 py-2.5 pl-4 text-left font-bold sm:pl-6">
+            <th scope="col" className="w-10 py-2.5 pl-4 text-left font-semibold sm:pl-6">
               #
             </th>
-            <th scope="col" className="py-2.5 pl-2 text-left font-bold">
+            <th scope="col" className="py-2.5 pl-2 text-left font-semibold">
               Empresa
             </th>
-            <th scope="col" className="py-2.5 pr-4 text-right font-bold sm:pr-6">
+            <th scope="col" className="py-2.5 pr-4 text-right font-semibold sm:pr-6">
               <span className="sm:hidden">Valor</span>
               <span className="hidden sm:inline">Prêmios</span>
             </th>
             {/* Coluna própria só a partir de sm; abaixo disso a variação
                 aparece embaixo do valor, para caber em 375px sem rolagem. */}
-            <th scope="col" className="hidden w-24 py-2.5 pr-6 text-right font-bold sm:table-cell">
+            <th scope="col" className="hidden w-24 py-2.5 pr-6 text-right font-semibold sm:table-cell">
               Variação
             </th>
           </tr>
@@ -123,7 +123,7 @@ function RankingTable({
               >
                 <td className="py-3 pl-4 align-middle sm:pl-6">
                   <span
-                    className={`font-mono text-sm font-bold tabular-nums ${
+                    className={`font-mono text-sm font-semibold tabular-nums ${
                       isPodium ? "text-lime-400" : "text-forest-400"
                     }`}
                   >
@@ -196,7 +196,7 @@ function RankingPaywall({
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.1em] text-lime-400">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-lime-400">
             <LockIcon className="h-3 w-3" />
             mais {hiddenCount} posições no plano PRO
           </p>
@@ -209,7 +209,7 @@ function RankingPaywall({
 
         <Link
           href="/premium"
-          className="shrink-0 self-start rounded-full bg-lime-400 px-5 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-all hover:bg-lime-500 hover:shadow-[0_8px_24px_rgba(178,224,47,0.35)] lg:self-center"
+          className="shrink-0 self-start rounded-full bg-lime-400 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-forest-800 transition-all hover:bg-lime-500 hover:shadow-[0_8px_24px_rgba(178,224,47,0.35)] lg:self-center"
         >
           Ver ranking completo
         </Link>
@@ -230,7 +230,7 @@ function PositionDelta({ delta }: { delta: number }) {
   const up = delta > 0;
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums ${
+      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums ${
         up ? "bg-up/12 text-up" : "bg-down/12 text-down"
       }`}
       title={`${Math.abs(delta)} ${Math.abs(delta) === 1 ? "posição" : "posições"} ${up ? "acima" : "abaixo"} do ano anterior`}
@@ -258,7 +258,7 @@ function ExportButton({
   primary?: boolean;
 }) {
   const base =
-    "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-bold transition-colors";
+    "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-colors";
 
   if (disabled) {
     return (

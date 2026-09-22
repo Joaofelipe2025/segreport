@@ -39,10 +39,10 @@ export default async function ColunistasPage() {
               className="h-16 w-16 shrink-0 rounded-full object-cover"
             />
             <div className="min-w-0">
-              <h2 className="text-base font-bold text-ink transition-colors group-hover:text-forest-700">
+              <h2 className="text-base font-semibold text-ink transition-colors group-hover:text-forest-700">
                 {author.name}
               </h2>
-              <p className="mt-0.5 text-[11px] font-extrabold uppercase tracking-[0.06em] text-forest-600">
+              <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-forest-600">
                 {author.role}
               </p>
               <p className="clamp-3 mt-2 text-[13px] leading-relaxed text-ink-3">

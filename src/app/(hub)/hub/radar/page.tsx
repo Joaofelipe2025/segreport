@@ -88,7 +88,7 @@ export default async function RadarPage(props: PageProps<"/hub/radar">) {
                 </time>
               </div>
 
-              <h3 className="mt-3 text-balance text-base font-bold leading-snug sm:text-xl">
+              <h3 className="mt-3 text-balance text-base font-semibold leading-snug sm:text-xl">
                 {signal.title}
               </h3>
               <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-forest-200 sm:text-sm">

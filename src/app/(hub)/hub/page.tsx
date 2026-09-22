@@ -51,7 +51,7 @@ export default async function HubDashboard() {
 
         {locked.length > 0 && (
           <>
-            <p className="mb-3 mt-6 text-[11px] font-extrabold uppercase tracking-[0.1em] text-ink-4">
+            <p className="mb-3 mt-6 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-4">
               Disponíveis para assinantes
             </p>
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -101,7 +101,7 @@ export default async function HubDashboard() {
           action={
             <Link
               href="/noticias"
-              className="shrink-0 text-xs font-bold text-lime-400 transition-colors hover:text-lime-300"
+              className="shrink-0 text-xs font-semibold text-lime-400 transition-colors hover:text-lime-300"
             >
               Ver todas →
             </Link>
@@ -143,7 +143,7 @@ export default async function HubDashboard() {
           action={
             <Link
               href="/hub/radar"
-              className="shrink-0 text-xs font-bold text-lime-400 transition-colors hover:text-lime-300"
+              className="shrink-0 text-xs font-semibold text-lime-400 transition-colors hover:text-lime-300"
             >
               Ver radar →
             </Link>
@@ -156,7 +156,7 @@ export default async function HubDashboard() {
                 className="px-4 py-3.5 transition-colors hover:bg-white/[0.04] sm:px-6"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-forest-400">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-forest-400">
                     {signal.category}
                   </p>
                   <ImpactBadge impact={signal.impact} />
@@ -213,7 +213,7 @@ function SectionBar({
   return (
     <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <div className="flex items-baseline gap-2.5">
-        <h2 className="text-base font-bold tracking-[-0.01em] text-ink sm:text-lg">
+        <h2 className="text-base font-semibold tracking-[-0.01em] text-ink sm:text-lg">
           {title}
         </h2>
         {meta && (
@@ -256,7 +256,7 @@ function QuickCard({
         {icon}
       </span>
       <div className="mt-3">
-        <p className="text-[15px] font-bold leading-tight text-ink">{title}</p>
+        <p className="text-[15px] font-semibold leading-tight text-ink">{title}</p>
         <p className="mt-0.5 text-[11px] leading-snug text-ink-3">{subtitle}</p>
       </div>
     </Link>

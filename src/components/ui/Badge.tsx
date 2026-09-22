@@ -20,7 +20,7 @@ export function CategoryBadge({
 }) {
   const className = [
     "inline-block border-l-[3px] border-lime-400 px-2 py-1",
-    "text-[10px] font-extrabold uppercase tracking-[0.08em]",
+    "text-[10px] font-semibold uppercase tracking-[0.08em]",
     onDark
       ? "bg-forest-800/85 text-forest-100 backdrop-blur-sm"
       : "bg-forest-100 text-forest-700",
@@ -48,7 +48,7 @@ export function ImpactBadge({ impact }: { impact: Impact }) {
   const meta = IMPACT_META[impact];
   return (
     <span
-      className={`inline-block rounded px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.05em] ${meta.className}`}
+      className={`inline-block rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.05em] ${meta.className}`}
     >
       {meta.label}
     </span>
@@ -59,7 +59,7 @@ export function ImpactBadge({ impact }: { impact: Impact }) {
 export function TierBadge({ tier }: { tier: Tier }) {
   if (tier === "free") return null;
   return (
-    <span className="inline-flex items-center gap-1 rounded bg-lime-400 px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.06em] text-forest-800">
+    <span className="inline-flex items-center gap-1 rounded bg-lime-400 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-forest-800">
       <LockIcon className="h-2.5 w-2.5" />
       {tier === "pro" ? "PRO" : "Corporate"}
     </span>

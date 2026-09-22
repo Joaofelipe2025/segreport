@@ -14,7 +14,7 @@ export function NewsletterWidget() {
             <path d="m3.5 7 8.5 6 8.5-6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
-        <h2 className="text-sm font-extrabold uppercase tracking-[0.08em] text-ink">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-ink">
           Newsletter
         </h2>
       </div>
@@ -36,7 +36,7 @@ export function NewsletterWidget() {
         />
         <button
           type="submit"
-          className="w-full rounded-lg bg-forest-800 py-3 text-xs font-extrabold uppercase tracking-[0.08em] text-white transition-colors hover:bg-forest-700"
+          className="w-full rounded-lg bg-forest-800 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-forest-700"
         >
           Inscrever-se
         </button>
@@ -58,7 +58,7 @@ export async function MostReadWidget() {
             <path d="M15 7h5v5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
-        <h2 className="text-sm font-extrabold uppercase tracking-[0.08em] text-ink">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-ink">
           Mais lidas
         </h2>
       </div>
@@ -76,7 +76,7 @@ export async function MostReadWidget() {
 export function ProWidget() {
   return (
     <section className="overflow-hidden rounded-xl bg-forest-800 p-6 text-white">
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-lime-400">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-lime-400">
         Hub Inteligência
       </p>
       <h2 className="mt-2 text-lg font-bold leading-snug">
@@ -96,7 +96,7 @@ export function ProWidget() {
 
       <Link
         href="/premium"
-        className="mt-5 block rounded-lg bg-lime-400 py-3 text-center text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
+        className="mt-5 block rounded-lg bg-lime-400 py-3 text-center text-xs font-semibold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
       >
         Conhecer o PRO
       </Link>
@@ -126,7 +126,7 @@ export function AdSlot({
       className={`flex ${height} flex-col items-center justify-center rounded-xl border border-dashed border-hairline bg-white/60`}
       aria-label="Espaço publicitário"
     >
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink-4">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-4">
         Publicidade
       </p>
       <p className="mt-1 font-mono text-[10px] text-ink-4">slot: {slot}</p>

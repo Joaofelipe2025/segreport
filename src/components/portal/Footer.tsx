@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CATEGORIES } from "@/lib/categories";
+import Logo from "@/components/ui/Logo";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -11,9 +12,7 @@ export default function Footer() {
             coluna só deixa o rodapé com quase mil pixels de altura no celular. */}
         <div className="grid gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="sm:col-span-2 lg:col-span-1">
-            <p className="text-2xl font-extrabold italic tracking-[-0.03em] text-white">
-              segreport
-            </p>
+            <Logo variant="dark" className="h-8" />
             <p className="mt-3 max-w-xs text-sm leading-relaxed">
               Notícias, dados e inteligência para profissionais do mercado
               segurador brasileiro.
@@ -74,7 +73,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <p className="mb-4 text-[11px] font-extrabold uppercase tracking-[0.1em] text-white">
+      <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-white">
         {title}
       </p>
       <ul className="space-y-2.5 text-sm">{children}</ul>

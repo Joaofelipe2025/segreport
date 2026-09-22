@@ -77,7 +77,7 @@ export function OverlayCard({
         </div>
         <div className="absolute inset-x-0 bottom-0 p-4">
           <CategoryBadge category={article.category} onDark href={false} />
-          <h3 className="mt-2.5 text-balance text-base font-bold leading-[1.25] text-white lg:text-lg">
+          <h3 className="mt-2.5 text-balance text-base font-semibold leading-[1.25] text-white lg:text-lg">
             {article.title}
           </h3>
           <p className="clamp-1 mt-1.5 text-xs text-forest-200">
@@ -106,7 +106,7 @@ export function StripCard({ article }: { article: Article }) {
             <CategoryBadge category={article.category} onDark href={false} />
           </div>
         </div>
-        <h3 className="clamp-3 mt-3 text-balance text-sm font-bold leading-[1.35] text-ink group-hover:text-forest-700 lg:text-[15px]">
+        <h3 className="clamp-3 mt-3 text-balance text-sm font-semibold leading-[1.35] text-ink group-hover:text-forest-700 lg:text-[15px]">
           {article.title}
         </h3>
         <p className="clamp-2 mt-1.5 text-[13px] leading-relaxed text-ink-3">
@@ -143,7 +143,7 @@ export function ListRow({
             <CategoryBadge category={article.category} onDark={false} href={false} />
             {article.minTier && <TierBadge tier={article.minTier} />}
           </div>
-          <h3 className="clamp-2 text-balance text-[15px] font-bold leading-[1.3] text-ink transition-colors group-hover:text-forest-700 sm:text-base">
+          <h3 className="clamp-2 text-balance text-[15px] font-semibold leading-[1.3] text-ink transition-colors group-hover:text-forest-700 sm:text-base">
             {article.title}
           </h3>
           {showStandfirst && (
@@ -178,7 +178,7 @@ export function RankedRow({
           <h3 className="clamp-3 text-[14px] font-semibold leading-[1.35] text-ink transition-colors group-hover:text-forest-700">
             {article.title}
           </h3>
-          <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-ink-4">
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-4">
             {article.category}
           </p>
         </div>

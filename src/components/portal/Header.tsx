@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatDateLong } from "@/lib/format";
+import Logo from "@/components/ui/Logo";
 
 /**
  * Cabeçalho do portal.
@@ -27,9 +28,10 @@ export default function Header() {
           {/* Logo */}
           <Link
             href="/"
-            className="col-start-1 justify-self-start text-2xl font-extrabold italic tracking-[-0.03em] lg:col-start-2 lg:justify-self-center lg:text-[34px]"
+            className="col-start-1 justify-self-start lg:col-start-2 lg:justify-self-center"
+            aria-label="SegReport — ir para a home"
           >
-            segreport
+            <Logo variant="dark" className="h-7 lg:h-9" title="" />
           </Link>
 
           {/* Sessão */}
@@ -43,7 +45,7 @@ export default function Header() {
             </Link>
             <Link
               href="/premium"
-              className="rounded-full border border-white/35 px-4 py-2 text-xs font-bold tracking-wide transition-colors hover:border-lime-400 hover:bg-lime-400 hover:text-forest-800 lg:px-5 lg:text-sm"
+              className="rounded-full border border-white/35 px-4 py-2 text-xs font-semibold tracking-wide transition-colors hover:border-lime-400 hover:bg-lime-400 hover:text-forest-800 lg:px-5 lg:text-sm"
             >
               Assinar
             </Link>

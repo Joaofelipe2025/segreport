@@ -69,7 +69,7 @@ export default function AnunciePage() {
           </p>
           <Link
             href="/contato?assunto=midia"
-            className="mt-8 inline-block rounded-full bg-lime-400 px-7 py-3.5 text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
+            className="mt-8 inline-block rounded-full bg-lime-400 px-7 py-3.5 text-xs font-semibold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
           >
             Solicitar mídia kit
           </Link>
@@ -88,7 +88,7 @@ export default function AnunciePage() {
               className="flex min-h-[172px] flex-col justify-between rounded-xl border border-hairline bg-white p-6"
             >
               <div>
-                <h3 className="text-base font-bold text-ink">{format.name}</h3>
+                <h3 className="text-base font-semibold text-ink">{format.name}</h3>
                 <p className="mt-1.5 text-sm text-ink-2">{format.spec}</p>
                 <p className="mt-2.5 text-[13px] leading-relaxed text-ink-3">
                   {format.note}

@@ -44,7 +44,7 @@ export default async function FlashPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-forest-900 via-forest-900/25 to-transparent" />
             </div>
 
-            <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded bg-lime-400 px-2.5 py-1 text-[11px] font-extrabold text-forest-800">
+            <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded bg-lime-400 px-2.5 py-1 text-[11px] font-semibold text-forest-800">
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
                 <path d="M9.4 4h5.2l1.1 2H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.3zM12 9.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5" />
               </svg>
@@ -52,7 +52,7 @@ export default async function FlashPage() {
             </span>
 
             <div className="absolute inset-x-0 bottom-0 p-4">
-              <h2 className="text-balance text-base font-bold leading-tight text-white lg:text-lg">
+              <h2 className="text-balance text-base font-semibold leading-tight text-white lg:text-lg">
                 {post.title}
               </h2>
               <p className="mt-1.5 text-xs text-forest-300">

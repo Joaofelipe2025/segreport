@@ -40,7 +40,7 @@ export default async function ColunistaPage(
           className="h-[104px] w-[104px] rounded-full object-cover"
         />
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-forest-600">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-forest-600">
             {author.role}
           </p>
           <h1 className="mt-1.5 text-3xl font-bold tracking-[-0.025em] text-ink sm:text-[38px]">
@@ -54,7 +54,7 @@ export default async function ColunistaPage(
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
         <div className="min-w-0">
-          <h2 className="mb-2 text-sm font-extrabold uppercase tracking-[0.1em] text-ink-3">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-[0.1em] text-ink-3">
             {articles.length} {articles.length === 1 ? "publicação" : "publicações"}
           </h2>
 

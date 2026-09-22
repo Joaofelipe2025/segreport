@@ -1,9 +1,10 @@
 import Link from "next/link";
+import Logo from "@/components/ui/Logo";
 
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-forest-800 px-4 text-center text-white">
-      <p className="text-2xl font-extrabold italic tracking-[-0.03em]">segreport</p>
+      <Logo variant="dark" className="h-8" />
 
       <p className="mt-10 font-mono text-6xl font-bold tracking-[-0.04em] text-lime-400 sm:text-8xl">
         404
@@ -20,13 +21,13 @@ export default function NotFound() {
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link
           href="/"
-          className="rounded-full bg-lime-400 px-6 py-3 text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
+          className="rounded-full bg-lime-400 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
         >
           Ir para a home
         </Link>
         <Link
           href="/noticias"
-          className="rounded-full border border-white/30 px-6 py-3 text-xs font-extrabold uppercase tracking-[0.06em] transition-colors hover:border-lime-400"
+          className="rounded-full border border-white/30 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] transition-colors hover:border-lime-400"
         >
           Ver notícias
         </Link>

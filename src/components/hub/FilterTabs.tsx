@@ -52,7 +52,7 @@ export default function FilterTabs({
             key={option.value || "todos"}
             href={buildHref(option.value)}
             aria-current={isActive ? "true" : undefined}
-            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-xs font-bold transition-colors sm:px-3.5 sm:text-[13px] ${
+            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-xs font-semibold transition-colors sm:px-3.5 sm:text-[13px] ${
               isActive
                 ? "bg-lime-400 text-forest-800 shadow-[0_2px_8px_rgba(178,224,47,0.25)]"
                 : variant === "lime"

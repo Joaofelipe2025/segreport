@@ -21,7 +21,7 @@ export default function Nav() {
 
   const linkClass = (href: string) =>
     [
-      "relative py-4 text-sm font-semibold transition-colors",
+      "relative py-4 text-sm font-medium transition-colors",
       isActive(href)
         ? "text-forest-800 after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:bg-lime-400"
         : "text-ink-2 hover:text-forest-700",
@@ -66,7 +66,7 @@ export default function Nav() {
               type="button"
               onClick={() => setOpenSub((v) => !v)}
               aria-expanded={openSub}
-              className="flex items-center gap-1.5 py-4 text-sm font-semibold text-ink-2 transition-colors hover:text-forest-700"
+              className="flex items-center gap-1.5 py-4 text-sm font-medium text-ink-2 transition-colors hover:text-forest-700"
             >
               Regulação &amp; Seguros
               <svg
@@ -114,10 +114,10 @@ export default function Nav() {
       {openMobile && (
         <div className="border-t border-hairline bg-white px-4 pb-4 lg:hidden">
           <div className="grid grid-cols-2 gap-x-4">
-            <Link href="/" className="border-b border-hairline py-3 text-sm font-semibold">
+            <Link href="/" className="border-b border-hairline py-3 text-sm font-medium">
               Home
             </Link>
-            <Link href="/noticias" className="border-b border-hairline py-3 text-sm font-semibold">
+            <Link href="/noticias" className="border-b border-hairline py-3 text-sm font-medium">
               Novidades
             </Link>
             {[...PRIMARY_CATEGORIES, ...SECONDARY_CATEGORIES].map((c) => (
@@ -146,7 +146,7 @@ function HubButton({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       href="/hub"
-      className={`inline-flex items-center gap-2 rounded-full bg-lime-400 font-extrabold uppercase tracking-[0.04em] text-forest-800 transition-all hover:bg-lime-500 hover:shadow-[0_6px_18px_rgba(178,224,47,0.45)] ${
+      className={`inline-flex items-center gap-2 rounded-full bg-lime-400 font-semibold uppercase tracking-[0.04em] text-forest-800 transition-all hover:bg-lime-500 hover:shadow-[0_6px_18px_rgba(178,224,47,0.45)] ${
         compact ? "px-3.5 py-2 text-[11px]" : "px-5 py-2.5 text-xs"
       }`}
     >

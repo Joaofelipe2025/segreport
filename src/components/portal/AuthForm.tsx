@@ -37,7 +37,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
             <button
               type="button"
-              className="w-full rounded-lg bg-forest-800 py-3.5 text-xs font-extrabold uppercase tracking-[0.08em] text-white transition-colors hover:bg-forest-700"
+              className="w-full rounded-lg bg-forest-800 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-forest-700"
             >
               {isLogin ? "Entrar" : "Criar conta grátis"}
             </button>
@@ -84,7 +84,7 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-2">
+      <label htmlFor={id} className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-2">
         {label}
       </label>
       <input

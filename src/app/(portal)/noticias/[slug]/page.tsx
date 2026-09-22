@@ -186,7 +186,7 @@ function ArticlePaywall() {
     <section className="mt-2 max-w-[720px] rounded-xl bg-forest-800 p-6 text-white sm:p-8">
       <div className="flex items-center gap-2 text-lime-400">
         <LockIcon className="h-4 w-4" />
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em]">
           Análise exclusiva PRO
         </p>
       </div>
@@ -213,13 +213,13 @@ function ArticlePaywall() {
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/premium"
-          className="rounded-full bg-lime-400 px-6 py-3 text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
+          className="rounded-full bg-lime-400 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
         >
           Assinar PRO
         </Link>
         <Link
           href="/login"
-          className="rounded-full border border-white/30 px-6 py-3 text-xs font-extrabold uppercase tracking-[0.06em] transition-colors hover:border-lime-400"
+          className="rounded-full border border-white/30 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] transition-colors hover:border-lime-400"
         >
           Já sou assinante
         </Link>

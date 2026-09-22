@@ -29,7 +29,7 @@ export default async function Ticker() {
       <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 lg:px-8">
         <Link
           href="/hub/indicadores"
-          className="flex shrink-0 items-center gap-2 py-2.5 text-[11px] font-extrabold uppercase tracking-[0.1em] text-lime-400"
+          className="flex shrink-0 items-center gap-2 py-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-lime-400"
         >
           <span className="animate-pulse-dot h-1.5 w-1.5 rounded-full bg-lime-400" />
           Indicadores
@@ -74,7 +74,7 @@ function TickerItem({
       {locked ? (
         <span className="inline-flex items-center gap-1 text-lime-400">
           <LockIcon className="h-2.5 w-2.5" />
-          <span className="font-sans text-[10px] font-extrabold">PRO</span>
+          <span className="font-sans text-[10px] font-semibold">PRO</span>
         </span>
       ) : (
         <>

@@ -103,13 +103,13 @@ export default async function HomePage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-forest-900 via-forest-900/30 to-transparent" />
                   </div>
 
-                  <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded bg-lime-400 px-2 py-1 text-[10px] font-extrabold text-forest-800">
+                  <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded bg-lime-400 px-2 py-1 text-[10px] font-semibold text-forest-800">
                     <CameraIcon className="h-3 w-3" />
                     {post.photoCount}
                   </span>
 
                   <div className="absolute inset-x-0 bottom-0 p-3.5">
-                    <h3 className="clamp-2 text-sm font-bold leading-tight text-white">
+                    <h3 className="clamp-2 text-sm font-semibold leading-tight text-white">
                       {post.title}
                     </h3>
                     <p className="mt-1 text-[11px] text-forest-300">

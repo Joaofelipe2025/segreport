@@ -32,7 +32,7 @@ export default async function AlertasPage() {
       <DataPanel title="Nova regra de alerta">
         <form className="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
           <div>
-            <label htmlFor="alerta-indicador" className="mb-2 block text-xs font-bold uppercase tracking-wide text-forest-300">
+            <label htmlFor="alerta-indicador" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-forest-300">
               Indicador
             </label>
             <select
@@ -49,7 +49,7 @@ export default async function AlertasPage() {
           </div>
 
           <div>
-            <label htmlFor="alerta-limite" className="mb-2 block text-xs font-bold uppercase tracking-wide text-forest-300">
+            <label htmlFor="alerta-limite" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-forest-300">
               Variação mínima (pontos percentuais)
             </label>
             <input
@@ -66,7 +66,7 @@ export default async function AlertasPage() {
             <button
               type="button"
               disabled={isFree}
-              className="inline-flex items-center gap-2 rounded-lg bg-lime-400 px-5 py-3 text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500 disabled:cursor-not-allowed disabled:bg-forest-700 disabled:text-forest-500"
+              className="inline-flex items-center gap-2 rounded-lg bg-lime-400 px-5 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500 disabled:cursor-not-allowed disabled:bg-forest-700 disabled:text-forest-500"
             >
               {isFree && <LockIcon className="h-3 w-3" />}
               Criar alerta

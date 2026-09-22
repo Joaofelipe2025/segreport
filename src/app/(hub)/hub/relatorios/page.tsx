@@ -39,7 +39,7 @@ export default async function RelatoriosPage() {
                 {report.minTier !== "free" && <TierBadge tier={report.minTier} />}
               </div>
 
-              <h3 className="text-base font-bold leading-snug sm:text-lg">
+              <h3 className="text-base font-semibold leading-snug sm:text-lg">
                 {report.title}
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-forest-200">
@@ -55,7 +55,7 @@ export default async function RelatoriosPage() {
               {locked ? (
                 <Link
                   href="/premium"
-                  className="inline-flex items-center gap-1.5 rounded-md bg-lime-400/15 px-3 py-1.5 text-[11px] font-bold text-lime-400 transition-colors hover:bg-lime-400/25"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-lime-400/15 px-3 py-1.5 text-[11px] font-semibold text-lime-400 transition-colors hover:bg-lime-400/25"
                 >
                   <LockIcon className="h-2.5 w-2.5" />
                   Liberar acesso
@@ -63,7 +63,7 @@ export default async function RelatoriosPage() {
               ) : (
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-md bg-lime-400 px-3 py-1.5 text-[11px] font-bold text-forest-800 transition-colors hover:bg-lime-500"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-lime-400 px-3 py-1.5 text-[11px] font-semibold text-forest-800 transition-colors hover:bg-lime-500"
                 >
                   <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M8 2v8M4.5 7 8 10.5 11.5 7M3 13h10" strokeLinecap="round" strokeLinejoin="round" />

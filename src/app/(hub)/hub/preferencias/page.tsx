@@ -57,7 +57,7 @@ export default async function PreferenciasPage() {
           </p>
           <Link
             href="/premium"
-            className="mt-4 inline-block rounded-full bg-lime-400 px-6 py-3 text-xs font-extrabold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
+            className="mt-4 inline-block rounded-full bg-lime-400 px-6 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-forest-800 transition-colors hover:bg-lime-500"
           >
             Conhecer os planos
           </Link>

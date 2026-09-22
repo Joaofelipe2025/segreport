@@ -74,7 +74,7 @@ export default function PremiumPage() {
     <>
       <section className="bg-forest-800 text-white">
         <div className="mx-auto max-w-[1400px] px-4 py-10 text-center sm:py-14 lg:px-8 lg:py-20">
-          <span className="inline-flex items-center gap-2 rounded-full bg-forest-700 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-lime-400">
+          <span className="inline-flex items-center gap-2 rounded-full bg-forest-700 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-lime-400">
             <LockIcon className="h-3 w-3" />
             Hub Inteligência
           </span>
@@ -103,13 +103,13 @@ export default function PremiumPage() {
               }`}
             >
               {plan.highlight && (
-                <span className="mb-4 inline-block self-start rounded-full bg-lime-400 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.1em] text-forest-800">
+                <span className="mb-4 inline-block self-start rounded-full bg-lime-400 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-forest-800">
                   Mais escolhido
                 </span>
               )}
 
               <h2
-                className={`text-lg font-extrabold uppercase tracking-[0.08em] ${
+                className={`text-lg font-semibold uppercase tracking-[0.08em] ${
                   plan.highlight ? "text-lime-400" : "text-forest-700"
                 }`}
               >
@@ -169,7 +169,7 @@ export default function PremiumPage() {
 
               <Link
                 href={plan.href}
-                className={`mt-7 block rounded-lg py-3.5 text-center text-xs font-extrabold uppercase tracking-[0.06em] transition-colors ${
+                className={`mt-7 block rounded-lg py-3.5 text-center text-xs font-semibold uppercase tracking-[0.06em] transition-colors ${
                   plan.highlight
                     ? "bg-lime-400 text-forest-800 hover:bg-lime-500"
                     : "bg-forest-800 text-white hover:bg-forest-700"

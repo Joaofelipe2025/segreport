@@ -19,8 +19,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
             Entrar no SegReport
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-ink-3">
-            Acesse o Hub Inteligência, suas preferências e — se você escreve
-            aqui — o painel de publicação.
+            Acesse o Hub Inteligência e suas preferências.
           </p>
 
           <div className="mt-7">
@@ -32,6 +31,16 @@ export default async function LoginPage(props: PageProps<"/login">) {
           Ainda não tem conta?{" "}
           <Link href="/cadastro" className="font-semibold text-forest-700 hover:underline">
             Criar conta gratuita
+          </Link>
+        </p>
+
+        {/* Quem escreve entra por outra porta. O link fica aqui porque
+            /auth/confirm manda link vencido para cá sem saber quem é a
+            pessoa — sem esta saída, o jornalista fica num beco. */}
+        <p className="mt-3 text-center text-xs text-ink-4">
+          Você escreve para o SegReport?{" "}
+          <Link href="/painel/entrar" className="text-forest-700 hover:underline">
+            Entrar na redação
           </Link>
         </p>
       </div>

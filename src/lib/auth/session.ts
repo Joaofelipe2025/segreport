@@ -58,15 +58,15 @@ export async function getSessionProfile(): Promise<SessionProfile | null> {
  */
 export async function requireRole(roles: Role[]): Promise<SessionProfile> {
   const profile = await getSessionProfile();
-  if (!profile) redirect("/login?motivo=sessao");
-  if (!roles.includes(profile.role)) redirect("/login?motivo=permissao");
+  if (!profile) redirect("/painel/entrar?motivo=sessao");
+  if (!roles.includes(profile.role)) redirect("/painel/entrar?motivo=permissao");
   return profile;
 }
 
 /** Atalho para as rotas do painel. */
 export async function requirePainel(): Promise<SessionProfile> {
   const profile = await getSessionProfile();
-  if (!profile) redirect("/login?motivo=sessao");
-  if (!podeAcessarPainel(profile.role)) redirect("/login?motivo=permissao");
+  if (!profile) redirect("/painel/entrar?motivo=sessao");
+  if (!podeAcessarPainel(profile.role)) redirect("/painel/entrar?motivo=permissao");
   return profile;
 }

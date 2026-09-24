@@ -20,6 +20,7 @@ export interface Database {
           avatar_url?: string | null;
           plan?: "free" | "premium";
           role?: "reader" | "columnist" | "admin";
+          invited_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -28,6 +29,7 @@ export interface Database {
           avatar_url?: string | null;
           plan?: "free" | "premium";
           role?: "reader" | "columnist" | "admin";
+          invited_at?: string | null;
           updated_at?: string;
         };
         Relationships: [];

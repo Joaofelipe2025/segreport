@@ -2,13 +2,11 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getAuthor, getArticles } from "@/lib/data";
-import { AUTHORS } from "@/lib/data/authors";
+
 import { ListRow } from "@/components/portal/ArticleCard";
 import { NewsletterWidget, AdSlot } from "@/components/portal/Sidebar";
 
-export function generateStaticParams() {
-  return AUTHORS.filter((a) => a.columnist).map((a) => ({ slug: a.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(
   props: PageProps<"/colunistas/[slug]">

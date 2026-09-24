@@ -381,6 +381,33 @@ export interface Database {
         Args: { p_article_id: string };
         Returns: void;
       };
+      /**
+       * Corpo da matéria conforme o direito de quem pede.
+       *
+       * As colunas de corpo foram revogadas de anon e authenticated; estas
+       * funções são o único caminho, e é nelas que mora a regra que depende
+       * ao mesmo tempo de quem pede e de qual linha é.
+       */
+      article_body: {
+        Args: { p_slug: string };
+        Returns: string | null;
+      };
+      article_body_json: {
+        Args: { p_slug: string };
+        Returns: Json | null;
+      };
+      current_role: {
+        Args: Record<string, never>;
+        Returns: string | null;
+      };
+      is_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      current_author_id: {
+        Args: Record<string, never>;
+        Returns: string | null;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

@@ -28,11 +28,17 @@ export default async function HomePage() {
   const { lead, secondary, strip } = await getFeatured();
   const latest = await getArticles({
     limit: 5,
-    exclude: [lead.slug, ...secondary.map((a) => a.slug)],
+    exclude: lead ? [lead.slug, ...secondary.map((a) => a.slug)] : [],
   });
   const saude = await getArticles({ category: "saude", limit: 3 });
   const auto = await getArticles({ category: "auto", limit: 3 });
   const flash = await getFlashPosts(4);
+
+  // Portal sem nenhuma matéria publicada. Acontece antes da estreia e é um
+  // estado legítimo — melhor uma capa honesta que um layout quebrado.
+  if (!lead) {
+    return <Estreia />;
+  }
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-5 sm:py-6 lg:px-8 lg:py-8">
@@ -189,5 +195,39 @@ function CameraIcon({ className = "h-5 w-5" }: { className?: string }) {
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
       <path d="M9.4 4h5.2l1.1 2H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.3zM12 9.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5" />
     </svg>
+  );
+}
+
+/**
+ * Capa de antes da estreia.
+ *
+ * Aparece enquanto não há nenhuma matéria publicada. Some sozinha na
+ * primeira publicação — não é um modo que alguém precise desligar.
+ */
+function Estreia() {
+  return (
+    <div className="mx-auto flex max-w-[1400px] flex-col items-center px-4 py-20 text-center lg:py-28">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-forest-600">
+        Em breve
+      </p>
+      <h1 className="mt-4 max-w-2xl text-balance text-3xl font-bold leading-[1.12] tracking-[-0.03em] text-ink sm:text-[44px]">
+        Inteligência do mercado segurador brasileiro
+      </h1>
+      <p className="mt-5 max-w-lg text-base leading-relaxed text-ink-3">
+        Notícias, indicadores por ramo e rankings de seguradoras — com fonte e
+        data de apuração em cada número. Estamos preparando a primeira edição.
+      </p>
+
+      <div className="mt-9 w-full max-w-sm">
+        <NewsletterWidget />
+      </div>
+
+      <p className="mt-8 text-xs text-ink-4">
+        Já escreve aqui?{" "}
+        <Link href="/login" className="font-semibold text-forest-700 hover:underline">
+          Entrar no painel
+        </Link>
+      </p>
+    </div>
   );
 }

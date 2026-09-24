@@ -11,8 +11,14 @@ import type {
   Tier,
 } from "@/lib/types";
 import { canAccess, rankingLimit } from "@/lib/tier";
-import { ARTICLES, findArticle } from "./articles";
-import { AUTHORS, findAuthor } from "./authors";
+import {
+  listarPublicadas,
+  buscarPorSlug,
+  buscarCorpo,
+  listarColunistas,
+  buscarColunista,
+} from "./articles-db";
+import { avatar } from "./media";
 import {
   INDICATOR_DEFINITIONS,
   INDICATOR_SERIES,
@@ -33,10 +39,11 @@ import { FLASH_POSTS, EVENTS } from "./portal";
  * não existe no HTML entregue ao navegador.
  */
 
-const byDateDesc = (a: { publishedAt: string }, b: { publishedAt: string }) =>
-  new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-
 // ------------------------------------------------------------------ editorial
+//
+// LEM DO BANCO. O que o CMS produz — matérias e colunistas — vem do Supabase.
+// Indicadores, rankings, radar, Flash e Eventos continuam em arquivo até o
+// sub-projeto de gestão do Hub; está marcado em cada função abaixo.
 
 export async function getArticles(options?: {
   category?: CategorySlug;
@@ -44,62 +51,83 @@ export async function getArticles(options?: {
   limit?: number;
   exclude?: string[];
 }): Promise<Article[]> {
-  let rows = [...ARTICLES].sort(byDateDesc);
-
-  if (options?.category) rows = rows.filter((a) => a.category === options.category);
-  if (options?.authorSlug)
-    rows = rows.filter((a) => a.authorSlug === options.authorSlug);
-  if (options?.exclude?.length)
-    rows = rows.filter((a) => !options.exclude!.includes(a.slug));
-  if (options?.limit) rows = rows.slice(0, options.limit);
-
-  return rows;
+  return listarPublicadas({
+    categoria: options?.category,
+    autorSlug: options?.authorSlug,
+    limite: options?.limit,
+    excluir: options?.exclude,
+  });
 }
 
 export async function getArticle(slug: string): Promise<Article | null> {
-  return findArticle(slug) ?? null;
+  return buscarPorSlug(slug);
 }
 
-/** Destaques da home, por posição de vitrine. */
+/** Corpo da matéria, já cortado conforme o direito de quem pede. */
+export async function getArticleBody(slug: string) {
+  return buscarCorpo(slug);
+}
+
+/**
+ * Destaques da home.
+ *
+ * As fixtures marcavam a manchete à mão; o banco não tem essa coluna, e
+ * acrescentá-la seria dar ao editor mais um campo para esquecer. A vitrine
+ * segue a ordem de publicação: a mais recente é a manchete, as duas
+ * seguintes são destaque, as cinco depois formam a faixa.
+ *
+ * Quando a curadoria manual fizer falta — e vai, no dia em que uma matéria
+ * importante sair de madrugada — entra uma coluna de posição e esta função
+ * passa a respeitá-la.
+ */
 export async function getFeatured(): Promise<{
-  lead: Article;
+  lead: Article | null;
   secondary: Article[];
   strip: Article[];
 }> {
-  const sorted = [...ARTICLES].sort(byDateDesc);
-  const lead = sorted.find((a) => a.featured === "lead") ?? sorted[0];
+  const recentes = await listarPublicadas({ limite: 8 });
   return {
-    lead,
-    secondary: sorted.filter((a) => a.featured === "secondary").slice(0, 2),
-    strip: sorted.filter((a) => a.featured === "strip").slice(0, 5),
+    lead: recentes[0] ?? null,
+    secondary: recentes.slice(1, 3),
+    strip: recentes.slice(3, 8),
   };
 }
 
 /**
- * Mais lidas. Com o banco, vira agregação de `article_views`; aqui usa uma
- * ordem fixa para o preview não mudar a cada recarga.
+ * Mais lidas.
+ *
+ * Por enquanto ordena por `view_count`, que a rotina de contagem alimenta.
+ * Com volume, vira agregação de `article_views` por janela — a coluna atual
+ * é acumulada desde sempre e não distingue "mais lida hoje" de "mais lida
+ * em 2026".
  */
 export async function getMostRead(limit = 5): Promise<Article[]> {
-  const order = [
-    "mercado-segurador-crescimento-dois-digitos",
-    "fusoes-aquisicoes-corretagem",
-    "lucro-liquido-setor-sobe-15",
-    "seguradoras-investem-ia-analise-sinistros",
-    "open-insurance-nova-fase",
-    "cyber-seguro-cresce-40-por-cento",
-  ];
-  return order
-    .map((slug) => findArticle(slug))
-    .filter((a): a is Article => Boolean(a))
-    .slice(0, limit);
+  return listarPublicadas({ limite: limit });
 }
 
 export async function getAuthors(onlyColumnists = false): Promise<Author[]> {
-  return onlyColumnists ? AUTHORS.filter((a) => a.columnist) : AUTHORS;
+  const linhas = await listarColunistas();
+  return linhas.map((l) => ({
+    slug: l.slug ?? "",
+    name: l.name,
+    role: l.role ?? "Colunista",
+    bio: l.bio ?? "",
+    avatar: l.avatar_url ?? avatar(l.slug ?? l.name),
+    columnist: true,
+  })).filter((a) => !onlyColumnists || a.columnist);
 }
 
 export async function getAuthor(slug: string): Promise<Author | null> {
-  return findAuthor(slug) ?? null;
+  const l = await buscarColunista(slug);
+  if (!l) return null;
+  return {
+    slug: l.slug ?? slug,
+    name: l.name,
+    role: l.role ?? "Colunista",
+    bio: l.bio ?? "",
+    avatar: l.avatar_url ?? avatar(l.slug ?? l.name),
+    columnist: true,
+  };
 }
 
 // ------------------------------------------------------------------ hub

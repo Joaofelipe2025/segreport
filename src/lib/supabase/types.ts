@@ -195,6 +195,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
+          slug?: string;
           title?: string;
           subtitle?: string | null;
           excerpt?: string | null;
@@ -207,6 +208,13 @@ export interface Database {
           is_exclusive?: boolean;
           reading_time?: number | null;
           published_at?: string | null;
+          content_json?: Json | null;
+          content_text?: string | null;
+          standfirst?: string | null;
+          scheduled_for?: string | null;
+          seo_title?: string | null;
+          seo_description?: string | null;
+          updated_by?: string | null;
           updated_at?: string;
         };
         Relationships: [

@@ -5,39 +5,23 @@ import { requirePainel } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { criarMateria } from "./actions";
 import { formatRelative } from "@/lib/format";
+import { exigir } from "@/lib/painel/consulta";
+import {
+  corDeEstado,
+  estadoValido,
+  rotuloDeEstado,
+  type EstadoEditorial,
+} from "@/lib/painel/estados";
 
 export const metadata: Metadata = { title: "Matérias" };
 
-const ROTULO: Record<string, string> = {
-  draft: "Rascunho",
-  in_review: "Em revisão",
-  scheduled: "Agendada",
-  published: "Publicada",
-  archived: "Arquivada",
-};
-
-const COR: Record<string, string> = {
-  draft: "bg-paper text-ink-3",
-  in_review: "bg-[#fbf6e0] text-[#7d6612]",
-  scheduled: "bg-[#e6f0fb] text-[#1f5590]",
-  published: "bg-[#e7f5ec] text-[#1e6b40]",
-  archived: "bg-paper text-ink-4",
-};
-
-type Estado = "draft" | "in_review" | "scheduled" | "published" | "archived";
-
-const FILTROS: Array<{ valor: "" | Estado; rotulo: string }> = [
+const FILTROS: Array<{ valor: "" | EstadoEditorial; rotulo: string }> = [
   { valor: "", rotulo: "Todas" },
   { valor: "in_review", rotulo: "Em revisão" },
   { valor: "draft", rotulo: "Rascunhos" },
   { valor: "scheduled", rotulo: "Agendadas" },
   { valor: "published", rotulo: "Publicadas" },
 ];
-
-/** O filtro vem da URL, que aceita qualquer coisa. Só passa o que é estado. */
-function estadoValido(valor: string): valor is Estado {
-  return FILTROS.some((f) => f.valor !== "" && f.valor === valor);
-}
 
 export default async function MateriasPage(props: PageProps<"/admin/materias">) {
   const params = await props.searchParams;
@@ -54,11 +38,11 @@ export default async function MateriasPage(props: PageProps<"/admin/materias">) 
 
   if (estadoValido(filtro)) consulta = consulta.eq("status", filtro);
 
-  const { data: materias, error } = await consulta;
+  const materias = exigir(await consulta, "as matérias");
 
   // A fila de revisão é o que o admin abre primeiro: é o trabalho pendente
   // dele, e some da vista se ficar misturado com o resto.
-  const emRevisao = (materias ?? []).filter((m) => m.status === "in_review");
+  const emRevisao = materias.filter((m) => m.status === "in_review");
 
   return (
     <>
@@ -112,14 +96,8 @@ export default async function MateriasPage(props: PageProps<"/admin/materias">) 
         })}
       </div>
 
-      {error && (
-        <p role="alert" className="mb-4 rounded-lg bg-[#fdeced] px-4 py-3 text-sm text-[#a5252a]">
-          Não foi possível carregar: {error.message}
-        </p>
-      )}
-
       <div className="overflow-hidden rounded-xl border border-hairline bg-white">
-        {materias && materias.length > 0 ? (
+        {materias.length > 0 ? (
           <ul className="divide-y divide-hairline">
             {materias.map((m) => (
               <li key={m.id}>
@@ -134,9 +112,9 @@ export default async function MateriasPage(props: PageProps<"/admin/materias">) 
                     {(m.authors as { name: string } | null)?.name ?? "—"}
                   </span>
                   <span
-                    className={`shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${COR[m.status] ?? ""}`}
+                    className={`shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${corDeEstado(m.status)}`}
                   >
-                    {ROTULO[m.status] ?? m.status}
+                    {rotuloDeEstado(m.status)}
                   </span>
                   <span className="w-24 shrink-0 text-right font-mono text-[11px] text-ink-4">
                     {formatRelative(m.updated_at)}

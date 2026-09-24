@@ -51,23 +51,29 @@ do $$ begin
   create role service_role nologin bypassrls;
 exception when duplicate_object then null; end $$;
 
+-- As colunas espelham o que o projeto realmente usa. A de metadados do
+-- usuário não é decoração: a migração de junho instala um gatilho em
+-- auth.users que cria o perfil lendo full_name e avatar_url dela. Sem a
+-- coluna, qualquer inserção de usuário quebra.
 create table if not exists auth.users (
-  id          uuid primary key,
-  email       text unique,
-  instance_id uuid,
-  aud         text,
-  role        text,
-  created_at  timestamptz not null default now()
+  id                 uuid primary key,
+  email              text unique,
+  instance_id        uuid,
+  aud                text,
+  role               text,
+  raw_user_meta_data jsonb not null default '{}'::jsonb,
+  raw_app_meta_data  jsonb not null default '{}'::jsonb,
+  created_at         timestamptz not null default now()
 );
 
 create or replace function auth.uid() returns uuid
   language sql stable as $$
-  select nullif(current_setting('request.jwt.claims', true)::json ->> 'sub', '')::uuid
+  select nullif(nullif(current_setting('request.jwt.claims', true), '')::json ->> 'sub', '')::uuid
 $$;
 
 create or replace function auth.role() returns text
   language sql stable as $$
-  select nullif(current_setting('request.jwt.claims', true)::json ->> 'role', '')::text
+  select nullif(nullif(current_setting('request.jwt.claims', true), '')::json ->> 'role', '')::text
 $$;
 
 grant usage on schema auth to anon, authenticated, service_role;
@@ -197,4 +203,42 @@ export async function actAs(db: DbClient, userId: string | null): Promise<void> 
 /** Volta ao superusuário para conferir o efeito real de uma escrita negada. */
 export async function actAsOwner(db: DbClient): Promise<void> {
   await db.exec("reset role");
+}
+
+export interface WriteAttempt {
+  /** A instrução foi aceita pelo banco? */
+  ok: boolean;
+  /** Linhas efetivamente afetadas. Zero significa negado pela policy. */
+  rowCount: number;
+  error?: string;
+}
+
+/**
+ * Tenta uma escrita que pode ser negada, sem derrubar a transação do teste.
+ *
+ * Uma policy nega de duas formas distintas: silenciosamente, afetando zero
+ * linhas, ou com exceção — quando um `with check` ou um gatilho reprova. No
+ * segundo caso o Postgres ABORTA a transação inteira, e todo comando seguinte
+ * falha com "current transaction is aborted". Um try/catch em JavaScript não
+ * resolve isso: o estado é do banco, não do processo.
+ *
+ * O savepoint é o que permite ao teste continuar e conferir, como
+ * superusuário, que a linha realmente não mudou — que é a asserção que
+ * importa. Sem ele, o teste só saberia que houve erro, não que o dado está a
+ * salvo.
+ */
+export async function tryWrite(
+  db: DbClient,
+  sql: string,
+  params?: unknown[]
+): Promise<WriteAttempt> {
+  await db.exec("savepoint tentativa");
+  try {
+    const r = await db.query(sql, params);
+    await db.exec("release savepoint tentativa");
+    return { ok: true, rowCount: r.rowCount };
+  } catch (cause) {
+    await db.exec("rollback to savepoint tentativa");
+    return { ok: false, rowCount: 0, error: (cause as Error).message };
+  }
 }

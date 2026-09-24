@@ -23,8 +23,12 @@ import { join } from "node:path";
  * impede uma diferença de comportamento passar despercebida.
  */
 
+/** Linha genérica: o formato depende da consulta, então é aberto de propósito. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- linha de banco tem formato dinâmico
+export type DbRow = Record<string, any>;
+
 export interface DbClient {
-  query(sql: string, params?: unknown[]): Promise<{ rows: any[]; rowCount: number }>;
+  query(sql: string, params?: unknown[]): Promise<{ rows: DbRow[]; rowCount: number }>;
   exec(sql: string): Promise<void>;
 }
 
@@ -114,8 +118,8 @@ async function boot() {
     const pool = new Pool({ connectionString: url, max: 4 });
     const client: DbClient = {
       async query(sql, params) {
-        const r = await pool.query(sql, params as any[]);
-        return { rows: r.rows, rowCount: r.rowCount ?? 0 };
+        const r = await pool.query(sql, params as unknown[]);
+        return { rows: r.rows as DbRow[], rowCount: r.rowCount ?? 0 };
       },
       async exec(sql) {
         await pool.query(sql);
@@ -145,7 +149,7 @@ async function boot() {
   const client: DbClient = {
     async query(sql, params) {
       const r = await pg.query(sql, params as unknown[]);
-      return { rows: r.rows as any[], rowCount: r.rows.length };
+      return { rows: r.rows as DbRow[], rowCount: r.rows.length };
     },
     async exec(sql) {
       await pg.exec(sql);

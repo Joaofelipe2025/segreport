@@ -9,7 +9,8 @@ export interface Database {
           full_name: string | null;
           avatar_url: string | null;
           plan: "free" | "premium";
-          role: "reader" | "editor" | "admin";
+          role: "reader" | "columnist" | "admin";
+          invited_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -18,7 +19,7 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           plan?: "free" | "premium";
-          role?: "reader" | "editor" | "admin";
+          role?: "reader" | "columnist" | "admin";
           created_at?: string;
           updated_at?: string;
         };
@@ -26,7 +27,7 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           plan?: "free" | "premium";
-          role?: "reader" | "editor" | "admin";
+          role?: "reader" | "columnist" | "admin";
           updated_at?: string;
         };
         Relationships: [];
@@ -63,11 +64,17 @@ export interface Database {
           avatar_url: string | null;
           email: string | null;
           twitter_handle: string | null;
+          slug: string | null;
+          role: string | null;
+          profile_id: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           name: string;
+          slug?: string | null;
+          role?: string | null;
+          profile_id?: string | null;
           bio?: string | null;
           avatar_url?: string | null;
           email?: string | null;
@@ -80,6 +87,9 @@ export interface Database {
           avatar_url?: string | null;
           email?: string | null;
           twitter_handle?: string | null;
+          slug?: string | null;
+          role?: string | null;
+          profile_id?: string | null;
         };
         Relationships: [];
       };
@@ -94,18 +104,33 @@ export interface Database {
           cover_url: string | null;
           category_id: number | null;
           author_id: string | null;
-          status: "draft" | "published" | "archived";
+          status: "draft" | "in_review" | "scheduled" | "published" | "archived";
           is_premium: boolean;
           is_exclusive: boolean;
           reading_time: number | null;
           view_count: number;
           published_at: string | null;
+          content_json: Json | null;
+          content_text: string | null;
+          standfirst: string | null;
+          scheduled_for: string | null;
+          seo_title: string | null;
+          seo_description: string | null;
+          updated_by: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           slug: string;
+          content_json?: Json | null;
+          content_text?: string | null;
+          standfirst?: string | null;
+          scheduled_for?: string | null;
+          seo_title?: string | null;
+          seo_description?: string | null;
+          updated_by?: string | null;
+
           title: string;
           subtitle?: string | null;
           excerpt?: string | null;

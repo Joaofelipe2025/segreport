@@ -2,7 +2,7 @@
 /**
  * Cria a conta de administrador do SegReport.
  *
- *   node supabase/setup/criar-admin.mjs seu@email.com "Seu Nome"
+ *   node supabase/setup/criar-admin.mjs seu@email.com "Assinatura" "Cargo"
  *
  * Usa a chave `service_role`, que ignora a RLS — é a única forma de criar a
  * primeira conta, porque não existe admin ainda para autorizar a operação.
@@ -13,10 +13,10 @@
 
 import { readFileSync } from "node:fs";
 
-const [email, nome = "Administrador"] = process.argv.slice(2);
+const [email, nome = "Administrador", cargo = "Equipe editorial"] = process.argv.slice(2);
 
 if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-  console.error("Uso: node supabase/setup/criar-admin.mjs seu@email.com \"Seu Nome\"");
+  console.error("Uso: node supabase/setup/criar-admin.mjs seu@email.com \"Assinatura\" [\"Cargo\"]");
   process.exit(1);
 }
 
@@ -121,7 +121,7 @@ const autor = await fetch(`${url}/rest/v1/authors?on_conflict=profile_id`, {
   method: "POST",
   headers: { ...cabecalhos, Prefer: "resolution=merge-duplicates,return=representation" },
   body: JSON.stringify([
-    { profile_id: userId, name: nome, slug, email, role: "Editor-chefe" },
+    { profile_id: userId, name: nome, slug, email, role: cargo },
   ]),
 }).then(json);
 

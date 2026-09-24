@@ -51,6 +51,23 @@ export async function convidarColunista(
 
   const userId = convidado.user.id;
 
+  // Reconvidar alguém é comum — o link expira e a pessoa pede outro. Se essa
+  // pessoa já for admin, gravar 'columnist' a rebaixaria em silêncio, e a
+  // chave de serviço não é barrada por nada. Só promovemos quem ainda é
+  // leitor.
+  const { data: perfilAtual } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (perfilAtual && perfilAtual.role !== "reader" && perfilAtual.role !== "columnist") {
+    return {
+      status: "erro",
+      mensagem: `${email} já tem uma conta de ${perfilAtual.role}. O link de acesso foi reenviado, e o papel foi mantido.`,
+    };
+  }
+
   // `profiles` não tem coluna de e-mail; `full_name` é o rótulo humano.
   const { error: erroPerfil } = await admin.from("profiles").upsert({
     id: userId,
@@ -66,11 +83,28 @@ export async function convidarColunista(
     };
   }
 
+  // O slug precisa ser único. Dois colunistas homônimos, ou um nome que já
+  // existia como assinatura sem conta, colidiriam — e a pessoa entraria no
+  // painel sem conseguir criar matéria nenhuma, porque a policy de inserção
+  // exige author_id = current_author_id().
+  const slugBase = slugDeNome(nome);
+  let slug = slugBase;
+
+  const { data: ocupado } = await admin
+    .from("authors")
+    .select("id, profile_id")
+    .eq("slug", slugBase)
+    .maybeSingle();
+
+  if (ocupado && ocupado.profile_id !== userId) {
+    slug = `${slugBase}-${userId.slice(0, 6)}`;
+  }
+
   const { error: erroAutor } = await admin.from("authors").upsert(
     {
       profile_id: userId,
       name: nome,
-      slug: slugDeNome(nome),
+      slug,
       email,
       role: cargo || "Colunista",
     },
@@ -78,9 +112,14 @@ export async function convidarColunista(
   );
 
   if (erroAutor) {
+    // A conta e o perfil já existem neste ponto. Sem assinatura pública o
+    // colunista entra e não consegue publicar, então a mensagem precisa dizer
+    // exatamente o que aconteceu — não "erro ao convidar".
     return {
       status: "erro",
-      mensagem: `Perfil criado, mas a assinatura falhou: ${erroAutor.message}`,
+      mensagem:
+        `A conta de ${email} foi criada, mas a assinatura pública falhou: ${erroAutor.message}. ` +
+        `Crie o autor manualmente e vincule ao perfil antes de o colunista escrever.`,
     };
   }
 

@@ -115,17 +115,28 @@ async function boot() {
     }
 
     const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: url, max: 4 });
+    const pool = new Pool({ connectionString: url, max: 1 });
+    // Um client RESERVADO, não o pool: transação exige a mesma conexão do
+    // início ao fim. Com pool.query, a troca de papel poderia cair numa
+    // conexão e as consultas em outra — e aí tudo roda como dono, que ignora
+    // RLS. A suíte inteira passaria sem testar nada.
+    const reservado = await pool.connect();
     const client: DbClient = {
       async query(sql, params) {
-        const r = await pool.query(sql, params as unknown[]);
+        const r = await reservado.query(sql, params as unknown[]);
         return { rows: r.rows as DbRow[], rowCount: r.rowCount ?? 0 };
       },
       async exec(sql) {
-        await pool.query(sql);
+        await reservado.query(sql);
       },
     };
-    backend = { client, close: () => pool.end() };
+    backend = {
+      client,
+      close: async () => {
+        reservado.release();
+        await pool.end();
+      },
+    };
     return backend;
   }
 
@@ -140,11 +151,13 @@ async function boot() {
       throw new Error(`Migração ${file} falhou: ${(cause as Error).message}`);
     }
   }
-  // Concessões de novo: tabelas criadas pelas migrações não herdam as de cima.
-  await pg.exec(`
-    grant all on all tables in schema public to anon, authenticated, service_role;
-    grant all on all sequences in schema public to anon, authenticated, service_role;
-  `);
+  // NÃO reconceder privilégios aqui.
+  //
+  // Havia um `grant all on all tables` depois das migrações, para alcançar as
+  // tabelas que elas criam. Ele apagava silenciosamente os `revoke` de coluna
+  // da última migração — e a suíte passava a aprovar um vazamento que existia.
+  // As tabelas novas são cobertas pelo `alter default privileges` do shim, que
+  // roda antes e vale para o que o mesmo papel criar depois.
 
   const client: DbClient = {
     async query(sql, params) {
@@ -195,6 +208,10 @@ export async function withRollback<T>(fn: (db: DbClient) => Promise<T>): Promise
  */
 export async function actAs(db: DbClient, userId: string | null): Promise<void> {
   if (userId === null) {
+    // Limpa as claims: sem isso, auth.uid() ainda devolveria o usuário
+    // anterior com current_user = anon, combinação que o Supabase real
+    // nunca produz.
+    await db.query("select set_config('request.jwt.claims', '', true)");
     await db.exec("set local role anon");
     return;
   }

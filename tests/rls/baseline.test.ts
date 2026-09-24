@@ -31,7 +31,7 @@ describe(`base da RLS (${backendName()})`, () => {
     });
   });
 
-  it("a função current_role ainda NÃO existe — alvo da Task 2", async () => {
+  it("as funções auxiliares de papel existem", async () => {
     await withRollback(async (db) => {
       const r = await db.query(
         `select routine_name from information_schema.routines

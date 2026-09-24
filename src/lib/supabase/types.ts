@@ -34,6 +34,51 @@ export interface Database {
         };
         Relationships: [];
       };
+      tags: {
+        Row: { id: number; slug: string; label: string };
+        Insert: { id?: number; slug: string; label: string };
+        Update: { slug?: string; label?: string };
+        Relationships: [];
+      };
+      article_tags: {
+        Row: { article_id: string; tag_id: number };
+        Insert: { article_id: string; tag_id: number };
+        Update: { article_id?: string; tag_id?: number };
+        Relationships: [];
+      };
+      media_assets: {
+        Row: {
+          id: string;
+          storage_path: string;
+          alt: string;
+          credit: string | null;
+          width: number | null;
+          height: number | null;
+          bytes: number | null;
+          uploaded_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          storage_path: string;
+          alt: string;
+          credit?: string | null;
+          width?: number | null;
+          height?: number | null;
+          bytes?: number | null;
+          uploaded_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          storage_path?: string;
+          alt?: string;
+          credit?: string | null;
+          width?: number | null;
+          height?: number | null;
+          bytes?: number | null;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           id: number;
@@ -140,7 +185,7 @@ export interface Database {
           cover_url?: string | null;
           category_id?: number | null;
           author_id?: string | null;
-          status?: "draft" | "published" | "archived";
+          status?: "draft" | "in_review" | "scheduled" | "published" | "archived";
           is_premium?: boolean;
           is_exclusive?: boolean;
           reading_time?: number | null;
@@ -157,7 +202,7 @@ export interface Database {
           cover_url?: string | null;
           category_id?: number | null;
           author_id?: string | null;
-          status?: "draft" | "published" | "archived";
+          status?: "draft" | "in_review" | "scheduled" | "published" | "archived";
           is_premium?: boolean;
           is_exclusive?: boolean;
           reading_time?: number | null;

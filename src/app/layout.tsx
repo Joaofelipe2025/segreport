@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins, DM_Mono } from "next/font/google";
 import "./globals.css";
+import CapturarRetornoDeLogin from "@/components/auth/CapturarRetornoDeLogin";
 
 // next/font hospeda as fontes junto com o build — sem request para o Google,
 // sem layout shift. Substitui o @import que havia no globals.css.
@@ -48,7 +49,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className={`${poppins.variable} ${dmMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        {/* Rede de proteção: retorno de login que caia fora de /auth/confirm
+            é encaminhado para lá, com o token intacto. */}
+        <CapturarRetornoDeLogin />
+        {children}
+      </body>
     </html>
   );
 }

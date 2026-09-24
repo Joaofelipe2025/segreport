@@ -23,7 +23,6 @@ export interface MateriaParaEditar {
   category_id: number | null;
   seo_title: string | null;
   seo_description: string | null;
-  content_json: DocumentoBlocos | null;
   updated_at: string;
   is_premium: boolean;
 }
@@ -46,17 +45,23 @@ const COR_ESTADO: Record<string, string> = {
 
 export default function EditorDeMateria({
   materia,
+  corpo,
   categorias,
   papel,
 }: {
   materia: MateriaParaEditar;
+  /**
+   * Chega pronto do servidor e é obrigatório. Antes o corpo vinha junto com a
+   * matéria e podia ser nulo, e o editor inventava um documento vazio no
+   * lugar — que o Salvar seguinte gravava por cima do texto real. Quem não
+   * conseguiu ler o corpo não chega a renderizar este componente.
+   */
+  corpo: DocumentoBlocos;
   categorias: Array<{ id: number; label: string }>;
   papel: Role;
 }) {
   const [estado, acao, pendente] = useActionState(salvarMateria, INICIAL);
-  const [doc, setDoc] = useState<DocumentoBlocos>(
-    materia.content_json ?? ({ type: "doc", content: [{ type: "paragraph" }] } as DocumentoBlocos)
-  );
+  const [doc, setDoc] = useState<DocumentoBlocos>(corpo);
   const [statusAtual, setStatusAtual] = useState(materia.status);
   const [avisoEstado, setAvisoEstado] = useState<string>();
 

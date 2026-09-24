@@ -396,6 +396,15 @@ export interface Database {
         Args: { p_slug: string };
         Returns: Json | null;
       };
+      /**
+       * Corpo visto de dentro do painel: chaveado por id, porque no editor o
+       * slug é campo editável. Nulo significa "sem direito de editar" — e
+       * nunca deve ser confundido com documento vazio.
+       */
+      article_body_for_edit: {
+        Args: { p_id: string };
+        Returns: Json | null;
+      };
       current_role: {
         Args: Record<string, never>;
         Returns: string | null;

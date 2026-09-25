@@ -1,10 +1,17 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useActionState, useState } from "react";
-import { salvarMateria, mudarEstado, type EstadoMateria } from "../actions";
+import { useActionState, useEffect, useState, useTransition } from "react";
+import {
+  salvarMateria,
+  mudarEstado,
+  excluirMateria,
+  type EstadoMateria,
+} from "../actions";
 import type { DocumentoBlocos } from "@/lib/editor/document";
 import type { Role } from "@/lib/auth/rules";
+import { corDeEstado, rotuloDeEstado } from "@/lib/painel/estados";
+import { confirmacaoConfere } from "@/lib/painel/confirmacao";
 
 // O editor só existe no navegador: o ProseMirror precisa de DOM.
 const Editor = dynamic(() => import("@/components/editor/Editor"), {
@@ -27,22 +34,6 @@ export interface MateriaParaEditar {
   is_premium: boolean;
 }
 
-const ROTULO_ESTADO: Record<string, string> = {
-  draft: "Rascunho",
-  in_review: "Em revisão",
-  scheduled: "Agendada",
-  published: "Publicada",
-  archived: "Arquivada",
-};
-
-const COR_ESTADO: Record<string, string> = {
-  draft: "bg-paper text-ink-3",
-  in_review: "bg-[#fbf6e0] text-[#7d6612]",
-  scheduled: "bg-[#e6f0fb] text-[#1f5590]",
-  published: "bg-[#e7f5ec] text-[#1e6b40]",
-  archived: "bg-paper text-ink-4",
-};
-
 export default function EditorDeMateria({
   materia,
   corpo,
@@ -64,18 +55,53 @@ export default function EditorDeMateria({
   const [doc, setDoc] = useState<DocumentoBlocos>(corpo);
   const [statusAtual, setStatusAtual] = useState(materia.status);
   const [avisoEstado, setAvisoEstado] = useState<string>();
+  const [sujo, setSujo] = useState(false);
+  const [confirmacao, setConfirmacao] = useState("");
+  const [transicionando, iniciarTransicao] = useTransition();
 
   const carimbo = estado.updatedAt ?? materia.updated_at;
   const ehAdmin = papel === "admin";
 
-  async function transicao(novo: string, agendadoPara?: string) {
-    const r = await mudarEstado(materia.id, novo, agendadoPara);
-    setAvisoEstado(r.mensagem);
-    if (r.status === "salvo") setStatusAtual(novo);
+  function mudouOCorpo(novo: DocumentoBlocos) {
+    setDoc(novo);
+    setSujo(true);
   }
 
+  // Fechar a aba com texto não salvo é a perda mais boba que existe. O
+  // navegador só mostra o aviso se já houve interação na página — o que
+  // sempre houve, porque a pessoa estava escrevendo.
+  useEffect(() => {
+    if (!sujo) return;
+    const aviso = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", aviso);
+    return () => window.removeEventListener("beforeunload", aviso);
+  }, [sujo]);
+
+  // Salvamento concluído limpa a marca.
+  //
+  // Ajuste durante a renderização, não em efeito: em efeito, a tela pisca uma
+  // vez mostrando "Não salvo" depois de já ter salvo. O carimbo é a chave
+  // porque dois salvamentos seguidos deixam `status` em "salvo" o tempo todo
+  // — só a mudança de `updatedAt` distingue um do outro.
+  const [carimboVisto, setCarimboVisto] = useState(estado.updatedAt);
+  if (estado.status === "salvo" && estado.updatedAt !== carimboVisto) {
+    setCarimboVisto(estado.updatedAt);
+    setSujo(false);
+  }
+
+  function transicao(novo: string, agendadoPara?: string) {
+    setAvisoEstado(undefined);
+    iniciarTransicao(async () => {
+      const r = await mudarEstado(materia.id, novo, agendadoPara);
+      setAvisoEstado(r.mensagem);
+      if (r.status === "salvo") setStatusAtual(novo);
+    });
+  }
+
+  const ocupado = pendente || transicionando;
+
   return (
-    <form action={acao}>
+    <form action={acao} onInput={() => setSujo(true)}>
       <input type="hidden" name="id" value={materia.id} />
       <input type="hidden" name="updated_at" value={carimbo} />
       <input type="hidden" name="content_json" value={JSON.stringify(doc)} />
@@ -83,16 +109,21 @@ export default function EditorDeMateria({
       {/* Barra superior: estado e ações ---------------------------------- */}
       <div className="mb-5 flex flex-wrap items-center gap-3 border-b border-hairline pb-4">
         <span
-          className={`rounded px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${COR_ESTADO[statusAtual] ?? ""}`}
+          className={`rounded px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${corDeEstado(statusAtual)}`}
         >
-          {ROTULO_ESTADO[statusAtual] ?? statusAtual}
+          {rotuloDeEstado(statusAtual)}
         </span>
 
-        {estado.status === "salvo" && (
-          <span className="text-xs text-forest-700">{estado.mensagem}</span>
+        {sujo ? (
+          <span className="text-xs text-[#7d6612]">Não salvo</span>
+        ) : (
+          estado.status === "salvo" && (
+            <span className="text-xs text-forest-700">{estado.mensagem}</span>
+          )
         )}
+
         {estado.status === "erro" && (
-          <span role="alert" className="text-xs text-down">
+          <span role="alert" className="max-w-md text-xs leading-relaxed text-down">
             {estado.mensagem}
           </span>
         )}
@@ -101,12 +132,14 @@ export default function EditorDeMateria({
             {estado.mensagem}
           </span>
         )}
-        {avisoEstado && <span className="text-xs text-ink-3">{avisoEstado}</span>}
+        {avisoEstado && (
+          <span className="max-w-md text-xs leading-relaxed text-ink-3">{avisoEstado}</span>
+        )}
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <button
             type="submit"
-            disabled={pendente}
+            disabled={ocupado}
             className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
           >
             {pendente ? "Salvando…" : "Salvar"}
@@ -115,8 +148,9 @@ export default function EditorDeMateria({
           {statusAtual === "draft" && (
             <button
               type="button"
+              disabled={ocupado}
               onClick={() => transicao("in_review")}
-              className="rounded-lg bg-forest-800 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-forest-700"
+              className="rounded-lg bg-forest-800 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-forest-700 disabled:opacity-60"
             >
               Enviar para revisão
             </button>
@@ -126,15 +160,17 @@ export default function EditorDeMateria({
             <>
               <button
                 type="button"
+                disabled={ocupado}
                 onClick={() => transicao("draft")}
-                className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500"
+                className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
               >
                 Devolver
               </button>
               <button
                 type="button"
+                disabled={ocupado}
                 onClick={() => transicao("published")}
-                className="rounded-lg bg-lime-400 px-4 py-2 text-xs font-semibold text-forest-800 transition-colors hover:bg-lime-500"
+                className="rounded-lg bg-lime-400 px-4 py-2 text-xs font-semibold text-forest-800 transition-colors hover:bg-lime-500 disabled:opacity-60"
               >
                 Publicar
               </button>
@@ -144,8 +180,9 @@ export default function EditorDeMateria({
           {ehAdmin && statusAtual === "published" && (
             <button
               type="button"
+              disabled={ocupado}
               onClick={() => transicao("archived")}
-              className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500"
+              className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
             >
               Arquivar
             </button>
@@ -170,7 +207,7 @@ export default function EditorDeMateria({
           />
 
           <div className="mt-6">
-            <Editor inicial={doc} onChange={setDoc} />
+            <Editor inicial={doc} onChange={mudouOCorpo} />
           </div>
         </div>
 
@@ -221,11 +258,39 @@ export default function EditorDeMateria({
           </Campo>
 
           <p className="rounded-lg bg-paper px-3 py-2.5 text-[11px] leading-relaxed text-ink-3">
-            Capa e tags entram na próxima fase. O acesso da matéria —
-            aberta ou paga — é decisão comercial e só o administrador muda.
+            Capa e tags entram na próxima fase. O acesso da matéria — aberta ou
+            paga — é decisão comercial e só o administrador muda.
           </p>
         </aside>
       </div>
+
+      {/* Exclusão: a única ação do painel sem volta ----------------------- */}
+      {ehAdmin && (
+        <section className="mt-10 border-t border-hairline pt-6">
+          <h2 className="text-sm font-semibold text-ink">Excluir esta matéria</h2>
+          <p className="mt-1 max-w-lg text-xs leading-relaxed text-ink-3">
+            Não há lixeira: a matéria e o texto somem de vez. Para confirmar,
+            digite o título exatamente como está acima.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              value={confirmacao}
+              onChange={(e) => setConfirmacao(e.target.value)}
+              placeholder={materia.title}
+              aria-label="Digite o título para confirmar a exclusão"
+              className="w-72 rounded-lg border border-hairline bg-white px-3 py-2 text-sm outline-none focus:border-down"
+            />
+            <button
+              type="button"
+              disabled={!confirmacaoConfere(confirmacao, materia.title) || ocupado}
+              onClick={() => iniciarTransicao(() => excluirMateria(materia.id))}
+              className="rounded-lg border border-down px-4 py-2 text-xs font-semibold text-down transition-colors hover:bg-down hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-down"
+            >
+              Excluir definitivamente
+            </button>
+          </div>
+        </section>
+      )}
     </form>
   );
 }

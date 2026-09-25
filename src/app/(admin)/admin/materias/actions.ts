@@ -65,6 +65,8 @@ async function criarMateriaNova(
       category_id: campos.categoryId,
       seo_title: campos.seoTitle,
       seo_description: campos.seoDescription,
+      cover_url: campos.coverUrl,
+      excerpt: campos.excerpt,
       content_json: doc as never,
       content_text: extrairTexto(doc),
       reading_time: tempoDeLeitura(doc),
@@ -94,6 +96,8 @@ interface CamposDaMateria {
   categoryId: number | null;
   seoTitle: string | null;
   seoDescription: string | null;
+  coverUrl: string | null;
+  excerpt: string | null;
 }
 
 export async function salvarMateria(
@@ -110,6 +114,8 @@ export async function salvarMateria(
   const categoria = String(dados.get("category_id") ?? "");
   const seoTitle = String(dados.get("seo_title") ?? "").trim();
   const seoDescription = String(dados.get("seo_description") ?? "").trim();
+  const capa = String(dados.get("cover_url") ?? "").trim();
+  const resumo = String(dados.get("excerpt") ?? "").trim();
   const updatedAtCliente = String(dados.get("updated_at") ?? "");
   const docBruto = String(dados.get("content_json") ?? "");
 
@@ -136,6 +142,8 @@ export async function salvarMateria(
     categoryId: categoria ? Number(categoria) : null,
     seoTitle: seoTitle || null,
     seoDescription: seoDescription || null,
+    coverUrl: capa || null,
+    excerpt: resumo || null,
   };
 
   // Sem id, a matéria ainda não existe: este é o primeiro salvamento, e é
@@ -174,6 +182,8 @@ export async function salvarMateria(
       category_id: categoria ? Number(categoria) : null,
       seo_title: seoTitle || null,
       seo_description: seoDescription || null,
+      cover_url: capa || null,
+      excerpt: resumo || null,
       content_json: doc as never,
       // Derivado no salvamento, não em gatilho: quem sabe percorrer o
       // documento é o mesmo código que define os tipos de bloco.

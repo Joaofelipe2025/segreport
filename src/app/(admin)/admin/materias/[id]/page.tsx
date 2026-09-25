@@ -24,7 +24,7 @@ export default async function EditarMateriaPage(props: PageProps<"/admin/materia
   const { data: materia, error: erroMateria } = await supabase
     .from("articles")
     .select(
-      "id, slug, title, standfirst, status, category_id, author_id, seo_title, seo_description, updated_at, is_premium"
+      "id, slug, title, standfirst, status, category_id, author_id, seo_title, seo_description, cover_url, excerpt, updated_at, is_premium"
     )
     .eq("id", id)
     .maybeSingle();

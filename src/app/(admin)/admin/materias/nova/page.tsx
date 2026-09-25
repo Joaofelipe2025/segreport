@@ -52,6 +52,8 @@ export default async function NovaMateriaPage() {
           category_id: null,
           seo_title: null,
           seo_description: null,
+          cover_url: null,
+          excerpt: null,
           updated_at: "",
           is_premium: false,
         }}

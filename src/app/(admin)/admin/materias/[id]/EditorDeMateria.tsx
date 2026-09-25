@@ -32,6 +32,8 @@ export interface MateriaParaEditar {
   category_id: number | null;
   seo_title: string | null;
   seo_description: string | null;
+  cover_url: string | null;
+  excerpt: string | null;
   updated_at: string;
   is_premium: boolean;
 }
@@ -254,6 +256,30 @@ export default function EditorDeMateria({
             />
           </Campo>
 
+          <Campo rotulo="Capa">
+            <input
+              name="cover_url"
+              defaultValue={materia.cover_url ?? ""}
+              placeholder="https://…"
+              className="w-full rounded-lg border border-hairline bg-white px-3 py-2 font-mono text-[12px] outline-none focus:border-forest-500"
+            />
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-4">
+              Endereço de uma imagem já hospedada. O envio de arquivo entra
+              com a biblioteca de mídia.
+            </p>
+          </Campo>
+
+          <Campo rotulo="Resumo na listagem">
+            <textarea
+              name="excerpt"
+              defaultValue={materia.excerpt ?? ""}
+              rows={3}
+              maxLength={240}
+              placeholder="O que a matéria diz, para quem está passando os olhos na home."
+              className="w-full rounded-lg border border-hairline bg-white px-3 py-2 text-sm outline-none focus:border-forest-500"
+            />
+          </Campo>
+
           <Campo rotulo="Título para busca">
             <input
               name="seo_title"
@@ -274,8 +300,8 @@ export default function EditorDeMateria({
           </Campo>
 
           <p className="rounded-lg bg-paper px-3 py-2.5 text-[11px] leading-relaxed text-ink-3">
-            Capa e tags entram na próxima fase. O acesso da matéria — aberta ou
-            paga — é decisão comercial e só o administrador muda.
+            Tags entram na próxima fase. O acesso da matéria — aberta ou paga —
+            é decisão comercial e só o administrador muda.
           </p>
         </aside>
       </div>

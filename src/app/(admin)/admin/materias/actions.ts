@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requirePainel, requireRole } from "@/lib/auth/session";
 import { slugDeNome } from "@/lib/auth/rules";
+import { pendenciasParaPublicar } from "@/lib/painel/publicacao";
 import {
   documentoVazio,
   extrairTexto,
@@ -152,6 +153,38 @@ export async function mudarEstado(
   }
 
   const supabase = await createClient();
+
+  // Portão de publicação. Confere o que está NO BANCO, não o que o formulário
+  // disse: entre o último Salvar e o clique em Publicar pode não ter havido
+  // salvamento nenhum.
+  if (novoEstado === "published" || novoEstado === "scheduled") {
+    const { data: linha, error: erroLinha } = await supabase
+      .from("articles")
+      .select("title, category_id, slug")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (erroLinha || !linha) {
+      return {
+        status: "erro",
+        mensagem: `Não foi possível conferir a matéria: ${erroLinha?.message ?? "não encontrada"}`,
+      };
+    }
+
+    // O corpo vem pela função: a coluna está revogada de `authenticated`.
+    const { data: corpo } = await supabase.rpc("article_body_for_edit", { p_id: id });
+
+    const faltas = pendenciasParaPublicar({
+      title: linha.title ?? "",
+      category_id: linha.category_id,
+      slug: linha.slug ?? "",
+      corpo: corpo as unknown as DocumentoBlocos | null,
+    });
+
+    if (faltas.length > 0) {
+      return { status: "erro", mensagem: `Antes de publicar: ${faltas.join("; ")}.` };
+    }
+  }
 
   const { error } = await supabase
     .from("articles")

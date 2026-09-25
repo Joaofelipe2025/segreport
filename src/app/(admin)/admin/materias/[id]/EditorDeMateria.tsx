@@ -13,6 +13,7 @@ import type { Role } from "@/lib/auth/rules";
 import { corDeEstado, rotuloDeEstado } from "@/lib/painel/estados";
 import { confirmacaoConfere } from "@/lib/painel/confirmacao";
 import { useGuardaDeSaida } from "@/components/admin/GuardaDeSaida";
+import CampoDeCapa from "./CampoDeCapa";
 
 // O editor só existe no navegador: o ProseMirror precisa de DOM.
 const Editor = dynamic(() => import("@/components/editor/Editor"), {
@@ -257,16 +258,7 @@ export default function EditorDeMateria({
           </Campo>
 
           <Campo rotulo="Capa">
-            <input
-              name="cover_url"
-              defaultValue={materia.cover_url ?? ""}
-              placeholder="https://…"
-              className="w-full rounded-lg border border-hairline bg-white px-3 py-2 font-mono text-[12px] outline-none focus:border-forest-500"
-            />
-            <p className="mt-1 text-[11px] leading-relaxed text-ink-4">
-              Endereço de uma imagem já hospedada. O envio de arquivo entra
-              com a biblioteca de mídia.
-            </p>
+            <CampoDeCapa inicial={materia.cover_url ?? ""} />
           </Campo>
 
           <Campo rotulo="Resumo na listagem">

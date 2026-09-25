@@ -17,7 +17,9 @@ export function LeadCard({ article }: { article: Article }) {
   return (
     <article className="group relative overflow-hidden rounded-xl bg-forest-800">
       <Link href={`/noticias/${article.slug}`} className="block">
-        <div className="relative aspect-[16/11] sm:aspect-[16/10]">
+        {/* Um degrau mais baixa do que era (16/11 e 16/10): a manchete
+            empurrava o resto da home para baixo da dobra. */}
+        <div className="relative aspect-[16/10] sm:aspect-[16/9]">
           <Image
             src={article.image}
             alt={article.imageAlt}
@@ -94,7 +96,9 @@ export function StripCard({ article }: { article: Article }) {
   return (
     <article className="group">
       <Link href={`/noticias/${article.slug}`} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-forest-100">
+        {/* 3/2 no lugar de 4/3: em faixa de quatro ou cinco cartões, cada
+            centímetro de altura de foto some com uma linha de texto. */}
+        <div className="relative aspect-[3/2] overflow-hidden rounded-lg bg-forest-100">
           <Image
             src={article.image}
             alt={article.imageAlt}

@@ -6,10 +6,18 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
-  // Nenhum domínio remoto de imagem: as imagens do preview são geradas
-  // localmente pela rota /preview. Quando o upload do CMS entrar, o bucket
-  // do Supabase Storage é declarado aqui em `images.remotePatterns`.
   images: {
+    // As capas enviadas pelo CMS moram no balde público `midia` do Supabase
+    // Storage. O padrão é estreito de propósito: só este projeto, só este
+    // balde. Qualquer outro host continua recusado, então uma URL colada de
+    // fora não passa a ser servida pelo otimizador do Next.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/midia/**",
+      },
+    ],
     // Os padrões do Next geram oito larguras por imagem, e a home tem mais de
     // trinta imagens — o que produzia duzentas variantes para gerar e guardar.
     // Estas cobrem os pontos de quebra que o layout realmente usa.

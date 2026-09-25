@@ -119,18 +119,23 @@ export default async function ArticlePage(props: PageProps<"/noticias/[slug]">) 
             )}
           </header>
 
-          <figure className="mt-7">
-            <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-forest-100">
+          {/* A capa acompanha a medida do texto, não a da coluna.
+              Antes ela ocupava a largura inteira e ficava mais larga do que a
+              matéria que ilustra — o olho batia na foto e não no lede. Em
+              jornal a imagem serve o texto; quando ela é maior que ele, a
+              hierarquia se inverte sem ninguém ter decidido isso. */}
+          <figure className="mt-7 max-w-[720px]">
+            <div className="relative aspect-[3/2] overflow-hidden rounded-xl bg-forest-100">
               <Image
                 src={article.image}
                 alt={article.imageAlt}
                 fill
                 priority
-                sizes="(max-width: 1024px) 100vw, 66vw"
+                sizes="(max-width: 768px) 100vw, 720px"
                 className="object-cover"
               />
             </div>
-            <figcaption className="mt-2 text-xs text-ink-4">
+            <figcaption className="mt-2 text-xs leading-relaxed text-ink-4">
               {article.imageAlt}
             </figcaption>
           </figure>

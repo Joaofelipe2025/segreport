@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:push:test": "supabase db push --db-url $TEST_DATABASE_URL"
+    "db:push:test": "supabase db push --db-url $TEST_DATABASE_URL",
+    "fumaca": "node scripts/fumaca-painel.mjs && node scripts/fumaca-publicacao.mjs && node scripts/fumaca-upload.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

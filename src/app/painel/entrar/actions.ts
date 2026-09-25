@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { origemDoSite } from "@/lib/painel/origem";
 import { createClient } from "@/lib/supabase/server";
 import { COOKIE_DA_PORTA, VALIDADE_DA_PORTA } from "@/lib/painel/porta";
 import { emailValido } from "@/lib/auth/rules";
@@ -44,7 +45,7 @@ export async function enviarLinkDaRedacao(
   });
 
   const supabase = await createClient();
-  const origem = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origem = origemDoSite();
 
   const { error } = await supabase.auth.signInWithOtp({
     email,

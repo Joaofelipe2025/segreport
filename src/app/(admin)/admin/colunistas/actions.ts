@@ -1,5 +1,6 @@
 "use server";
 
+import { origemDoSite } from "@/lib/painel/origem";
 import { revalidatePath } from "next/cache";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth/session";
@@ -35,7 +36,7 @@ export async function convidarColunista(
   }
 
   const admin = criarClienteAdmin();
-  const origem = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origem = origemDoSite();
 
   const { data: convidado, error: erroConvite } =
     await admin.auth.admin.inviteUserByEmail(email, {

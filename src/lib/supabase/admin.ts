@@ -5,12 +5,21 @@ import type { Database } from "./types";
 /**
  * Cliente com a chave `service_role`.
  *
- * ATENÇÃO — esta chave IGNORA TODA A RLS. Ela existe por uma única razão:
- * convidar usuário exige criar conta alheia, e nenhuma policy permite isso.
+ * ATENÇÃO — esta chave IGNORA TODA A RLS. Há exatamente DOIS usos, e cada um
+ * está aqui porque a alternativa exigiria aplicar DDL à mão no Supabase:
+ *
+ *   1. Convidar colunista: criar conta alheia, que nenhuma policy permite.
+ *   2. Enviar capa de matéria: as políticas de `storage.objects` são DDL, e
+ *      uma dependência de DDL manual já deixou este CMS inoperante uma vez.
+ *
+ * Nos dois casos a autorização mora na Server Action, com `requirePainel()`
+ * ou `requireRole()` na primeira linha, e o alcance de cada ação é estreito
+ * de propósito.
  *
  * Regras, sem exceção:
  *   • Só este arquivo importa a chave.
- *   • Só a ação de convite usa este cliente.
+ *   • Só as duas ações acima usam este cliente. Um terceiro uso precisa de
+ *     justificativa escrita aqui.
  *   • Nunca em componente de página, nem em rota chamada pelo navegador sem
  *     verificação de papel antes.
  *

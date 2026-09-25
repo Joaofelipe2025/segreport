@@ -1,10 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useActionState, useState } from "react";
-import { salvarMateria, mudarEstado, type EstadoMateria } from "../actions";
+import { useActionState, useEffect, useState, useTransition } from "react";
+import {
+  salvarMateria,
+  mudarEstado,
+  excluirMateria,
+  type EstadoMateria,
+} from "../actions";
 import type { DocumentoBlocos } from "@/lib/editor/document";
 import type { Role } from "@/lib/auth/rules";
+import { corDeEstado, rotuloDeEstado } from "@/lib/painel/estados";
+import { confirmacaoConfere } from "@/lib/painel/confirmacao";
+import { useGuardaDeSaida } from "@/components/admin/GuardaDeSaida";
+import CampoDeCapa from "./CampoDeCapa";
+import CampoDeEndereco from "./CampoDeEndereco";
+import { transicoesDe } from "@/lib/painel/fluxo";
 
 // O editor só existe no navegador: o ProseMirror precisa de DOM.
 const Editor = dynamic(() => import("@/components/editor/Editor"), {
@@ -15,7 +26,8 @@ const Editor = dynamic(() => import("@/components/editor/Editor"), {
 const INICIAL: EstadoMateria = { status: "inicial" };
 
 export interface MateriaParaEditar {
-  id: string;
+  /** Nulo enquanto a matéria não existe: a linha nasce no primeiro salvamento. */
+  id: string | null;
   slug: string;
   title: string;
   standfirst: string | null;
@@ -23,71 +35,117 @@ export interface MateriaParaEditar {
   category_id: number | null;
   seo_title: string | null;
   seo_description: string | null;
-  content_json: DocumentoBlocos | null;
+  cover_url: string | null;
+  excerpt: string | null;
   updated_at: string;
   is_premium: boolean;
 }
 
-const ROTULO_ESTADO: Record<string, string> = {
-  draft: "Rascunho",
-  in_review: "Em revisão",
-  scheduled: "Agendada",
-  published: "Publicada",
-  archived: "Arquivada",
-};
-
-const COR_ESTADO: Record<string, string> = {
-  draft: "bg-paper text-ink-3",
-  in_review: "bg-[#fbf6e0] text-[#7d6612]",
-  scheduled: "bg-[#e6f0fb] text-[#1f5590]",
-  published: "bg-[#e7f5ec] text-[#1e6b40]",
-  archived: "bg-paper text-ink-4",
-};
-
 export default function EditorDeMateria({
   materia,
+  corpo,
   categorias,
   papel,
 }: {
   materia: MateriaParaEditar;
+  /**
+   * Chega pronto do servidor e é obrigatório. Antes o corpo vinha junto com a
+   * matéria e podia ser nulo, e o editor inventava um documento vazio no
+   * lugar — que o Salvar seguinte gravava por cima do texto real. Quem não
+   * conseguiu ler o corpo não chega a renderizar este componente.
+   */
+  corpo: DocumentoBlocos;
   categorias: Array<{ id: number; label: string }>;
   papel: Role;
 }) {
   const [estado, acao, pendente] = useActionState(salvarMateria, INICIAL);
-  const [doc, setDoc] = useState<DocumentoBlocos>(
-    materia.content_json ?? ({ type: "doc", content: [{ type: "paragraph" }] } as DocumentoBlocos)
-  );
+  const [doc, setDoc] = useState<DocumentoBlocos>(corpo);
   const [statusAtual, setStatusAtual] = useState(materia.status);
   const [avisoEstado, setAvisoEstado] = useState<string>();
+  // A marca vive no contexto do painel, não aqui: quem oferece a saída é a
+  // barra lateral, que está em outro ramo da árvore.
+  const { sujo, marcarSujo: setSujo } = useGuardaDeSaida();
+  const [confirmacao, setConfirmacao] = useState("");
+  const [titulo, setTitulo] = useState(materia.title);
+  const [transicionando, iniciarTransicao] = useTransition();
 
   const carimbo = estado.updatedAt ?? materia.updated_at;
   const ehAdmin = papel === "admin";
+  const existe = materia.id !== null;
 
-  async function transicao(novo: string, agendadoPara?: string) {
-    const r = await mudarEstado(materia.id, novo, agendadoPara);
-    setAvisoEstado(r.mensagem);
-    if (r.status === "salvo") setStatusAtual(novo);
+  function mudouOCorpo(novo: DocumentoBlocos) {
+    setDoc(novo);
+    setSujo(true);
   }
 
+  // O provedor vive no layout e sobrevive à troca de rota. Sem esta limpeza,
+  // a marca ficaria acesa depois de sair do editor, e o aviso passaria a
+  // aparecer em telas onde não há nada para perder — que é como se ensina
+  // alguém a clicar em "sair" sem ler.
+  useEffect(() => () => setSujo(false), [setSujo]);
+
+  // Fechar a aba com texto não salvo é a perda mais boba que existe. O
+  // navegador só mostra o aviso se já houve interação na página — o que
+  // sempre houve, porque a pessoa estava escrevendo.
+  useEffect(() => {
+    if (!sujo) return;
+    const aviso = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", aviso);
+    return () => window.removeEventListener("beforeunload", aviso);
+  }, [sujo]);
+
+  // Salvamento concluído limpa a marca.
+  //
+  // Ajuste durante a renderização, não em efeito: em efeito, a tela pisca uma
+  // vez mostrando "Não salvo" depois de já ter salvo. O carimbo é a chave
+  // porque dois salvamentos seguidos deixam `status` em "salvo" o tempo todo
+  // — só a mudança de `updatedAt` distingue um do outro.
+  const [carimboVisto, setCarimboVisto] = useState(estado.updatedAt);
+  if (estado.status === "salvo" && estado.updatedAt !== carimboVisto) {
+    setCarimboVisto(estado.updatedAt);
+    setSujo(false);
+  }
+
+  function transicao(novo: string) {
+    // Só existe transição para matéria que existe; os botões nem aparecem
+    // antes disso. A checagem é para o TypeScript e para o clique impossível.
+    if (!materia.id) return;
+    const idDaMateria = materia.id;
+
+    setAvisoEstado(undefined);
+    iniciarTransicao(async () => {
+      const r = await mudarEstado(idDaMateria, novo);
+      setAvisoEstado(r.mensagem);
+      if (r.status === "salvo") setStatusAtual(novo);
+    });
+  }
+
+  const ocupado = pendente || transicionando;
+
   return (
-    <form action={acao}>
-      <input type="hidden" name="id" value={materia.id} />
+    <form action={acao} onInput={() => setSujo(true)}>
+      {materia.id && <input type="hidden" name="id" value={materia.id} />}
       <input type="hidden" name="updated_at" value={carimbo} />
       <input type="hidden" name="content_json" value={JSON.stringify(doc)} />
 
       {/* Barra superior: estado e ações ---------------------------------- */}
       <div className="mb-5 flex flex-wrap items-center gap-3 border-b border-hairline pb-4">
         <span
-          className={`rounded px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${COR_ESTADO[statusAtual] ?? ""}`}
+          className={`rounded px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${corDeEstado(statusAtual)}`}
         >
-          {ROTULO_ESTADO[statusAtual] ?? statusAtual}
+          {rotuloDeEstado(statusAtual)}
         </span>
 
-        {estado.status === "salvo" && (
-          <span className="text-xs text-forest-700">{estado.mensagem}</span>
+        {sujo ? (
+          <span className="text-xs text-[#7d6612]">Não salvo</span>
+        ) : (
+          estado.status === "salvo" && (
+            <span className="text-xs text-forest-700">{estado.mensagem}</span>
+          )
         )}
+
         {estado.status === "erro" && (
-          <span role="alert" className="text-xs text-down">
+          <span role="alert" className="max-w-md text-xs leading-relaxed text-down">
             {estado.mensagem}
           </span>
         )}
@@ -96,55 +154,37 @@ export default function EditorDeMateria({
             {estado.mensagem}
           </span>
         )}
-        {avisoEstado && <span className="text-xs text-ink-3">{avisoEstado}</span>}
+        {avisoEstado && (
+          <span className="max-w-md text-xs leading-relaxed text-ink-3">{avisoEstado}</span>
+        )}
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <button
             type="submit"
-            disabled={pendente}
+            disabled={ocupado}
             className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
           >
-            {pendente ? "Salvando…" : "Salvar"}
+            {pendente ? "Salvando…" : existe ? "Salvar" : "Criar matéria"}
           </button>
 
-          {statusAtual === "draft" && (
-            <button
-              type="button"
-              onClick={() => transicao("in_review")}
-              className="rounded-lg bg-forest-800 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-forest-700"
-            >
-              Enviar para revisão
-            </button>
-          )}
-
-          {ehAdmin && statusAtual === "in_review" && (
-            <>
+          {/* As transições vêm de painel/fluxo: três estados, e o que cada
+              papel pode fazer a partir de onde a matéria está. */}
+          {existe &&
+            transicoesDe(statusAtual, papel).map((t) => (
               <button
+                key={t.para}
                 type="button"
-                onClick={() => transicao("draft")}
-                className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500"
+                disabled={ocupado}
+                onClick={() => transicao(t.para)}
+                className={
+                  t.tom === "primario"
+                    ? "rounded-lg bg-forest-800 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-forest-700 disabled:opacity-60"
+                    : "rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
+                }
               >
-                Devolver
+                {t.rotulo}
               </button>
-              <button
-                type="button"
-                onClick={() => transicao("published")}
-                className="rounded-lg bg-lime-400 px-4 py-2 text-xs font-semibold text-forest-800 transition-colors hover:bg-lime-500"
-              >
-                Publicar
-              </button>
-            </>
-          )}
-
-          {ehAdmin && statusAtual === "published" && (
-            <button
-              type="button"
-              onClick={() => transicao("archived")}
-              className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500"
-            >
-              Arquivar
-            </button>
-          )}
+            ))}
         </div>
       </div>
 
@@ -153,7 +193,8 @@ export default function EditorDeMateria({
         <div className="min-w-0">
           <input
             name="title"
-            defaultValue={materia.title}
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
             placeholder="Título da matéria"
             className="w-full border-0 bg-transparent p-0 text-2xl font-bold leading-tight tracking-[-0.02em] text-ink outline-none placeholder:text-ink-4 sm:text-[30px]"
           />
@@ -164,8 +205,15 @@ export default function EditorDeMateria({
             className="mt-2 w-full border-0 bg-transparent p-0 text-base leading-relaxed text-ink-3 outline-none placeholder:text-ink-4"
           />
 
+          <CampoDeEndereco
+            titulo={titulo}
+            inicial={materia.slug}
+            status={statusAtual}
+            ehAdmin={ehAdmin}
+          />
+
           <div className="mt-6">
-            <Editor inicial={doc} onChange={setDoc} />
+            <Editor inicial={doc} onChange={mudouOCorpo} />
           </div>
         </div>
 
@@ -187,12 +235,18 @@ export default function EditorDeMateria({
             </select>
           </Campo>
 
-          <Campo rotulo="Endereço da matéria">
-            <input
-              name="slug"
-              defaultValue={materia.slug}
-              disabled={!ehAdmin}
-              className="w-full rounded-lg border border-hairline bg-white px-3 py-2 font-mono text-[12px] outline-none focus:border-forest-500 disabled:bg-paper disabled:text-ink-4"
+          <Campo rotulo="Capa">
+            <CampoDeCapa inicial={materia.cover_url ?? ""} />
+          </Campo>
+
+          <Campo rotulo="Resumo na listagem">
+            <textarea
+              name="excerpt"
+              defaultValue={materia.excerpt ?? ""}
+              rows={3}
+              maxLength={240}
+              placeholder="O que a matéria diz, para quem está passando os olhos na home."
+              className="w-full rounded-lg border border-hairline bg-white px-3 py-2 text-sm outline-none focus:border-forest-500"
             />
           </Campo>
 
@@ -216,11 +270,46 @@ export default function EditorDeMateria({
           </Campo>
 
           <p className="rounded-lg bg-paper px-3 py-2.5 text-[11px] leading-relaxed text-ink-3">
-            Capa e tags entram na próxima fase. O acesso da matéria —
-            aberta ou paga — é decisão comercial e só o administrador muda.
+            Tags entram na próxima fase. O acesso da matéria — aberta ou paga —
+            é decisão comercial e só o administrador muda.
           </p>
         </aside>
       </div>
+
+      {/* Exclusão: a única ação do painel sem volta ----------------------- */}
+      {existe && ehAdmin && (
+        <section className="mt-10 border-t border-hairline pt-6">
+          <h2 className="text-sm font-semibold text-ink">Excluir esta matéria</h2>
+          <p className="mt-1 max-w-lg text-xs leading-relaxed text-ink-3">
+            Não há lixeira: a matéria e o texto somem de vez. Para confirmar,
+            digite o título exatamente como está acima.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              value={confirmacao}
+              onChange={(e) => setConfirmacao(e.target.value)}
+              placeholder={materia.title}
+              aria-label="Digite o título para confirmar a exclusão"
+              className="w-72 rounded-lg border border-hairline bg-white px-3 py-2 text-sm outline-none focus:border-down"
+            />
+            <button
+              type="button"
+              disabled={!confirmacaoConfere(confirmacao, materia.title) || ocupado}
+              onClick={() =>
+                iniciarTransicao(async () => {
+                  // Sucesso redireciona e nunca volta; só a recusa retorna.
+                  if (!materia.id) return;
+                  const r = await excluirMateria(materia.id);
+                  setAvisoEstado(r.mensagem);
+                })
+              }
+              className="rounded-lg border border-down px-4 py-2 text-xs font-semibold text-down transition-colors hover:bg-down hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-down"
+            >
+              Excluir definitivamente
+            </button>
+          </div>
+        </section>
+      )}
     </form>
   );
 }

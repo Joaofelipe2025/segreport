@@ -33,15 +33,25 @@ export function formatMonthYear(iso: string | Date): string {
   return MONTH_YEAR.format(new Date(iso));
 }
 
-/** "há 3 dias" — usado nas listas de últimas notícias. */
+/**
+ * "há 3 dias", "em 2h" — distância humana até uma data.
+ *
+ * Trata futuro porque o painel mostra matéria agendada: `scheduled_for` está
+ * à frente de agora. A conta crua dava minuto negativo, e o `Math.max(_, 1)`
+ * o transformava em "há 1 min" — errado sem parecer errado.
+ */
 export function formatRelative(iso: string, now = new Date()): string {
   const diffMs = now.getTime() - new Date(iso).getTime();
-  const minutes = Math.round(diffMs / 60000);
-  if (minutes < 60) return `há ${Math.max(minutes, 1)} min`;
+  const futuro = diffMs < 0;
+  const abs = Math.abs(diffMs);
+  const prefixo = (texto: string) => (futuro ? `em ${texto}` : `há ${texto}`);
+
+  const minutes = Math.round(abs / 60000);
+  if (minutes < 60) return prefixo(`${Math.max(minutes, 1)} min`);
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `há ${hours}h`;
+  if (hours < 24) return prefixo(`${hours}h`);
   const days = Math.round(hours / 24);
-  if (days < 30) return `há ${days} ${days === 1 ? "dia" : "dias"}`;
+  if (days < 30) return prefixo(`${days} ${days === 1 ? "dia" : "dias"}`);
   return formatDateShort(iso);
 }
 

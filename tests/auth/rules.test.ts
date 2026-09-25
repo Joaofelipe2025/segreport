@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   destinoAposLogin,
   emailValido,
+  itemAtivo,
   itensDeMenu,
   podeAcessarPainel,
   slugDeNome,
@@ -51,6 +52,7 @@ describe("menu por papel", () => {
   it("admin vê todas as seções", () => {
     const rotas = itensDeMenu("admin").map((i) => i.href);
     expect(rotas).toEqual([
+      "/admin",
       "/admin/materias",
       "/admin/colunistas",
       "/admin/midia",
@@ -60,11 +62,30 @@ describe("menu por papel", () => {
 
   it("colunista vê apenas matérias e mídia", () => {
     const rotas = itensDeMenu("columnist").map((i) => i.href);
-    expect(rotas).toEqual(["/admin/materias", "/admin/midia"]);
+    expect(rotas).toEqual(["/admin", "/admin/materias", "/admin/midia"]);
   });
 
   it("leitor não vê seção nenhuma", () => {
     expect(itensDeMenu("reader")).toEqual([]);
+  });
+});
+
+describe("item de menu ativo", () => {
+  it("/admin só acende na raiz do painel", () => {
+    // startsWith("/admin") casa com TODA rota do painel: sem isto o item
+    // Painel ficaria aceso o tempo todo, junto com o item certo.
+    expect(itemAtivo("/admin", "/admin")).toBe(true);
+    expect(itemAtivo("/admin", "/admin/materias")).toBe(false);
+    expect(itemAtivo("/admin", "/admin/ajustes")).toBe(false);
+  });
+
+  it("seção acende também nas páginas de dentro", () => {
+    expect(itemAtivo("/admin/materias", "/admin/materias")).toBe(true);
+    expect(itemAtivo("/admin/materias", "/admin/materias/abc-123")).toBe(true);
+  });
+
+  it("não acende por prefixo no meio de um nome", () => {
+    expect(itemAtivo("/admin/midia", "/admin/midiateca")).toBe(false);
   });
 });
 

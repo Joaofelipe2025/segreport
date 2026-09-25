@@ -1,5 +1,6 @@
 "use server";
 
+import { origemDoSite } from "@/lib/painel/origem";
 import { revalidatePath } from "next/cache";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth/session";
@@ -35,7 +36,7 @@ export async function convidarColunista(
   }
 
   const admin = criarClienteAdmin();
-  const origem = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origem = origemDoSite();
 
   const { data: convidado, error: erroConvite } =
     await admin.auth.admin.inviteUserByEmail(email, {
@@ -55,11 +56,22 @@ export async function convidarColunista(
   // pessoa já for admin, gravar 'columnist' a rebaixaria em silêncio, e a
   // chave de serviço não é barrada por nada. Só promovemos quem ainda é
   // leitor.
-  const { data: perfilAtual } = await admin
+  //
+  // A leitura falha FECHADA. Descartar o erro desligava a guarda exatamente
+  // no caso que ela descreve: `perfilAtual` vinha nulo, o `if` não entrava, e
+  // o upsert com chave de serviço rebaixava um admin sem que nada aparecesse.
+  const { data: perfilAtual, error: erroPapel } = await admin
     .from("profiles")
     .select("role")
     .eq("id", userId)
     .maybeSingle();
+
+  if (erroPapel) {
+    return {
+      status: "erro",
+      mensagem: `Não deu para conferir o papel atual de ${email} (${erroPapel.message}). Nada foi alterado — gravar sem essa checagem poderia rebaixar um administrador.`,
+    };
+  }
 
   if (perfilAtual && perfilAtual.role !== "reader" && perfilAtual.role !== "columnist") {
     return {

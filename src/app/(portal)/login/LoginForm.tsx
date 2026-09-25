@@ -2,19 +2,15 @@
 
 import { useActionState } from "react";
 import { enviarLinkMagico, type EstadoLogin } from "./actions";
+import { mensagemDeMotivoDoLeitor } from "@/lib/painel/motivos";
 
 const INICIAL: EstadoLogin = { status: "inicial" };
 
-const MOTIVOS: Record<string, string> = {
-  sessao: "Sua sessão expirou. Entre novamente.",
-  permissao: "Sua conta não tem acesso a essa área.",
-  "link-invalido": "O link está incompleto. Peça outro.",
-  "link-expirado": "O link expirou. Peça um novo abaixo.",
-};
-
 export default function LoginForm({ motivo }: { motivo?: string }) {
   const [estado, acao, pendente] = useActionState(enviarLinkMagico, INICIAL);
-  const aviso = motivo ? MOTIVOS[motivo] : undefined;
+  // Lista fechada, em Map: ?motivo=__proto__ num objeto literal devolve
+  // Object.prototype e derruba esta página pública com 500.
+  const aviso = mensagemDeMotivoDoLeitor(motivo);
 
   if (estado.status === "enviado") {
     return (

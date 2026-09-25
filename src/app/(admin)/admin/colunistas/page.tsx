@@ -3,6 +3,7 @@ import PageHeader from "@/components/admin/PageHeader";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import FormularioConvite from "./FormularioConvite";
+import { exigir } from "@/lib/painel/consulta";
 
 export const metadata: Metadata = { title: "Colunistas" };
 
@@ -10,11 +11,15 @@ export default async function ColunistasPage() {
   await requireRole(["admin"]);
 
   const supabase = await createClient();
-  const { data: colunistas } = await supabase
-    .from("authors")
-    .select("id, name, slug, role, email, profile_id")
-    .not("profile_id", "is", null)
-    .order("name");
+
+  const colunistas = exigir(
+    await supabase
+      .from("authors")
+      .select("id, name, slug, role, email, profile_id")
+      .not("profile_id", "is", null)
+      .order("name"),
+    "os colunistas"
+  );
 
   return (
     <>

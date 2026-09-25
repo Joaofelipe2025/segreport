@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import EditorDeMateria, { type MateriaParaEditar } from "./EditorDeMateria";
 import { documentoVazio, type DocumentoBlocos } from "@/lib/editor/document";
 import { podeEditarMateria } from "@/lib/painel/permissao";
+import { exigir } from "@/lib/painel/consulta";
 
 export const metadata: Metadata = { title: "Editar matéria" };
 
@@ -61,10 +62,13 @@ export default async function EditarMateriaPage(props: PageProps<"/admin/materia
 
   if (erroCorpo) return <NaoAbriu motivo={erroCorpo.message} />;
 
-  const { data: categorias } = await supabase
-    .from("categories")
-    .select("id, label")
-    .order("label");
+  // Com exigir(): descartar o erro aqui fazia o <select> renderizar só "Sem
+  // categoria", o navegador escolher essa opção, e o Salvar seguinte gravar
+  // category_id nulo — tirando a matéria da editoria sem uma palavra.
+  const categorias = exigir(
+    await supabase.from("categories").select("id, label").order("label"),
+    "as editorias"
+  );
 
   return (
     <>
@@ -80,7 +84,7 @@ export default async function EditarMateriaPage(props: PageProps<"/admin/materia
         // Nulo aqui é matéria sem texto ainda, não falta de direito: o
         // direito foi conferido acima, e a falha de leitura acima também.
         corpo={(corpo as unknown as DocumentoBlocos | null) ?? documentoVazio()}
-        categorias={categorias ?? []}
+        categorias={categorias}
         papel={perfil.role}
       />
     </>

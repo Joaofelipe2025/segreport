@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { destinoAposLogin } from "@/lib/auth/rules";
 
 /**
  * Último recurso: a sessão veio no fragmento da URL.
@@ -43,13 +44,29 @@ export default function ConfirmarPeloFragmento({ porta }: { porta: string }) {
         window.history.replaceState(null, "", window.location.pathname);
 
         const { data: auth } = await supabase.auth.getUser();
-        const { data: perfil } = auth?.user
-          ? await supabase.from("profiles").select("role").eq("id", auth.user.id).single()
-          : { data: null };
+        if (!auth?.user) {
+          window.location.replace(`${porta}?motivo=sessao`);
+          return;
+        }
 
-        const destino =
-          perfil?.role === "admin" || perfil?.role === "columnist" ? "/admin" : "/hub";
-        window.location.replace(destino);
+        // O erro precisa ser olhado, como no Route Handler. Descartá-lo faria
+        // papel nulo mandar quem escreve para /hub, e de lá para /admin, que
+        // devolve a pessoa para a porta dizendo "sessão expirou". Laço
+        // fechado, sem erro em lugar nenhum.
+        const { data: perfil, error: erroPerfil } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", auth.user.id)
+          .maybeSingle();
+
+        if (erroPerfil) {
+          window.location.replace(`${porta}?motivo=perfil-ilegivel`);
+          return;
+        }
+
+        // A MESMA função que o Route Handler usa: duas cópias da regra de
+        // destino divergem na primeira vez que um papel mudar.
+        window.location.replace(destinoAposLogin(perfil?.role));
       });
   }, [porta]);
 

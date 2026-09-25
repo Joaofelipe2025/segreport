@@ -89,3 +89,17 @@ describe("portão de publicação", () => {
     expect(p).toHaveLength(4);
   });
 });
+
+describe("endereço vazio", () => {
+  it("é pendência de publicação", () => {
+    // `slugDeNome` devolve "" para título sem alfanumérico ASCII: "...",
+    // "🔥🔥🔥", "Проверка". A coluna é `text not null unique` e aceita ""
+    // alegremente — e a matéria vai ao ar em /noticias/, que é a listagem.
+    expect(pendenciasParaPublicar({ ...completa, slug: "" })).toContain(
+      "a matéria precisa de um endereço"
+    );
+    expect(pendenciasParaPublicar({ ...completa, slug: "   " })).toContain(
+      "a matéria precisa de um endereço"
+    );
+  });
+});

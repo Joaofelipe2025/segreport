@@ -3,13 +3,16 @@
  *
  *   node scripts/fumaca-publicacao.mjs [http://localhost:3000]
  *
- * Pega um rascunho, dá a ele título, categoria e corpo, publica, e confere
- * que ele aparece: na home, na listagem, na página da categoria, na página do
- * autor e na própria matéria — com o texto renderizado. Depois DESFAZ tudo,
- * devolvendo a linha ao estado em que estava.
+ * Cria uma matéria PRÓPRIA, publica, confere que ela aparece na home, na
+ * listagem, na editoria, na página do autor e nela mesma com o texto
+ * renderizado — e apaga no fim.
  *
- * Usa a chave de serviço para montar e desmontar o cenário, e o portal
- * anônimo para conferir — que é exatamente o par de olhos que interessa.
+ * A primeira versão deste script sequestrava o rascunho mais antigo do banco,
+ * fotografava cinco campos e zerava outros cinco na hora de devolver. Num
+ * rascunho com texto, isso APAGAVA o texto — e o `finally` rodava mesmo
+ * quando o teste falhava antes de começar. Nunca chegou a destruir nada, por
+ * sorte: acertou um rascunho vazio. Criar e apagar o próprio cenário não tem
+ * essa aresta, porque não existe estado alheio para restaurar.
  */
 import { readFileSync } from "node:fs";
 
@@ -29,12 +32,18 @@ const h = {
   Prefer: "return=representation",
 };
 
+// Endereço reconhecível e datado: se uma execução morrer no meio, dá para
+// achar e remover o resto sem adivinhar qual linha é do script.
+const SLUG = `zz-verificacao-automatica-${Date.now().toString(36)}`;
 const MARCA = "Texto de verificacao do caminho CMS ate o portal";
 const CORPO = {
   type: "doc",
   content: [
     { type: "paragraph", content: [{ type: "text", text: MARCA }] },
-    { type: "paragraph", content: [{ type: "text", text: "Segundo parágrafo, para o tempo de leitura." }] },
+    {
+      type: "paragraph",
+      content: [{ type: "text", text: "Segundo parágrafo, para o tempo de leitura." }],
+    },
   ],
 };
 
@@ -45,27 +54,16 @@ const rest = async (caminho, init) => {
   return t ? JSON.parse(t) : null;
 };
 
-const [rascunho] = await rest("articles?status=eq.draft&order=created_at.asc&limit=1");
-if (!rascunho) {
-  console.log("Nenhum rascunho disponível para o teste. Crie um e rode de novo.");
+const [autor] = await rest("authors?select=id,name,slug&slug=not.is.null&limit=1");
+if (!autor) {
+  console.log("Nenhum autor cadastrado. Crie a assinatura da redação e rode de novo.");
   process.exit(0);
 }
+const [categoria] = await rest("categories?select=id,key,label&order=key&limit=1");
 
-const [categoria] = await rest("categories?key=eq.regulacao&select=id,key,label&limit=1");
-const [autor] = await rest(`authors?id=eq.${rascunho.author_id}&select=id,name,slug&limit=1`);
-
-const original = {
-  slug: rascunho.slug,
-  title: rascunho.title,
-  status: rascunho.status,
-  category_id: rascunho.category_id,
-  published_at: rascunho.published_at,
-};
-
-const SLUG = "verificacao-do-caminho-cms-portal";
-console.log(`cenário: matéria ${rascunho.id}`);
-console.log(`  autor: ${autor?.name ?? "?"} (/colunistas/${autor?.slug ?? "?"})`);
-console.log(`  categoria: ${categoria?.label ?? "?"} (/${categoria?.key ?? "?"})\n`);
+console.log(`cenário próprio: /${SLUG}`);
+console.log(`  autor: ${autor.name} (/colunistas/${autor.slug})`);
+console.log(`  categoria: ${categoria?.label ?? "—"} (/${categoria?.key ?? "—"})\n`);
 
 const resultados = [];
 const conferir = async (nome, caminho, ...espera) => {
@@ -75,18 +73,22 @@ const conferir = async (nome, caminho, ...espera) => {
   resultados.push({
     ok: r.status === 200 && faltando.length === 0,
     nome,
-    detalhe: r.status !== 200 ? `HTTP ${r.status}` : faltando.length ? `sem: ${faltando.join(" | ")}` : "ok",
+    detalhe:
+      r.status !== 200 ? `HTTP ${r.status}` : faltando.length ? `sem: ${faltando.join(" | ")}` : "ok",
   });
 };
 
+let criada = null;
+
 try {
-  await rest(`articles?id=eq.${rascunho.id}`, {
-    method: "PATCH",
+  [criada] = await rest("articles", {
+    method: "POST",
     body: JSON.stringify({
       slug: SLUG,
-      title: "Verificação do caminho CMS até o portal",
-      standfirst: "Matéria temporária criada por script de verificação.",
-      excerpt: "Matéria temporária criada por script de verificação.",
+      title: "Verificação automática do caminho CMS",
+      standfirst: "Matéria temporária criada e apagada por script de verificação.",
+      excerpt: "Matéria temporária criada e apagada por script de verificação.",
+      author_id: autor.id,
       category_id: categoria?.id ?? null,
       content_json: CORPO,
       content_text: MARCA,
@@ -96,32 +98,30 @@ try {
     }),
   });
 
-  // O Next guarda cache por rota; em dev o force-dynamic do painel não vale
-  // para o portal, então damos um respiro antes de conferir.
   await new Promise((r) => setTimeout(r, 1500));
 
   await conferir("a matéria abre e mostra o texto", `/noticias/${SLUG}`, MARCA);
-  await conferir("aparece na listagem de notícias", "/noticias", "Verificação do caminho CMS");
-  await conferir("aparece na home", "/", "Verificação do caminho CMS");
+  await conferir("aparece na listagem de notícias", "/noticias", "Verificação automática");
+  await conferir("aparece na home", "/", "Verificação automática");
   if (categoria) {
-    await conferir(`aparece na editoria /${categoria.key}`, `/${categoria.key}`, "Verificação do caminho CMS");
+    await conferir(
+      `aparece na editoria /${categoria.key}`,
+      `/${categoria.key}`,
+      "Verificação automática"
+    );
   }
-  if (autor?.slug) {
-    await conferir("aparece na página do autor", `/colunistas/${autor.slug}`, "Verificação do caminho CMS");
-  }
+  await conferir("aparece na página do autor", `/colunistas/${autor.slug}`, "Verificação automática");
 } finally {
-  await rest(`articles?id=eq.${rascunho.id}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      ...original,
-      standfirst: null,
-      excerpt: null,
-      content_json: null,
-      content_text: null,
-      reading_time: null,
-    }),
-  });
-  console.log("cenário desfeito: a matéria voltou a ser rascunho vazio\n");
+  // Só apaga o que este processo criou, identificado pelo id devolvido no
+  // insert. Sem id não houve criação, e não há nada a remover.
+  if (criada?.id) {
+    const apagadas = await rest(`articles?id=eq.${criada.id}&select=id`, { method: "DELETE" });
+    console.log(
+      apagadas?.length
+        ? "cenário apagado: a matéria temporária não existe mais\n"
+        : `ATENÇÃO: não consegui apagar ${criada.id} (/${SLUG}). Remova à mão.\n`
+    );
+  }
 }
 
 let falhas = 0;

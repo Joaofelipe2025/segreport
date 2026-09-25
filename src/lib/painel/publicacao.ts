@@ -27,10 +27,18 @@ export function pendenciasParaPublicar(materia: MateriaParaPublicar): string[] {
   if (materia.category_id === null) {
     faltas.push("escolha uma categoria");
   }
-  // `criarMateria` grava `rascunho-<base36 do relógio>`. É endereço de
-  // trabalho: publicar com ele põe no ar uma URL impossível de adivinhar e
+  // Endereço vazio é aceito pelo banco — `text not null unique` deixa passar
+  // string vazia — e põe a matéria em /noticias/, que é a própria listagem:
+  // publicada e inalcançável.
+  //
+  // `rascunho-*` e `materia-*` são endereços de trabalho, gerados quando não
+  // havia base utilizável no título ou quando o endereço limpo já estava
+  // ocupado. Publicar com um deles põe no ar uma URL que ninguém escolheu e
   // que, depois de indexada, não se corrige sem quebrar link.
-  if (materia.slug.trim().startsWith("rascunho-")) {
+  const endereco = materia.slug.trim();
+  if (endereco.length === 0) {
+    faltas.push("a matéria precisa de um endereço");
+  } else if (endereco.startsWith("rascunho-") || endereco.startsWith("materia-")) {
     faltas.push("troque o endereço provisório da matéria");
   }
   // `extrairTexto` ignora atributo técnico de propósito: matéria que só tem

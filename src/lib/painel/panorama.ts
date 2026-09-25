@@ -103,7 +103,11 @@ export function problemasDaPublicada(linha: LinhaDoPanorama): string[] {
   if (linha.status !== "published") return [];
 
   const problemas: string[] = [];
-  if (linha.slug.startsWith("rascunho-")) problemas.push("endereço provisório");
+  const endereco = linha.slug.trim();
+  if (endereco.length === 0) problemas.push("sem endereço");
+  else if (endereco.startsWith("rascunho-") || endereco.startsWith("materia-")) {
+    problemas.push("endereço provisório");
+  }
   if (linha.category_id === null) problemas.push("sem editoria");
   if (!linha.cover_url?.trim()) problemas.push("sem capa");
   if (!linha.excerpt?.trim()) problemas.push("sem resumo");

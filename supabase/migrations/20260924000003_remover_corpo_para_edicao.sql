@@ -1,0 +1,22 @@
+-- ============================================================================
+-- Remover article_body_for_edit
+--
+-- A migração 20260924000002 criou esta função para o editor ler o corpo por
+-- id. Ela nunca chegou a ser aplicada em produção — conferido por RPC, que
+-- devolveu PGRST202 — e enquanto não era aplicada o painel não abria matéria
+-- nenhuma. Passo manual que trava o produto é pior do que a imperfeição que
+-- ele corrige.
+--
+-- O editor passou a usar `article_body_json(slug)`, que já existia e tem a
+-- mesma regra de autorização; o direito de EDITAR, que é mais estreito que o
+-- de ler, é conferido em src/lib/painel/permissao.ts, espelhando a RLS de
+-- escrita.
+--
+-- Esta migração existe em vez de apagar o arquivo anterior: migração é
+-- append-only. Num banco onde a 000002 tenha rodado, remover o arquivo
+-- deixaria `supabase_migrations.schema_migrations` apontando para uma versão
+-- sem arquivo local, e `supabase db push` travaria — junto com uma função
+-- `security definer` órfã que nada no repositório referencia ou testa.
+-- ============================================================================
+
+drop function if exists public.article_body_for_edit(uuid);

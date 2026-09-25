@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AVISO_DE_SAIDA, deveAvisarAoSair } from "@/lib/painel/saida";
 import { slugDeAssinatura } from "@/lib/painel/assinatura";
+import { enderecoDisponivel } from "@/lib/painel/endereco";
 
 describe("aviso ao sair com trabalho não salvo", () => {
   it("avisa quando há alteração pendente e o destino é outra página", () => {
@@ -48,5 +49,31 @@ describe("endereço público da assinatura", () => {
     // página /colunistas/ quebrava.
     expect(slugDeAssinatura("", "日本語の名前")).toBeNull();
     expect(slugDeAssinatura("—— ——", "···")).toBeNull();
+  });
+});
+
+describe("endereço único na criação", () => {
+  it("o primeiro fica com o endereço limpo", () => {
+    expect(enderecoDisponivel("Boletim do dia", [])).toBe("boletim-do-dia");
+  });
+
+  it("o segundo ganha sufixo em vez de ser recusado", () => {
+    // Coluna diária repete título por natureza. Recusar a criação joga o
+    // problema no colo do colunista, que nem pode mudar o endereço — o campo
+    // é desabilitado para ele, e o gatilho do banco barra a troca.
+    const r = enderecoDisponivel("Boletim do dia", ["boletim-do-dia"]);
+    expect(r).toMatch(/^boletim-do-dia-/);
+    expect(r).not.toBe("boletim-do-dia");
+  });
+
+  it("pula todos os ocupados", () => {
+    const ocupados = ["boletim-do-dia", "boletim-do-dia-2"];
+    expect(ocupados).not.toContain(enderecoDisponivel("Boletim do dia", ocupados));
+  });
+
+  it("título sem letra latina ainda produz endereço utilizável", () => {
+    const r = enderecoDisponivel("🔥🔥🔥", []);
+    expect(r.length).toBeGreaterThan(0);
+    expect(r).toMatch(/^[a-z0-9-]+$/);
   });
 });

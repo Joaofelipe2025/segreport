@@ -7,6 +7,7 @@ import { requirePainel, requireRole } from "@/lib/auth/session";
 import { slugDeNome } from "@/lib/auth/rules";
 import { pendenciasParaPublicar } from "@/lib/painel/publicacao";
 import { haConflito } from "@/lib/painel/consulta";
+import { enderecoDisponivel } from "@/lib/painel/endereco";
 import {
   extrairTexto,
   tempoDeLeitura,
@@ -49,10 +50,21 @@ async function criarMateriaNova(
 
   const supabase = await createClient();
 
-  // O endereço sai do título. Se colidir, o banco recusa pela restrição de
-  // unicidade e a pessoa recebe o motivo — melhor do que inventar um sufixo
-  // e deixá-la publicar com uma URL que ninguém escolheu.
-  const slug = campos.slug || slugDeNome(campos.titulo);
+  // O endereço sai do título, com sufixo quando já estiver ocupado.
+  //
+  // Recusar a criação por colisão parecia mais honesto e não era: coluna
+  // diária repete título por natureza, e o colunista não pode resolver —
+  // o campo Endereço é desabilitado para ele e o gatilho do banco barra a
+  // troca. A matéria nasce; quem cobra um endereço escolhido é o portão de
+  // publicação, com o admin presente.
+  let slug = campos.slug;
+  if (!slug) {
+    const { data: vizinhos } = await supabase
+      .from("articles")
+      .select("slug")
+      .like("slug", `${slugDeNome(campos.titulo) || "materia"}%`);
+    slug = enderecoDisponivel(campos.titulo, (vizinhos ?? []).map((v) => v.slug));
+  }
 
   const { data, error } = await supabase
     .from("articles")
@@ -76,11 +88,15 @@ async function criarMateriaNova(
     .single();
 
   if (error || !data) {
+    // Ainda pode colidir: outra pessoa pode ter gravado o mesmo endereço
+    // entre a consulta dos vizinhos e este insert. A mensagem diz o que a
+    // pessoa consegue fazer — o colunista não pode mudar o endereço, então
+    // mandá-lo fazer isso seria um conselho impossível.
     const duplicado = error?.code === "23505";
     return {
       status: "erro",
       mensagem: duplicado
-        ? `Já existe uma matéria no endereço /${slug}. Mude o título ou o endereço no trilho à direita.`
+        ? `O endereço /${slug} acabou de ser ocupado por outra matéria. Salve de novo — o endereço é recalculado.`
         : `Não foi possível criar a matéria: ${error?.message ?? "erro desconhecido"}`,
     };
   }

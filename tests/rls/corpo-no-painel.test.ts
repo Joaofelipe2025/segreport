@@ -108,3 +108,34 @@ describe("o painel alcança o corpo por article_body_json", () => {
     });
   });
 });
+
+describe("a diferença que a troca de função introduziu", () => {
+  it("article_body_json entrega matéria publicada aberta a QUALQUER UM — inclusive ao colunista alheio", async () => {
+    // Esta é a única diferença de comportamento entre a função que existe e
+    // a que foi descartada, e ela precisa ficar visível: sozinha, a função
+    // NÃO serve para decidir quem edita.
+    await withRollback(async (db) => {
+      const ids = await seedUsers(db);
+      await seedArticle(db, ids.otherAuthorId, "published", "publicada-alheia");
+      await comCorpo(db, "publicada-alheia");
+
+      await actAs(db, ids.columnistId);
+      const r = await db.query("select public.article_body_json($1) as corpo", [
+        "publicada-alheia",
+      ]);
+      expect(JSON.stringify(r.rows[0].corpo)).toContain("Miolo da matéria.");
+    });
+  });
+
+  it("e é por isso que o painel confere podeEditarMateria ANTES de chamar a função", async () => {
+    // O invariante mora em dois lugares, então o teste tem de mostrar os dois
+    // juntos: a função entrega o corpo, e a regra de edição recusa.
+    const { podeEditarMateria } = await import("@/lib/painel/permissao");
+    expect(
+      podeEditarMateria("columnist", "autor-proprio", {
+        author_id: "autor-alheio",
+        status: "published",
+      })
+    ).toBe(false);
+  });
+});

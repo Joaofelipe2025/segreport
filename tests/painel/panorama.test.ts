@@ -210,3 +210,11 @@ describe("contagem por estado", () => {
     expect(contarPorEstado([linha({ status: "limbo" })]).draft).toBe(0);
   });
 });
+
+describe("endereço vazio em matéria publicada", () => {
+  it("aparece entre os problemas", () => {
+    expect(problemasDaPublicada(linha({ status: "published", slug: "" }))).toContain(
+      "sem endereço"
+    );
+  });
+});

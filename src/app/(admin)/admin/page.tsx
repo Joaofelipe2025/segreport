@@ -38,31 +38,80 @@ export default async function PainelInicial() {
   const supabase = await createClient();
   const agora = new Date();
 
-  // Uma consulta só, sem corpo de matéria: a RLS já limita o colunista ao que
-  // é dele, e todo o resto é conta feita em memória sobre estas linhas.
-  const [todas, listaDeCategorias] = await Promise.all([
-    supabase.from("articles").select(CAMPOS).order("updated_at", { ascending: false }),
+  // Consultas dirigidas, nunca a tabela inteira.
+  //
+  // Uma versão anterior lia tudo e fatiava em memória. Parece simples e
+  // mente: o PostgREST corta a resposta no `max-rows` do projeto (1000 por
+  // padrão) e devolve 200 com o corpo truncado — sem erro, sem aviso, e
+  // `exigir()` deixa passar. A partir daí os contadores viram ficção, e como
+  // a ordem é por `updated_at`, o primeiro a sumir é o que está parado há
+  // mais tempo: exatamente o que este painel existe para mostrar.
+  const contagens = supabase.from("articles").select("status");
+  const filaDeRevisao = supabase
+    .from("articles")
+    .select(CAMPOS)
+    .eq("status", "in_review")
+    .order("updated_at", { ascending: true });
+  const agendadas = supabase
+    .from("articles")
+    .select(CAMPOS)
+    .eq("status", "scheduled")
+    .order("scheduled_for", { ascending: true });
+  const publicadas = supabase
+    .from("articles")
+    .select(CAMPOS)
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+  const rascunhos = supabase
+    .from("articles")
+    .select(CAMPOS)
+    .eq("status", "draft")
+    .order("updated_at", { ascending: true });
+  const ultimas = supabase
+    .from("articles")
+    .select(CAMPOS)
+    .order("updated_at", { ascending: false })
+    .limit(8);
+
+  const [
+    porStatus,
+    listaEmRevisao,
+    listaAgendadas,
+    listaPublicadas,
+    listaRascunhos,
+    listaUltimas,
+    listaDeCategorias,
+  ] = await Promise.all([
+    contagens,
+    filaDeRevisao,
+    agendadas,
+    publicadas,
+    rascunhos,
+    ultimas,
     supabase.from("categories").select("id, label").order("label"),
   ]);
 
-  const linhas = exigir(todas, "o panorama das matérias") as unknown as LinhaDoPanorama[];
+  const como = (r: Awaited<typeof filaDeRevisao>, oQue: string) =>
+    exigir(r, oQue) as unknown as LinhaDoPanorama[];
+
+  const contagem = contarPorEstado(exigir(porStatus, "as contagens do painel"));
+  const emRevisao = como(listaEmRevisao, "a fila de revisão");
+  const listaDePublicadas = como(listaPublicadas, "as matérias publicadas");
+  const recentes = como(listaUltimas, "as últimas matérias editadas");
   const categorias = exigir(listaDeCategorias, "as editorias");
 
-  const contagem = contarPorEstado(linhas);
-  const emRevisao = linhas
-    .filter((l) => l.status === "in_review")
-    .sort((a, b) => a.updated_at.localeCompare(b.updated_at));
-  const atrasadas = agendadasAtrasadas(linhas, agora);
-  const paradas = rascunhosParados(linhas, agora);
-  const vazias = rascunhosVazios(linhas);
-  const comProblema = linhas
+  const atrasadas = agendadasAtrasadas(como(listaAgendadas, "as matérias agendadas"), agora);
+  const todosOsRascunhos = como(listaRascunhos, "os rascunhos");
+  const paradas = rascunhosParados(todosOsRascunhos, agora);
+  const vazias = rascunhosVazios(todosOsRascunhos);
+
+  const comProblema = listaDePublicadas
     .map((l) => ({ linha: l, problemas: problemasDaPublicada(l) }))
     .filter((x) => x.problemas.length > 0);
-  const maisLidas = linhas
-    .filter((l) => l.status === "published" && (l.view_count ?? 0) > 0)
+  const maisLidas = [...listaDePublicadas]
+    .filter((l) => (l.view_count ?? 0) > 0)
     .sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0))
     .slice(0, 5);
-  const recentes = linhas.slice(0, 8);
   const ehAdmin = perfil.role === "admin";
 
   return (
@@ -150,7 +199,7 @@ export default async function PainelInicial() {
       <Secao titulo="Como está o acervo">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           <Numero
-            valor={publicadasDesde(linhas, agora, 7)}
+            valor={publicadasDesde(listaDePublicadas, agora, 7)}
             rotulo="últimos 7 dias"
             destaque="bg-forest-100 text-forest-700"
           />
@@ -230,7 +279,7 @@ export default async function PainelInicial() {
       <div className="grid gap-8 lg:grid-cols-2">
         <Secao titulo="Cobertura por editoria">
           <Cartao className="p-4">
-            <CoberturaPorEditoria itens={porEditoria(linhas, categorias)} />
+            <CoberturaPorEditoria itens={porEditoria(listaDePublicadas, categorias)} />
           </Cartao>
         </Secao>
 

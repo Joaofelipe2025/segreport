@@ -80,7 +80,12 @@ async function conferir(nome, caminho, espera) {
 const destino = await entrar();
 console.log(`sessão estabelecida, /auth/confirm mandou para ${destino}\n`);
 
-await conferir("painel inicial", "/admin", ["Painel", "Editadas por último"]);
+await conferir("painel inicial", "/admin", [
+  "Como está o acervo",
+  "Cobertura por editoria",
+  "Mais lidas",
+  "Editadas por último",
+]);
 await conferir("listagem de matérias", "/admin/materias", ["Matérias", "Nova matéria"]);
 await conferir("nova matéria (sem gravar)", "/admin/materias/nova", ["Título da matéria"]);
 await conferir("colunistas", "/admin/colunistas", ["Colunistas"]);

@@ -23,7 +23,8 @@ const Editor = dynamic(() => import("@/components/editor/Editor"), {
 const INICIAL: EstadoMateria = { status: "inicial" };
 
 export interface MateriaParaEditar {
-  id: string;
+  /** Nulo enquanto a matéria não existe: a linha nasce no primeiro salvamento. */
+  id: string | null;
   slug: string;
   title: string;
   standfirst: string | null;
@@ -64,6 +65,7 @@ export default function EditorDeMateria({
 
   const carimbo = estado.updatedAt ?? materia.updated_at;
   const ehAdmin = papel === "admin";
+  const existe = materia.id !== null;
 
   function mudouOCorpo(novo: DocumentoBlocos) {
     setDoc(novo);
@@ -99,9 +101,14 @@ export default function EditorDeMateria({
   }
 
   function transicao(novo: string, agendadoPara?: string) {
+    // Só existe transição para matéria que existe; os botões nem aparecem
+    // antes disso. A checagem é para o TypeScript e para o clique impossível.
+    if (!materia.id) return;
+    const idDaMateria = materia.id;
+
     setAvisoEstado(undefined);
     iniciarTransicao(async () => {
-      const r = await mudarEstado(materia.id, novo, agendadoPara);
+      const r = await mudarEstado(idDaMateria, novo, agendadoPara);
       setAvisoEstado(r.mensagem);
       if (r.status === "salvo") setStatusAtual(novo);
     });
@@ -111,7 +118,7 @@ export default function EditorDeMateria({
 
   return (
     <form action={acao} onInput={() => setSujo(true)}>
-      <input type="hidden" name="id" value={materia.id} />
+      {materia.id && <input type="hidden" name="id" value={materia.id} />}
       <input type="hidden" name="updated_at" value={carimbo} />
       <input type="hidden" name="content_json" value={JSON.stringify(doc)} />
 
@@ -151,10 +158,10 @@ export default function EditorDeMateria({
             disabled={ocupado}
             className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
           >
-            {pendente ? "Salvando…" : "Salvar"}
+            {pendente ? "Salvando…" : existe ? "Salvar" : "Criar matéria"}
           </button>
 
-          {statusAtual === "draft" && (
+          {existe && statusAtual === "draft" && (
             <button
               type="button"
               disabled={ocupado}
@@ -165,7 +172,7 @@ export default function EditorDeMateria({
             </button>
           )}
 
-          {ehAdmin && statusAtual === "in_review" && (
+          {existe && ehAdmin && statusAtual === "in_review" && (
             <>
               <button
                 type="button"
@@ -186,7 +193,7 @@ export default function EditorDeMateria({
             </>
           )}
 
-          {ehAdmin && statusAtual === "published" && (
+          {existe && ehAdmin && statusAtual === "published" && (
             <button
               type="button"
               disabled={ocupado}
@@ -274,7 +281,7 @@ export default function EditorDeMateria({
       </div>
 
       {/* Exclusão: a única ação do painel sem volta ----------------------- */}
-      {ehAdmin && (
+      {existe && ehAdmin && (
         <section className="mt-10 border-t border-hairline pt-6">
           <h2 className="text-sm font-semibold text-ink">Excluir esta matéria</h2>
           <p className="mt-1 max-w-lg text-xs leading-relaxed text-ink-3">
@@ -295,6 +302,7 @@ export default function EditorDeMateria({
               onClick={() =>
                 iniciarTransicao(async () => {
                   // Sucesso redireciona e nunca volta; só a recusa retorna.
+                  if (!materia.id) return;
                   const r = await excluirMateria(materia.id);
                   setAvisoEstado(r.mensagem);
                 })

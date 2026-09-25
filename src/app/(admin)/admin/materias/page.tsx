@@ -3,7 +3,6 @@ import Link from "next/link";
 import PageHeader from "@/components/admin/PageHeader";
 import { requirePainel } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { criarMateria } from "./actions";
 import { formatRelative } from "@/lib/format";
 import { exigir } from "@/lib/painel/consulta";
 import {
@@ -54,14 +53,14 @@ export default async function MateriasPage(props: PageProps<"/admin/materias">) 
             : "Todas as matérias do portal, de qualquer autor."
         }
         acao={
-          <form action={criarMateria}>
-            <button
-              type="submit"
-              className="rounded-lg bg-forest-800 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-forest-700"
-            >
-              + Nova matéria
-            </button>
-          </form>
+          // Link, não formulário: navegar não grava no banco. A linha nasce
+          // no primeiro salvamento, quando já existe um título.
+          <Link
+            href="/admin/materias/nova"
+            className="rounded-lg bg-forest-800 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-forest-700"
+          >
+            + Nova matéria
+          </Link>
         }
       />
 

@@ -8,7 +8,6 @@ import { slugDeNome } from "@/lib/auth/rules";
 import { pendenciasParaPublicar } from "@/lib/painel/publicacao";
 import { haConflito } from "@/lib/painel/consulta";
 import {
-  documentoVazio,
   extrairTexto,
   tempoDeLeitura,
   type DocumentoBlocos,
@@ -24,35 +23,77 @@ export interface EstadoMateria {
 /** Estados que o colunista pode gravar. A RLS é quem realmente impede. */
 const ESTADOS_DO_COLUNISTA = new Set(["draft", "in_review"]);
 
-export async function criarMateria(): Promise<void> {
-  const perfil = await requirePainel();
-  const supabase = await createClient();
-
+/**
+ * Cria a matéria no PRIMEIRO salvamento, não no clique do botão.
+ *
+ * Antes, "Nova matéria" era um formulário que gravava uma linha na hora:
+ * `Matéria sem título`, slug `rascunho-<relógio>`, corpo vazio. Quando o
+ * editor não abria — e ele não abriu — sobrava lixo no banco. Cinco linhas
+ * assim se acumularam antes de alguém perceber.
+ *
+ * Botão de navegação não deve escrever no banco. Agora `/admin/materias/nova`
+ * é só uma tela; a linha nasce quando existe um título de verdade.
+ */
+async function criarMateriaNova(
+  perfil: { id: string; authorId: string | null },
+  campos: CamposDaMateria,
+  doc: DocumentoBlocos
+): Promise<EstadoMateria> {
   if (!perfil.authorId) {
-    throw new Error(
-      "Sua conta não tem assinatura pública. Crie o autor e vincule ao perfil antes de escrever."
-    );
+    return {
+      status: "erro",
+      mensagem:
+        "Sua conta não tem assinatura pública, então não dá para assinar uma matéria. Peça ao administrador para criar o autor e vincular ao seu perfil.",
+    };
   }
 
-  const sufixo = Date.now().toString(36);
+  const supabase = await createClient();
+
+  // O endereço sai do título. Se colidir, o banco recusa pela restrição de
+  // unicidade e a pessoa recebe o motivo — melhor do que inventar um sufixo
+  // e deixá-la publicar com uma URL que ninguém escolheu.
+  const slug = campos.slug || slugDeNome(campos.titulo);
+
   const { data, error } = await supabase
     .from("articles")
     .insert({
-      slug: `rascunho-${sufixo}`,
-      title: "Matéria sem título",
+      slug,
+      title: campos.titulo,
+      standfirst: campos.standfirst,
       status: "draft",
       author_id: perfil.authorId,
-      content_json: documentoVazio() as never,
-      content_text: "",
+      category_id: campos.categoryId,
+      seo_title: campos.seoTitle,
+      seo_description: campos.seoDescription,
+      content_json: doc as never,
+      content_text: extrairTexto(doc),
+      reading_time: tempoDeLeitura(doc),
+      updated_by: perfil.id,
     })
     .select("id")
     .single();
 
   if (error || !data) {
-    throw new Error(`Não foi possível criar a matéria: ${error?.message ?? "erro desconhecido"}`);
+    const duplicado = error?.code === "23505";
+    return {
+      status: "erro",
+      mensagem: duplicado
+        ? `Já existe uma matéria no endereço /${slug}. Mude o título ou o endereço no trilho à direita.`
+        : `Não foi possível criar a matéria: ${error?.message ?? "erro desconhecido"}`,
+    };
   }
 
+  revalidatePath("/admin/materias");
   redirect(`/admin/materias/${data.id}`);
+}
+
+interface CamposDaMateria {
+  titulo: string;
+  standfirst: string | null;
+  slug: string;
+  categoryId: number | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
 }
 
 export async function salvarMateria(
@@ -72,9 +113,13 @@ export async function salvarMateria(
   const updatedAtCliente = String(dados.get("updated_at") ?? "");
   const docBruto = String(dados.get("content_json") ?? "");
 
-  if (!id) return { status: "erro", mensagem: "Matéria sem identificador." };
   if (titulo.length < 3) {
-    return { status: "erro", mensagem: "O título precisa de pelo menos três caracteres." };
+    return {
+      status: "erro",
+      mensagem: id
+        ? "O título precisa de pelo menos três caracteres."
+        : "Dê um título à matéria para começar — ele precisa de pelo menos três caracteres.",
+    };
   }
 
   let doc: DocumentoBlocos;
@@ -83,6 +128,19 @@ export async function salvarMateria(
   } catch {
     return { status: "erro", mensagem: "O corpo da matéria chegou corrompido. Recarregue e tente de novo." };
   }
+
+  const campos: CamposDaMateria = {
+    titulo,
+    standfirst: standfirst || null,
+    slug: slugBruto ? slugDeNome(slugBruto) : "",
+    categoryId: categoria ? Number(categoria) : null,
+    seoTitle: seoTitle || null,
+    seoDescription: seoDescription || null,
+  };
+
+  // Sem id, a matéria ainda não existe: este é o primeiro salvamento, e é
+  // aqui que a linha nasce.
+  if (!id) return criarMateriaNova(perfil, campos, doc);
 
   // Conflito de edição simultânea: o carimbo viaja com o formulário. Se mudou
   // no servidor, alguém salvou no meio. Recusamos em vez de mesclar — em
@@ -182,8 +240,8 @@ export async function mudarEstado(
     // indistinguível de corpo nulo por AUSÊNCIA, e o portão diria "escreva o
     // corpo da matéria" a quem já escreveu novecentas palavras — mandando a
     // pessoa reescrever o que está gravado.
-    const { data: corpo, error: erroCorpo } = await supabase.rpc("article_body_for_edit", {
-      p_id: id,
+    const { data: corpo, error: erroCorpo } = await supabase.rpc("article_body_json", {
+      p_slug: linha.slug ?? "",
     });
 
     if (erroCorpo) {

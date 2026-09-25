@@ -8,7 +8,7 @@ import FormularioDeAssinatura from "./FormularioDeAssinatura";
 
 export const metadata: Metadata = { title: "Ajustes" };
 
-const UUID_INEXISTENTE = "00000000-0000-0000-0000-000000000000";
+const SLUG_INEXISTENTE = "__sonda-de-diagnostico__";
 
 export default async function AjustesPage() {
   const perfil = await requirePainel();
@@ -45,13 +45,13 @@ export default async function AjustesPage() {
       })
     );
 
-    // Sonda barata: um id que não existe. Só interessa se a função responde
-    // — se ela sumir, o editor não abre matéria nenhuma.
-    const sonda = await supabase.rpc("article_body_for_edit", { p_id: UUID_INEXISTENTE });
+    // Sonda barata: um slug que não existe. Só interessa se a função
+    // responde — se ela sumir, o editor não abre matéria nenhuma.
+    const sonda = await supabase.rpc("article_body_json", { p_slug: SLUG_INEXISTENTE });
 
     diagnostico = [
       {
-        nome: "Função article_body_for_edit",
+        nome: "Função article_body_json",
         valor: sonda.error ? sonda.error.message : "responde",
         ok: !sonda.error,
       },

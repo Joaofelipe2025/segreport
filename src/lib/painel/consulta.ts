@@ -22,10 +22,35 @@ export class FalhaDeConsulta extends Error {
   }
 }
 
-export function exigir<T>(
-  resposta: { data: T | null; error: { message: string } | null },
+interface RespostaDoBanco {
+  data: unknown;
+  error: { message: string } | null;
+}
+
+/**
+ * O `data` do ramo em que NÃO houve erro.
+ *
+ * O Supabase tipa a resposta como união discriminada — ou dado com erro nulo,
+ * ou erro com dado nulo — e é preciso extrair só o primeiro ramo. As duas
+ * assinaturas óbvias falham, cada uma de um jeito:
+ *
+ *   `{ data: T | null; error: E | null }`  → T é inferido das duas pernas da
+ *   união e colapsa para `never`; toda propriedade do resultado vira erro.
+ *
+ *   `{ data: T; error: E | null }`  → T vira `Row[] | null`, e quem chamou
+ *   passa a precisar checar nulo que o `throw` já eliminou.
+ *
+ * Distribuindo sobre a união, o ramo de erro não casa com `error: null` e
+ * some. Sobra exatamente o que `exigir` devolve: `Row[]` para listagem,
+ * `Row | null` para `maybeSingle()` — onde nulo é linha inexistente, não
+ * falha.
+ */
+type DadoDoSucesso<R> = R extends { data: infer D; error: null } ? D : never;
+
+export function exigir<R extends RespostaDoBanco>(
+  resposta: R,
   oQue: string
-): T {
+): DadoDoSucesso<R> {
   if (resposta.error) throw new FalhaDeConsulta(oQue, resposta.error.message);
-  return resposta.data as T;
+  return resposta.data as DadoDoSucesso<R>;
 }

@@ -18,12 +18,24 @@ import { problemasDaPublicada, type LinhaDoPanorama } from "@/lib/painel/panoram
 
 export const metadata: Metadata = { title: "Matérias" };
 
+/**
+ * Três estados no fluxo. Agendada e arquivada saíram: agendar nunca
+ * funcionou sem pg_cron, e despublicar já devolve para rascunho.
+ *
+ * Elas continuam no banco, e linhas antigas continuam existindo — por isso
+ * o filtro delas aparece quando há o que filtrar, em vez de sumir e deixar
+ * matéria inalcançável pela interface.
+ */
 const FILTROS: Array<{ valor: "" | EstadoEditorial; rotulo: string }> = [
   { valor: "", rotulo: "Todas" },
-  { valor: "in_review", rotulo: "Em revisão" },
   { valor: "draft", rotulo: "Rascunhos" },
-  { valor: "scheduled", rotulo: "Agendadas" },
+  { valor: "in_review", rotulo: "Em revisão" },
   { valor: "published", rotulo: "Publicadas" },
+];
+
+const FILTROS_LEGADOS: Array<{ valor: EstadoEditorial; rotulo: string }> = [
+  { valor: "scheduled", rotulo: "Agendadas" },
+  { valor: "archived", rotulo: "Arquivadas" },
 ];
 
 const CAMPOS =
@@ -58,6 +70,14 @@ export default async function MateriasPage(props: PageProps<"/admin/materias">) 
   const linhas = exigir(await consulta, "as matérias") as unknown as LinhaDoPanorama[];
 
   const emRevisao = linhas.filter((m) => m.status === "in_review");
+
+  // Agendada e arquivada saíram do fluxo, mas linhas antigas existem. Sem
+  // este filtro elas ficariam inalcançáveis pela interface.
+  const legados = await supabase
+    .from("articles")
+    .select("status")
+    .in("status", ["scheduled", "archived"]);
+  const temLegado = new Set((legados.data ?? []).map((l) => l.status));
   const filtrando = Boolean(filtro || busca);
 
   return (
@@ -96,7 +116,7 @@ export default async function MateriasPage(props: PageProps<"/admin/materias">) 
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex flex-wrap gap-1 rounded-lg bg-forest-100 p-1">
-          {FILTROS.map((f) => {
+          {[...FILTROS, ...FILTROS_LEGADOS.filter((f) => temLegado.has(f.valor))].map((f) => {
             const ativo = f.valor === filtro;
             const destino = new URLSearchParams();
             if (f.valor) destino.set("estado", f.valor);

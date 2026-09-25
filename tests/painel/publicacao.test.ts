@@ -31,13 +31,13 @@ describe("portão de publicação", () => {
     );
   });
 
-  it("endereço provisório é pendência", () => {
-    // `criarMateria` grava `rascunho-<timestamp>`. Publicar assim põe no ar
-    // uma URL que ninguém adivinha e que, depois de indexada, não se corrige
-    // sem quebrar link.
-    expect(pendenciasParaPublicar({ ...completa, slug: "rascunho-mug0vle1" })).toContain(
-      "troque o endereço provisório da matéria"
-    );
+  it("endereço provisório é pendência, e a instrução aponta para o título", () => {
+    // O endereço sai do título agora. Só sobra provisório quando o título
+    // não tem caractere aproveitável — "🔥🔥🔥", "···". Mandar "trocar o
+    // endereço" seria apontar para um campo que a pessoa não edita mais.
+    const p = pendenciasParaPublicar({ ...completa, slug: "materia-mug0vle1" });
+    expect(p).toContain("dê um título com letras ou números — o endereço sai dele");
+    expect(pendenciasParaPublicar({ ...completa, slug: "rascunho-mug0vle1" })).toHaveLength(1);
   });
 
   it("corpo com só um parágrafo vazio conta como vazio", () => {

@@ -39,7 +39,10 @@ export function pendenciasParaPublicar(materia: MateriaParaPublicar): string[] {
   if (endereco.length === 0) {
     faltas.push("a matéria precisa de um endereço");
   } else if (endereco.startsWith("rascunho-") || endereco.startsWith("materia-")) {
-    faltas.push("troque o endereço provisório da matéria");
+    // Só chega aqui quem tem título sem nenhum caractere aproveitável —
+    // "🔥🔥🔥", "···". O endereço vem do título agora, então a instrução
+    // aponta para o título, não para um campo que a pessoa não edita mais.
+    faltas.push("dê um título com letras ou números — o endereço sai dele");
   }
   // `extrairTexto` ignora atributo técnico de propósito: matéria que só tem
   // um gráfico embutido não tem texto, e não é matéria.

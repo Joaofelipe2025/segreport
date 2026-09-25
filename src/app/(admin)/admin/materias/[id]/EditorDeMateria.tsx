@@ -14,6 +14,8 @@ import { corDeEstado, rotuloDeEstado } from "@/lib/painel/estados";
 import { confirmacaoConfere } from "@/lib/painel/confirmacao";
 import { useGuardaDeSaida } from "@/components/admin/GuardaDeSaida";
 import CampoDeCapa from "./CampoDeCapa";
+import CampoDeEndereco from "./CampoDeEndereco";
+import { transicoesDe } from "@/lib/painel/fluxo";
 
 // O editor só existe no navegador: o ProseMirror precisa de DOM.
 const Editor = dynamic(() => import("@/components/editor/Editor"), {
@@ -64,6 +66,7 @@ export default function EditorDeMateria({
   // barra lateral, que está em outro ramo da árvore.
   const { sujo, marcarSujo: setSujo } = useGuardaDeSaida();
   const [confirmacao, setConfirmacao] = useState("");
+  const [titulo, setTitulo] = useState(materia.title);
   const [transicionando, iniciarTransicao] = useTransition();
 
   const carimbo = estado.updatedAt ?? materia.updated_at;
@@ -103,7 +106,7 @@ export default function EditorDeMateria({
     setSujo(false);
   }
 
-  function transicao(novo: string, agendadoPara?: string) {
+  function transicao(novo: string) {
     // Só existe transição para matéria que existe; os botões nem aparecem
     // antes disso. A checagem é para o TypeScript e para o clique impossível.
     if (!materia.id) return;
@@ -111,7 +114,7 @@ export default function EditorDeMateria({
 
     setAvisoEstado(undefined);
     iniciarTransicao(async () => {
-      const r = await mudarEstado(idDaMateria, novo, agendadoPara);
+      const r = await mudarEstado(idDaMateria, novo);
       setAvisoEstado(r.mensagem);
       if (r.status === "salvo") setStatusAtual(novo);
     });
@@ -164,48 +167,24 @@ export default function EditorDeMateria({
             {pendente ? "Salvando…" : existe ? "Salvar" : "Criar matéria"}
           </button>
 
-          {existe && statusAtual === "draft" && (
-            <button
-              type="button"
-              disabled={ocupado}
-              onClick={() => transicao("in_review")}
-              className="rounded-lg bg-forest-800 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-forest-700 disabled:opacity-60"
-            >
-              Enviar para revisão
-            </button>
-          )}
-
-          {existe && ehAdmin && statusAtual === "in_review" && (
-            <>
+          {/* As transições vêm de painel/fluxo: três estados, e o que cada
+              papel pode fazer a partir de onde a matéria está. */}
+          {existe &&
+            transicoesDe(statusAtual, papel).map((t) => (
               <button
+                key={t.para}
                 type="button"
                 disabled={ocupado}
-                onClick={() => transicao("draft")}
-                className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
+                onClick={() => transicao(t.para)}
+                className={
+                  t.tom === "primario"
+                    ? "rounded-lg bg-forest-800 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-forest-700 disabled:opacity-60"
+                    : "rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
+                }
               >
-                Devolver
+                {t.rotulo}
               </button>
-              <button
-                type="button"
-                disabled={ocupado}
-                onClick={() => transicao("published")}
-                className="rounded-lg bg-lime-400 px-4 py-2 text-xs font-semibold text-forest-800 transition-colors hover:bg-lime-500 disabled:opacity-60"
-              >
-                Publicar
-              </button>
-            </>
-          )}
-
-          {existe && ehAdmin && statusAtual === "published" && (
-            <button
-              type="button"
-              disabled={ocupado}
-              onClick={() => transicao("archived")}
-              className="rounded-lg border border-hairline px-4 py-2 text-xs font-semibold text-ink-2 transition-colors hover:border-forest-500 disabled:opacity-60"
-            >
-              Arquivar
-            </button>
-          )}
+            ))}
         </div>
       </div>
 
@@ -214,7 +193,8 @@ export default function EditorDeMateria({
         <div className="min-w-0">
           <input
             name="title"
-            defaultValue={materia.title}
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
             placeholder="Título da matéria"
             className="w-full border-0 bg-transparent p-0 text-2xl font-bold leading-tight tracking-[-0.02em] text-ink outline-none placeholder:text-ink-4 sm:text-[30px]"
           />
@@ -223,6 +203,13 @@ export default function EditorDeMateria({
             defaultValue={materia.standfirst ?? ""}
             placeholder="Linha de apoio — o que a matéria acrescenta em uma frase"
             className="mt-2 w-full border-0 bg-transparent p-0 text-base leading-relaxed text-ink-3 outline-none placeholder:text-ink-4"
+          />
+
+          <CampoDeEndereco
+            titulo={titulo}
+            inicial={materia.slug}
+            status={statusAtual}
+            ehAdmin={ehAdmin}
           />
 
           <div className="mt-6">
@@ -246,15 +233,6 @@ export default function EditorDeMateria({
                 </option>
               ))}
             </select>
-          </Campo>
-
-          <Campo rotulo="Endereço da matéria">
-            <input
-              name="slug"
-              defaultValue={materia.slug}
-              disabled={!ehAdmin}
-              className="w-full rounded-lg border border-hairline bg-white px-3 py-2 font-mono text-[12px] outline-none focus:border-forest-500 disabled:bg-paper disabled:text-ink-4"
-            />
           </Campo>
 
           <Campo rotulo="Capa">

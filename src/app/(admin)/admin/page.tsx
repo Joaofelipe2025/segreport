@@ -13,7 +13,8 @@ import LimparRascunhosVazios from "./LimparRascunhosVazios";
 import { requirePainel } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { exigir } from "@/lib/painel/consulta";
-import { ESTADOS_EDITORIAIS, corDeEstado, rotuloDeEstado } from "@/lib/painel/estados";
+import { corDeEstado, rotuloDeEstado } from "@/lib/painel/estados";
+import { ESTADOS_DO_FLUXO } from "@/lib/painel/fluxo";
 import { nomeDoAutor } from "@/lib/painel/resumo";
 import {
   DIAS_ATE_PARADO,
@@ -143,14 +144,15 @@ export default async function PainelInicial() {
           tom="alerta"
           titulo={
             atrasadas.length === 1
-              ? "1 matéria agendada passou da hora e não foi publicada"
-              : `${atrasadas.length} matérias agendadas passaram da hora e não foram publicadas`
+              ? "1 matéria ficou presa em agendamento"
+              : `${atrasadas.length} matérias ficaram presas em agendamento`
           }
         >
           <p className="mt-1.5 max-w-2xl text-xs leading-relaxed">
-            Este projeto ainda não tem publicação automática — nada sai do ar
-            para o ar sozinho. Até o agendamento por <code>pg_cron</code>{" "}
-            existir, agendar é só um lembrete: alguém precisa abrir e publicar.
+            O agendamento saiu do fluxo: ele nunca publicou nada sozinho, porque
+            este projeto não tem <code>pg_cron</code>. Estas são as que ficaram
+            para trás. Abra cada uma e publique, ou traga de volta para
+            rascunho — não há mais como agendar novas.
           </p>
           <ul className="mt-3 divide-y divide-[#f0cdcd]">
             {atrasadas.map((m) => (
@@ -161,7 +163,7 @@ export default async function PainelInicial() {
                 >
                   <span className="min-w-0 truncate text-sm">{m.title}</span>
                   <span className="shrink-0 text-[11px]">
-                    era para {m.scheduled_for ? formatRelative(m.scheduled_for, agora) : "—"}
+                    era para sair {m.scheduled_for ? formatRelative(m.scheduled_for, agora) : "—"}
                   </span>
                 </Link>
               </li>
@@ -197,13 +199,19 @@ export default async function PainelInicial() {
       )}
 
       <Secao titulo="Como está o acervo">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {/* Três estados, mais o ritmo da semana. Agendada e arquivada só
+            aparecem se houver o que mostrar: elas saíram do fluxo, mas linhas
+            antigas não somem por decreto. */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Numero
             valor={publicadasDesde(listaDePublicadas, agora, 7)}
             rotulo="últimos 7 dias"
             destaque="bg-forest-100 text-forest-700"
           />
-          {ESTADOS_EDITORIAIS.map((estado) => (
+          {[
+            ...ESTADOS_DO_FLUXO,
+            ...(["scheduled", "archived"] as const).filter((e) => contagem[e] > 0),
+          ].map((estado) => (
             <Numero
               key={estado}
               valor={contagem[estado]}

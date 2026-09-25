@@ -8,6 +8,7 @@ import { slugDeNome } from "@/lib/auth/rules";
 import { pendenciasParaPublicar } from "@/lib/painel/publicacao";
 import { haConflito } from "@/lib/painel/consulta";
 import { enderecoDisponivel } from "@/lib/painel/endereco";
+import { enderecoParaGravar, transicoesDe } from "@/lib/painel/fluxo";
 import {
   extrairTexto,
   tempoDeLeitura,
@@ -21,8 +22,6 @@ export interface EstadoMateria {
   updatedAt?: string;
 }
 
-/** Estados que o colunista pode gravar. A RLS é quem realmente impede. */
-const ESTADOS_DO_COLUNISTA = new Set(["draft", "in_review"]);
 
 /**
  * Cria a matéria no PRIMEIRO salvamento, não no clique do botão.
@@ -166,35 +165,46 @@ export async function salvarMateria(
   // aqui que a linha nasce.
   if (!id) return criarMateriaNova(perfil, campos, doc);
 
-  // Conflito de edição simultânea: o carimbo viaja com o formulário. Se mudou
-  // no servidor, alguém salvou no meio. Recusamos em vez de mesclar — em
-  // texto editorial, mesclar às cegas é pior que avisar.
-  if (updatedAtCliente) {
-    const { data: atual, error: erroCarimbo } = await supabase
-      .from("articles")
-      .select("updated_at")
-      .eq("id", id)
-      .maybeSingle();
+  // Uma leitura serve a duas decisões: o carimbo diz se alguém salvou no
+  // meio, e o estado diz se o endereço já está congelado. Quem decide o
+  // congelamento é o servidor — o campo é editável no formulário, e um POST
+  // direto não pode mover o link de uma matéria que está no ar.
+  const { data: atual, error: erroAtual } = await supabase
+    .from("articles")
+    .select("updated_at, status")
+    .eq("id", id)
+    .maybeSingle();
 
-    // `haConflito` falha fechada: se não deu para ler o carimbo, recusa. A
-    // versão anterior deixava passar, e a proteção contra edição simultânea
-    // se desligava sozinha exatamente quando deveria proteger.
-    if (haConflito(updatedAtCliente, atual?.updated_at ?? null, erroCarimbo)) {
-      return {
-        status: "conflito",
-        mensagem: erroCarimbo
-          ? `Não deu para confirmar se alguém alterou esta matéria (${erroCarimbo.message}). Não gravamos, para não passar por cima do texto de outra pessoa. Tente de novo — seu texto continua aqui na tela.`
-          : "Esta matéria foi alterada por outra pessoa desde que você abriu. Recarregue para ver a versão atual — seu texto continua aqui na tela.",
-      };
-    }
+  // `haConflito` falha fechada: se não deu para ler o carimbo, recusa. A
+  // versão anterior deixava passar, e a proteção contra edição simultânea
+  // se desligava sozinha exatamente quando deveria proteger.
+  if (updatedAtCliente && haConflito(updatedAtCliente, atual?.updated_at ?? null, erroAtual)) {
+    return {
+      status: "conflito",
+      mensagem: erroAtual
+        ? `Não deu para confirmar se alguém alterou esta matéria (${erroAtual.message}). Não gravamos, para não passar por cima do texto de outra pessoa. Tente de novo — seu texto continua aqui na tela.`
+        : "Esta matéria foi alterada por outra pessoa desde que você abriu. Recarregue para ver a versão atual — seu texto continua aqui na tela.",
+    };
   }
+
+  if (erroAtual || !atual) {
+    return {
+      status: "erro",
+      mensagem: `Não foi possível ler o estado da matéria: ${erroAtual?.message ?? "não encontrada"}`,
+    };
+  }
+
+  const estadoAtual = atual.status;
 
   const { data, error } = await supabase
     .from("articles")
     .update({
       title: titulo,
       standfirst: standfirst || null,
-      slug: slugBruto ? slugDeNome(slugBruto) : undefined,
+      // O endereço sai do título, e congela quando a matéria vai ao ar. O
+      // cliente manda o valor já derivado, mas quem decide é o servidor:
+      // `undefined` deixa a coluna intocada, que é o que congelar significa.
+      slug: enderecoParaGravar(titulo, slugBruto, estadoAtual),
       category_id: categoria ? Number(categoria) : null,
       seo_title: seoTitle || null,
       seo_description: seoDescription || null,
@@ -227,26 +237,41 @@ export async function salvarMateria(
  * o colunista não consegue gravar 'published' nem 'scheduled' nem chamando a
  * API diretamente.
  */
-export async function mudarEstado(
-  id: string,
-  novoEstado: string,
-  agendadoPara?: string
-): Promise<EstadoMateria> {
+export async function mudarEstado(id: string, novoEstado: string): Promise<EstadoMateria> {
   const perfil = await requirePainel();
-
-  if (perfil.role === "columnist" && !ESTADOS_DO_COLUNISTA.has(novoEstado)) {
-    return { status: "erro", mensagem: "Publicar é do administrador." };
-  }
-  if (novoEstado === "scheduled" && !agendadoPara) {
-    return { status: "erro", mensagem: "Informe a data e a hora do agendamento." };
-  }
-
   const supabase = await createClient();
+
+  // A transição é validada contra a MESMA tabela que desenha os botões. Antes
+  // a interface oferecia um conjunto e o servidor aceitava outro, mais largo;
+  // quem chamasse a Server Action direto passava por fora do desenho.
+  const { data: linhaAtual, error: erroEstado } = await supabase
+    .from("articles")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (erroEstado || !linhaAtual) {
+    return {
+      status: "erro",
+      mensagem: `Não foi possível ler o estado atual: ${erroEstado?.message ?? "matéria não encontrada"}`,
+    };
+  }
+
+  const permitidas = transicoesDe(linhaAtual.status, perfil.role);
+  if (!permitidas.some((t) => t.para === novoEstado)) {
+    return {
+      status: "erro",
+      mensagem:
+        perfil.role === "columnist" && novoEstado === "published"
+          ? "Publicar é do administrador."
+          : "Esta mudança de estado não é possível a partir de onde a matéria está.",
+    };
+  }
 
   // Portão de publicação. Confere o que está NO BANCO, não o que o formulário
   // disse: entre o último Salvar e o clique em Publicar pode não ter havido
   // salvamento nenhum.
-  if (novoEstado === "published" || novoEstado === "scheduled") {
+  if (novoEstado === "published") {
     const { data: linha, error: erroLinha } = await supabase
       .from("articles")
       .select("title, category_id, slug")
@@ -293,7 +318,12 @@ export async function mudarEstado(
     .from("articles")
     .update({
       status: novoEstado as never,
-      scheduled_for: novoEstado === "scheduled" ? agendadoPara! : null,
+      // Agendamento saiu do fluxo: sem pg_cron nada publica sozinho, e a
+      // coluna fica limpa para nenhuma matéria continuar esperando um
+      // disparo que não existe.
+      scheduled_for: null,
+      // Despublicar mantém a data original: se voltar ao ar, a matéria não
+      // reaparece no topo da home como se fosse nova.
       published_at: novoEstado === "published" ? new Date().toISOString() : undefined,
       updated_by: perfil.id,
       updated_at: new Date().toISOString(),

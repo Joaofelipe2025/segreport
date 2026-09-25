@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/ui/Logo";
-import { itensDeMenu, type Role } from "@/lib/auth/rules";
+import { itemAtivo, itensDeMenu, type Role } from "@/lib/auth/rules";
 
 /**
  * Barra lateral escura do painel.
@@ -28,7 +28,7 @@ export default function Sidebar({ papel, email }: { papel: Role; email: string }
 
       <nav className="no-scrollbar flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
         {itens.map((item) => {
-          const ativo = pathname.startsWith(item.href);
+          const ativo = itemAtivo(item.href, pathname);
           return (
             <Link
               key={item.href}

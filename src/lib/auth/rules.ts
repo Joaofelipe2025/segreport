@@ -39,6 +39,7 @@ export interface ItemDeMenu {
 }
 
 const MENU: Array<ItemDeMenu & { papeis: Role[] }> = [
+  { href: "/admin", rotulo: "Painel", papeis: ["admin", "columnist"] },
   { href: "/admin/materias", rotulo: "Matérias", papeis: ["admin", "columnist"] },
   { href: "/admin/colunistas", rotulo: "Colunistas", papeis: ["admin"] },
   { href: "/admin/midia", rotulo: "Mídia", papeis: ["admin", "columnist"] },
@@ -62,4 +63,17 @@ export function slugDeNome(nome: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * O item do menu está aceso?
+ *
+ * `pathname.startsWith(href)` erra duas vezes: `/admin` casa com toda rota do
+ * painel, e `/admin/midia` casaria com `/admin/midiateca`. A comparação
+ * precisa respeitar a fronteira de segmento — e a raiz do painel só acende
+ * quando é exatamente ela.
+ */
+export function itemAtivo(href: string, pathname: string): boolean {
+  if (href === "/admin") return pathname === "/admin";
+  return pathname === href || pathname.startsWith(`${href}/`);
 }

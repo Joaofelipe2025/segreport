@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/client";
  * O `replaceState` apaga o fragmento da barra de endereço assim que a sessão
  * é gravada — token em histórico de navegação é token vazado.
  */
-export default function ConfirmarPeloFragmento() {
+export default function ConfirmarPeloFragmento({ porta }: { porta: string }) {
   const [estado, setEstado] = useState<"verificando" | "falhou">("verificando");
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function ConfirmarPeloFragmento() {
     const refreshToken = fragmento.get("refresh_token");
 
     if (!accessToken || !refreshToken) {
-      window.location.replace("/login?motivo=link-invalido");
+      window.location.replace(`${porta}?motivo=link-invalido`);
       return;
     }
 
@@ -36,7 +36,7 @@ export default function ConfirmarPeloFragmento() {
       .then(async ({ error }) => {
         if (error) {
           setEstado("falhou");
-          window.location.replace("/login?motivo=link-expirado");
+          window.location.replace(`${porta}?motivo=link-expirado`);
           return;
         }
 
@@ -51,7 +51,7 @@ export default function ConfirmarPeloFragmento() {
           perfil?.role === "admin" || perfil?.role === "columnist" ? "/admin" : "/hub";
         window.location.replace(destino);
       });
-  }, []);
+  }, [porta]);
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">

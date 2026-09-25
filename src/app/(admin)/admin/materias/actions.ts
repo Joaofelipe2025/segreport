@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requirePainel, requireRole } from "@/lib/auth/session";
 import { slugDeNome } from "@/lib/auth/rules";
 import { pendenciasParaPublicar } from "@/lib/painel/publicacao";
+import { haConflito } from "@/lib/painel/consulta";
 import {
   documentoVazio,
   extrairTexto,
@@ -87,17 +88,21 @@ export async function salvarMateria(
   // no servidor, alguém salvou no meio. Recusamos em vez de mesclar — em
   // texto editorial, mesclar às cegas é pior que avisar.
   if (updatedAtCliente) {
-    const { data: atual } = await supabase
+    const { data: atual, error: erroCarimbo } = await supabase
       .from("articles")
       .select("updated_at")
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
-    if (atual && atual.updated_at !== updatedAtCliente) {
+    // `haConflito` falha fechada: se não deu para ler o carimbo, recusa. A
+    // versão anterior deixava passar, e a proteção contra edição simultânea
+    // se desligava sozinha exatamente quando deveria proteger.
+    if (haConflito(updatedAtCliente, atual?.updated_at ?? null, erroCarimbo)) {
       return {
         status: "conflito",
-        mensagem:
-          "Esta matéria foi alterada por outra pessoa desde que você abriu. Recarregue para ver a versão atual — seu texto continua aqui na tela.",
+        mensagem: erroCarimbo
+          ? `Não deu para confirmar se alguém alterou esta matéria (${erroCarimbo.message}). Não gravamos, para não passar por cima do texto de outra pessoa. Tente de novo — seu texto continua aqui na tela.`
+          : "Esta matéria foi alterada por outra pessoa desde que você abriu. Recarregue para ver a versão atual — seu texto continua aqui na tela.",
       };
     }
   }
@@ -172,7 +177,21 @@ export async function mudarEstado(
     }
 
     // O corpo vem pela função: a coluna está revogada de `authenticated`.
-    const { data: corpo } = await supabase.rpc("article_body_for_edit", { p_id: id });
+    //
+    // O erro precisa ser olhado. Descartá-lo faria corpo nulo por FALHA ficar
+    // indistinguível de corpo nulo por AUSÊNCIA, e o portão diria "escreva o
+    // corpo da matéria" a quem já escreveu novecentas palavras — mandando a
+    // pessoa reescrever o que está gravado.
+    const { data: corpo, error: erroCorpo } = await supabase.rpc("article_body_for_edit", {
+      p_id: id,
+    });
+
+    if (erroCorpo) {
+      return {
+        status: "erro",
+        mensagem: `Não foi possível ler o corpo para conferir antes de publicar: ${erroCorpo.message}`,
+      };
+    }
 
     const faltas = pendenciasParaPublicar({
       title: linha.title ?? "",
@@ -206,10 +225,31 @@ export async function mudarEstado(
   return { status: "salvo", mensagem: "Estado atualizado." };
 }
 
-export async function excluirMateria(id: string): Promise<void> {
+/**
+ * Exclui a matéria, ou explica por que não excluiu.
+ *
+ * O `.select()` não é enfeite: sem ele não há como distinguir "apagou" de
+ * "a RLS recusou em silêncio". A versão anterior descartava tudo e
+ * redirecionava — o admin digitava o título inteiro para confirmar uma ação
+ * sem volta e voltava para a listagem com a matéria ainda lá, sem explicação.
+ */
+export async function excluirMateria(id: string): Promise<EstadoMateria> {
   await requireRole(["admin"]);
   const supabase = await createClient();
-  await supabase.from("articles").delete().eq("id", id);
+
+  const { data, error } = await supabase.from("articles").delete().eq("id", id).select("id");
+
+  if (error) {
+    return { status: "erro", mensagem: `Não foi possível excluir: ${error.message}` };
+  }
+  if (!data || data.length === 0) {
+    return {
+      status: "erro",
+      mensagem:
+        "Nada foi excluído. A matéria já não existe, ou o banco recusou a exclusão — nada mudou.",
+    };
+  }
+
   revalidatePath("/admin/materias");
   redirect("/admin/materias");
 }

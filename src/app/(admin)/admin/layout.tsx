@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Sidebar from "@/components/admin/Sidebar";
+import { ProvedorDeGuarda } from "@/components/admin/GuardaDeSaida";
 import { requirePainel } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
@@ -20,9 +21,11 @@ export default async function AdminLayout({
   const perfil = await requirePainel();
 
   return (
-    <div className="flex min-h-screen flex-col bg-paper lg:flex-row">
-      <Sidebar papel={perfil.role} email={perfil.email} />
-      <main className="min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-8">{children}</main>
-    </div>
+    <ProvedorDeGuarda>
+      <div className="flex min-h-screen flex-col bg-paper lg:flex-row">
+        <Sidebar papel={perfil.role} email={perfil.email} />
+        <main className="min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-8">{children}</main>
+      </div>
+    </ProvedorDeGuarda>
   );
 }

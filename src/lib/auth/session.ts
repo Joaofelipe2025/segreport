@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { papelValido, podeAcessarPainel, type Role } from "./rules";
+import { FalhaDeConsulta } from "@/lib/painel/consulta";
 
 export type { Role };
 
@@ -27,19 +28,33 @@ export async function getSessionProfile(): Promise<SessionProfile | null> {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) return null;
 
-  const { data: profile } = await supabase
+  // Erro de consulta NÃO pode virar "sem sessão".
+  //
+  // Esta é a leitura mais executada do painel, e descartar o `error` aqui
+  // criava um laço fechado: a leitura falha, o perfil vem nulo, `requirePainel`
+  // manda para a porta dizendo "sua sessão expirou", a pessoa pede link novo,
+  // entra, e volta para a mesma mensagem. Sem erro em lugar nenhum e sem
+  // saída. É a lição desta fase inteira, no lugar onde mais dói.
+  const { data: profile, error: erroPerfil } = await supabase
     .from("profiles")
     .select("id, role")
     .eq("id", auth.user.id)
-    .single();
+    .maybeSingle();
 
+  if (erroPerfil) {
+    throw new FalhaDeConsulta("seu perfil", erroPerfil.message);
+  }
   if (!profile || !papelValido(profile.role)) return null;
 
-  const { data: author } = await supabase
+  const { data: author, error: erroAutor } = await supabase
     .from("authors")
     .select("id")
     .eq("profile_id", auth.user.id)
     .maybeSingle();
+
+  if (erroAutor) {
+    throw new FalhaDeConsulta("sua assinatura pública", erroAutor.message);
+  }
 
   return {
     id: profile.id,

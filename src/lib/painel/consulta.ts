@@ -54,3 +54,24 @@ export function exigir<R extends RespostaDoBanco>(
   if (resposta.error) throw new FalhaDeConsulta(oQue, resposta.error.message);
   return resposta.data as DadoDoSucesso<R>;
 }
+
+/**
+ * Esta gravação deve ser recusada por edição simultânea?
+ *
+ * Falha FECHADA de propósito. A versão anterior lia o carimbo atual e, se a
+ * leitura falhasse, `atual` vinha nulo, o `if` não entrava e a gravação
+ * seguia — a proteção contra edição simultânea se desligava sozinha no exato
+ * caso em que deveria proteger, e o texto de outra pessoa ia junto.
+ *
+ * Carimbo vazio do cliente é a única passagem livre: formulário sem o campo
+ * não tem o que comparar, e aí não há o que proteger.
+ */
+export function haConflito(
+  carimboDoCliente: string,
+  carimboDoServidor: string | null,
+  erro: { message: string } | null
+): boolean {
+  if (!carimboDoCliente) return false;
+  if (erro || carimboDoServidor === null) return true;
+  return carimboDoServidor !== carimboDoCliente;
+}

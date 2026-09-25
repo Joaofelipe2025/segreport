@@ -8,9 +8,11 @@ const INICIAL: EstadoAjustes = { status: "inicial" };
 export default function FormularioDeAssinatura({
   nome,
   bio,
+  slug,
 }: {
   nome: string;
   bio: string;
+  slug: string;
 }) {
   const [estado, acao, pendente] = useActionState(salvarAssinatura, INICIAL);
 
@@ -30,8 +32,31 @@ export default function FormularioDeAssinatura({
           className="w-full rounded-lg border border-hairline bg-white px-3 py-2 text-sm outline-none focus:border-forest-500"
         />
         <p className="mt-1.5 text-[11px] text-ink-4">
-          É o que aparece assinando a matéria. O endereço da página do autor é
-          recalculado a partir dele.
+          É o que aparece assinando a matéria.
+        </p>
+      </div>
+
+      <div>
+        <label
+          htmlFor="slug"
+          className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3"
+        >
+          Endereço da sua página
+        </label>
+        <div className="flex items-center gap-1">
+          <span className="font-mono text-[12px] text-ink-4">/colunistas/</span>
+          <input
+            id="slug"
+            name="slug"
+            defaultValue={slug}
+            placeholder="seu-nome"
+            className="min-w-0 flex-1 rounded-lg border border-hairline bg-white px-3 py-2 font-mono text-[12px] outline-none focus:border-forest-500"
+          />
+        </div>
+        <p className="mt-1.5 text-[11px] leading-relaxed text-ink-4">
+          Mudar isto quebra os links já publicados para a sua página. Só troque
+          se ainda não houver nada apontando para cá. Em branco, o endereço é
+          gerado a partir do nome.
         </p>
       </div>
 

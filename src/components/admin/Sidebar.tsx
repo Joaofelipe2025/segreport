@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LinkGuardado } from "@/components/admin/GuardaDeSaida";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/ui/Logo";
 import { itemAtivo, itensDeMenu, type Role } from "@/lib/auth/rules";
@@ -22,15 +22,15 @@ export default function Sidebar({ papel, email }: { papel: Role; email: string }
 
   return (
     <aside className="flex w-full shrink-0 flex-col bg-forest-900 px-3 py-3 lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:py-4">
-      <Link href="/admin" className="mb-1 block px-2 py-1 lg:mb-6">
+      <LinkGuardado href="/admin" className="mb-1 block px-2 py-1 lg:mb-6">
         <Logo variant="dark" className="h-6" />
-      </Link>
+      </LinkGuardado>
 
       <nav className="no-scrollbar flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
         {itens.map((item) => {
           const ativo = itemAtivo(item.href, pathname);
           return (
-            <Link
+            <LinkGuardado
               key={item.href}
               href={item.href}
               aria-current={ativo ? "page" : undefined}
@@ -41,7 +41,7 @@ export default function Sidebar({ papel, email }: { papel: Role; email: string }
               }`}
             >
               {item.rotulo}
-            </Link>
+            </LinkGuardado>
           );
         })}
       </nav>
@@ -50,12 +50,12 @@ export default function Sidebar({ papel, email }: { papel: Role; email: string }
         <p className="truncate px-3 text-[11px] text-forest-500" title={email}>
           {email}
         </p>
-        <Link
+        <LinkGuardado
           href="/"
           className="mt-2 block px-3 text-xs font-medium text-forest-300 transition-colors hover:text-lime-400"
         >
           ← Ver o portal
-        </Link>
+        </LinkGuardado>
       </div>
     </aside>
   );

@@ -1,7 +1,9 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { destinoAposLogin } from "@/lib/auth/rules";
+import { COOKIE_DA_PORTA, portaDeEntrada } from "@/lib/painel/porta";
 import ConfirmarPeloFragmento from "./ConfirmarPeloFragmento";
 
 export const dynamic = "force-dynamic";
@@ -31,8 +33,13 @@ export default async function ConfirmarPage(props: PageProps<"/auth/confirm">) {
     return typeof v === "string" ? v : undefined;
   };
 
+  // Quem clicou num link vencido volta para a porta de onde veio. Antes toda
+  // falha ia para /login, e o jornalista caía numa página de assinatura com
+  // "Criar conta gratuita" — longe de qualquer coisa que resolvesse.
+  const porta = portaDeEntrada((await cookies()).get(COOKIE_DA_PORTA)?.value);
+
   const erro = pegar("error_description") ?? pegar("error");
-  if (erro) redirect("/login?motivo=link-expirado");
+  if (erro) redirect(`${porta}?motivo=link-expirado`);
 
   const code = pegar("code");
   const tokenHash = pegar("token_hash");
@@ -45,20 +52,25 @@ export default async function ConfirmarPage(props: PageProps<"/auth/confirm">) {
       ? await supabase.auth.exchangeCodeForSession(code)
       : await supabase.auth.verifyOtp({ token_hash: tokenHash!, type: type! });
 
-    if (error) redirect("/login?motivo=link-expirado");
+    if (error) redirect(`${porta}?motivo=link-expirado`);
 
     const { data: auth } = await supabase.auth.getUser();
-    if (!auth?.user) redirect("/login?motivo=sessao");
+    if (!auth?.user) redirect(`${porta}?motivo=sessao`);
 
-    const { data: profile } = await supabase
+    // Sem descartar o erro: papel nulo por falha de leitura mandaria quem
+    // escreve para /hub, e de lá para /admin, que o devolve para a porta
+    // dizendo "sessão expirou". Laço fechado, sem erro em lugar nenhum.
+    const { data: profile, error: erroPerfil } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", auth.user.id)
-      .single();
+      .maybeSingle();
+
+    if (erroPerfil) redirect(`${porta}?motivo=perfil-ilegivel`);
 
     redirect(destinoAposLogin(profile?.role));
   }
 
   // Nada na query. Pode ser o fragmento, que só o navegador lê.
-  return <ConfirmarPeloFragmento />;
+  return <ConfirmarPeloFragmento porta={porta} />;
 }

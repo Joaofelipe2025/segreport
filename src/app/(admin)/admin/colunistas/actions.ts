@@ -55,11 +55,22 @@ export async function convidarColunista(
   // pessoa já for admin, gravar 'columnist' a rebaixaria em silêncio, e a
   // chave de serviço não é barrada por nada. Só promovemos quem ainda é
   // leitor.
-  const { data: perfilAtual } = await admin
+  //
+  // A leitura falha FECHADA. Descartar o erro desligava a guarda exatamente
+  // no caso que ela descreve: `perfilAtual` vinha nulo, o `if` não entrava, e
+  // o upsert com chave de serviço rebaixava um admin sem que nada aparecesse.
+  const { data: perfilAtual, error: erroPapel } = await admin
     .from("profiles")
     .select("role")
     .eq("id", userId)
     .maybeSingle();
+
+  if (erroPapel) {
+    return {
+      status: "erro",
+      mensagem: `Não deu para conferir o papel atual de ${email} (${erroPapel.message}). Nada foi alterado — gravar sem essa checagem poderia rebaixar um administrador.`,
+    };
+  }
 
   if (perfilAtual && perfilAtual.role !== "reader" && perfilAtual.role !== "columnist") {
     return {

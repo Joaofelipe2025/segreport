@@ -12,6 +12,7 @@ import type { DocumentoBlocos } from "@/lib/editor/document";
 import type { Role } from "@/lib/auth/rules";
 import { corDeEstado, rotuloDeEstado } from "@/lib/painel/estados";
 import { confirmacaoConfere } from "@/lib/painel/confirmacao";
+import { useGuardaDeSaida } from "@/components/admin/GuardaDeSaida";
 
 // O editor só existe no navegador: o ProseMirror precisa de DOM.
 const Editor = dynamic(() => import("@/components/editor/Editor"), {
@@ -55,7 +56,9 @@ export default function EditorDeMateria({
   const [doc, setDoc] = useState<DocumentoBlocos>(corpo);
   const [statusAtual, setStatusAtual] = useState(materia.status);
   const [avisoEstado, setAvisoEstado] = useState<string>();
-  const [sujo, setSujo] = useState(false);
+  // A marca vive no contexto do painel, não aqui: quem oferece a saída é a
+  // barra lateral, que está em outro ramo da árvore.
+  const { sujo, marcarSujo: setSujo } = useGuardaDeSaida();
   const [confirmacao, setConfirmacao] = useState("");
   const [transicionando, iniciarTransicao] = useTransition();
 
@@ -66,6 +69,12 @@ export default function EditorDeMateria({
     setDoc(novo);
     setSujo(true);
   }
+
+  // O provedor vive no layout e sobrevive à troca de rota. Sem esta limpeza,
+  // a marca ficaria acesa depois de sair do editor, e o aviso passaria a
+  // aparecer em telas onde não há nada para perder — que é como se ensina
+  // alguém a clicar em "sair" sem ler.
+  useEffect(() => () => setSujo(false), [setSujo]);
 
   // Fechar a aba com texto não salvo é a perda mais boba que existe. O
   // navegador só mostra o aviso se já houve interação na página — o que
@@ -283,7 +292,13 @@ export default function EditorDeMateria({
             <button
               type="button"
               disabled={!confirmacaoConfere(confirmacao, materia.title) || ocupado}
-              onClick={() => iniciarTransicao(() => excluirMateria(materia.id))}
+              onClick={() =>
+                iniciarTransicao(async () => {
+                  // Sucesso redireciona e nunca volta; só a recusa retorna.
+                  const r = await excluirMateria(materia.id);
+                  setAvisoEstado(r.mensagem);
+                })
+              }
               className="rounded-lg border border-down px-4 py-2 text-xs font-semibold text-down transition-colors hover:bg-down hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-down"
             >
               Excluir definitivamente

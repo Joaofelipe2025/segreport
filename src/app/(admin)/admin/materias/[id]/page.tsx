@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { LinkGuardado } from "@/components/admin/GuardaDeSaida";
 import { requirePainel } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import EditorDeMateria, { type MateriaParaEditar } from "./EditorDeMateria";
@@ -51,12 +52,12 @@ export default async function EditarMateriaPage(props: PageProps<"/admin/materia
 
   return (
     <>
-      <Link
+      <LinkGuardado
         href="/admin/materias"
         className="mb-4 inline-block text-xs font-medium text-ink-3 transition-colors hover:text-forest-700"
       >
         ← Matérias
-      </Link>
+      </LinkGuardado>
 
       <EditorDeMateria
         materia={materia as unknown as MateriaParaEditar}

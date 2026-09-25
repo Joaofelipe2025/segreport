@@ -72,7 +72,11 @@ export default async function AjustesPage() {
         <section>
           <h2 className="mb-3 text-sm font-semibold text-ink">Sua assinatura</h2>
           {autor ? (
-            <FormularioDeAssinatura nome={autor.name ?? ""} bio={autor.bio ?? ""} />
+            <FormularioDeAssinatura
+              nome={autor.name ?? ""}
+              bio={autor.bio ?? ""}
+              slug={autor.slug ?? ""}
+            />
           ) : (
             <p className="rounded-lg bg-paper px-4 py-3 text-sm leading-relaxed text-ink-3">
               Sua conta ainda não tem assinatura pública. Sem ela não é possível
@@ -94,6 +98,8 @@ export default async function AjustesPage() {
               rotulo="Endereço público"
               valor={autor?.slug ? `/colunistas/${autor.slug}` : "—"}
             />
+            {/* O suporte pergunta por ele quando algo não bate. */}
+            <Linha rotulo="Identificador do autor" valor={autor?.id ?? "—"} />
           </dl>
           <p className="mt-2 text-[11px] leading-relaxed text-ink-4">
             E-mail e papel não se editam aqui: mudar papel é decisão de quem

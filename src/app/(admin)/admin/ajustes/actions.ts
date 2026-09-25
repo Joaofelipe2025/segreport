@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requirePainel } from "@/lib/auth/session";
-import { slugDeNome } from "@/lib/auth/rules";
+import { slugDeAssinatura } from "@/lib/painel/assinatura";
 
 export interface EstadoAjustes {
   status: "inicial" | "salvo" | "erro";
@@ -25,6 +25,7 @@ export async function salvarAssinatura(
 
   const nome = String(dados.get("name") ?? "").trim();
   const bio = String(dados.get("bio") ?? "").trim();
+  const slugDigitado = String(dados.get("slug") ?? "").trim();
 
   if (nome.length < 2) {
     return {
@@ -40,10 +41,19 @@ export async function salvarAssinatura(
     };
   }
 
+  const slug = slugDeAssinatura(slugDigitado, nome);
+  if (!slug) {
+    return {
+      status: "erro",
+      mensagem:
+        "O endereço da sua página precisa ter ao menos uma letra ou número sem acento. Preencha o campo Endereço.",
+    };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("authors")
-    .update({ name: nome, bio: bio || null, slug: slugDeNome(nome) })
+    .update({ name: nome, bio: bio || null, slug })
     .eq("id", perfil.authorId)
     .eq("profile_id", perfil.id);
 

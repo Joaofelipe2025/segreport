@@ -3,9 +3,14 @@ import Link from "next/link";
 import PageHeader from "@/components/admin/PageHeader";
 import { requirePainel } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { exigir } from "@/lib/painel/consulta";
-import { ESTADOS_EDITORIAIS, corDeEstado, rotuloDeEstado } from "@/lib/painel/estados";
-import { contarPorEstado, nomeDoAutor } from "@/lib/painel/resumo";
+import { exigir, FalhaDeConsulta } from "@/lib/painel/consulta";
+import {
+  ESTADOS_EDITORIAIS,
+  corDeEstado,
+  rotuloDeEstado,
+  type EstadoEditorial,
+} from "@/lib/painel/estados";
+import { nomeDoAutor } from "@/lib/painel/resumo";
 import { formatRelative } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Painel" };
@@ -14,21 +19,47 @@ export default async function PainelInicial() {
   const perfil = await requirePainel();
   const supabase = await createClient();
 
-  // Uma consulta só. A RLS já limita o colunista às próprias matérias, então
-  // não há ramo no código: cada um conta o que o banco lhe entregou.
-  const linhas = exigir(
-    await supabase
-      .from("articles")
-      .select("id, title, status, updated_at, scheduled_for, authors(name)")
-      .order("updated_at", { ascending: false })
-      .limit(200),
-    "o resumo das matérias"
-  );
+  const campos = "id, title, status, updated_at, scheduled_for, authors(name)";
 
-  const contagem = contarPorEstado(linhas);
-  const emRevisao = linhas.filter((l) => l.status === "in_review");
-  const agendadas = linhas.filter((l) => l.status === "scheduled");
-  const recentes = linhas.slice(0, 8);
+  // Quatro consultas, não uma. A versão anterior lia as 200 mais recentemente
+  // editadas e tirava tudo dali — e a partir de 200 matérias os números viravam
+  // ficção: os cartões somavam 200 sem dizer que havia corte, e uma matéria em
+  // revisão parada há meses caía fora da janela e SUMIA da fila. O bloco que
+  // existe para mostrar trabalho parado escondia justamente o que estava
+  // parado há mais tempo.
+  //
+  // A RLS já limita o colunista às próprias matérias: não há ramo por papel
+  // aqui, cada um conta o que o banco lhe entregou.
+  const [porEstado, filaDeRevisao, naFila, ultimas] = await Promise.all([
+    Promise.all(
+      ESTADOS_EDITORIAIS.map(async (estado) => {
+        const r = await supabase
+          .from("articles")
+          .select("id", { count: "exact", head: true })
+          .eq("status", estado);
+        if (r.error) throw new FalhaDeConsulta("as contagens do painel", r.error.message);
+        return [estado, r.count ?? 0] as const;
+      })
+    ),
+    // Sem teto: fila de revisão truncada é trabalho parado invisível. A mais
+    // antiga primeiro, que é a que espera há mais tempo.
+    supabase
+      .from("articles")
+      .select(campos)
+      .eq("status", "in_review")
+      .order("updated_at", { ascending: true }),
+    supabase
+      .from("articles")
+      .select(campos)
+      .eq("status", "scheduled")
+      .order("scheduled_for", { ascending: true }),
+    supabase.from("articles").select(campos).order("updated_at", { ascending: false }).limit(8),
+  ]);
+
+  const contagem = Object.fromEntries(porEstado) as Record<EstadoEditorial, number>;
+  const emRevisao = exigir(filaDeRevisao, "a fila de revisão");
+  const agendadas = exigir(naFila, "as matérias agendadas");
+  const recentes = exigir(ultimas, "as últimas matérias editadas");
 
   return (
     <>

@@ -88,12 +88,17 @@ endpoint aceita as duas durante a troca.
 
 ## O vigia de fontes
 
-Roda no GitHub Actions, três vezes ao dia, e não precisa de nada seu além de
-dois cadastros:
+Roda no GitHub Actions, três vezes ao dia. Antes dos cadastros do GitHub, tem
+um passo de banco — o mesmo tipo de passo da ingestão, porque é DDL e nenhuma
+chave que eu tenho executa DDL:
 
-1. **Settings → Secrets and variables → Actions → New repository secret**
+1. **Passo único de banco:** Supabase, projeto **`hdzfleptasoepfsalqad`** →
+   **SQL Editor** → **New query** → abra **`supabase/setup/ATIVAR-VIGIA.sql`**
+   — termina em **.sql**, não este guia — copie tudo, cole e clique em **Run**.
+   Sem isso a rota do vigia responde 503 três vezes por dia, para sempre.
+2. **Settings → Secrets and variables → Actions → New repository secret**
    Nome `INGESTAO_TOKEN`, valor igual ao que está na Vercel.
-2. Na aba **Variables** da mesma tela, `SEGREPORT_URL` com o endereço do site.
+3. Na aba **Variables** da mesma tela, `SEGREPORT_URL` com o endereço do site.
 
 Para rodar na hora, sem esperar o horário: **Actions → Vigia de fontes → Run
 workflow**.

@@ -446,7 +446,12 @@ export interface Database {
           achados?: Record<string, number>;
           falhas?: Record<string, string>;
         };
-        Update: Record<string, never>;
+        // A rota corrige a própria linha quando a gravação das pautas falha
+        // depois de a execução já ter sido registrada. Só esses dois campos.
+        Update: {
+          achados?: Record<string, number>;
+          falhas?: Record<string, string>;
+        };
         Relationships: [];
       };
     };

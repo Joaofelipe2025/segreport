@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     // do que registro que falta. Corrige antes de responder.
     await admin
       .from("vigia_execucoes")
-      .update({ achados: {}, falhas: { ...falhas, _gravacao: erroPautas.message } } as any)
+      .update({ achados: {}, falhas: { ...falhas, _gravacao: erroPautas.message } })
       .eq("id", execucao.id);
 
     return recusa(500, `Não foi possível gravar as pautas: ${erroPautas.message}`, "Tente de novo.");

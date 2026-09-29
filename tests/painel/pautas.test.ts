@@ -38,7 +38,8 @@ describe("o aviso sobre a última execução", () => {
   it("execução recente com achados é calma", () => {
     const r = resumoDaExecucao(
       { comecou_em: dias(0), achados: { cqcs: 3 }, falhas: {} },
-      AGORA
+      AGORA,
+      0
     );
     expect(r.tom).toBe("calmo");
   });
@@ -46,7 +47,8 @@ describe("o aviso sobre a última execução", () => {
   it("execução com falha em alguma fonte pede atenção", () => {
     const r = resumoDaExecucao(
       { comecou_em: dias(0), achados: { cqcs: 3 }, falhas: { apolice: "HTTP 503" } },
-      AGORA
+      AGORA,
+      0
     );
     expect(r.tom).toBe("atencao");
     expect(r.texto).toContain("apolice");
@@ -57,10 +59,11 @@ describe("o aviso sobre a última execução", () => {
     // calmas em horários bem diferentes produzem o mesmo texto.
     const vinteMinutos = new Date(AGORA.getTime() - 20 * 60 * 1000).toISOString();
     const vinteETresHoras = new Date(AGORA.getTime() - 23 * 60 * 60 * 1000).toISOString();
-    const a = resumoDaExecucao({ comecou_em: vinteMinutos, achados: { cqcs: 3 }, falhas: {} }, AGORA);
+    const a = resumoDaExecucao({ comecou_em: vinteMinutos, achados: { cqcs: 3 }, falhas: {} }, AGORA, 0);
     const b = resumoDaExecucao(
       { comecou_em: vinteETresHoras, achados: { cqcs: 3 }, falhas: {} },
-      AGORA
+      AGORA,
+      0
     );
     expect(a.texto).not.toBe(b.texto);
     expect(a.texto).toMatch(/min/);
@@ -71,7 +74,8 @@ describe("o aviso sobre a última execução", () => {
     const vinteMinutos = new Date(AGORA.getTime() - 20 * 60 * 1000).toISOString();
     const r = resumoDaExecucao(
       { comecou_em: vinteMinutos, achados: { cqcs: 3 }, falhas: { apolice: "HTTP 503" } },
-      AGORA
+      AGORA,
+      0
     );
     expect(r.texto).toMatch(/min/);
   });
@@ -80,7 +84,8 @@ describe("o aviso sobre a última execução", () => {
     const vinteMinutos = new Date(AGORA.getTime() - 20 * 60 * 1000).toISOString();
     const r = resumoDaExecucao(
       { comecou_em: vinteMinutos, achados: { cqcs: 0 }, falhas: {} },
-      AGORA
+      AGORA,
+      0
     );
     expect(r.texto).toMatch(/min/);
   });
@@ -95,7 +100,8 @@ describe("o aviso sobre a última execução", () => {
         achados: { cqcs: 3 },
         falhas: { cqcs: "HTTP 503", _gravacao: "não foi possível gravar as pautas" },
       },
-      AGORA
+      AGORA,
+      0
     );
     expect(r.texto).not.toContain("_gravacao");
     expect(r.tom).toBe("atencao");
@@ -104,18 +110,33 @@ describe("o aviso sobre a última execução", () => {
   it("aviso do sistema sozinho (sem falha de fonte nenhuma) ainda pede atenção", () => {
     const r = resumoDaExecucao(
       { comecou_em: dias(0), achados: {}, falhas: { _gravacao: "erro ao gravar" } },
-      AGORA
+      AGORA,
+      0
     );
     expect(r.tom).toBe("atencao");
     expect(r.texto).not.toContain("_gravacao");
   });
 
-  it("nenhum achado em NENHUMA fonte é suspeito, não calmo", () => {
-    // Pode ser dia calmo; também é como parecem três feeds que mudaram de
-    // formato ao mesmo tempo, depois de uma atualização do WordPress.
+  it("execução vazia num dia que JÁ trouxe pauta é normal, não aviso", () => {
+    // O vigia lê três vezes ao dia a mesma janela de feed: a 2ª e a 3ª
+    // leitura não trazem nada de novo, e isso é o esperado. Acender a tarja
+    // amarela aí é o caminho conhecido para o dono parar de olhar para ela.
     const r = resumoDaExecucao(
       { comecou_em: dias(0), achados: { cqcs: 0, apolice: 0 }, falhas: {} },
-      AGORA
+      AGORA,
+      7
+    );
+    expect(r.tom).toBe("calmo");
+  });
+
+  it("nenhum achado em NENHUMA fonte, num dia inteiro em silêncio, é suspeito", () => {
+    // Pode ser dia calmo; também é como parecem três feeds que mudaram de
+    // formato ao mesmo tempo, depois de uma atualização do WordPress. A
+    // diferença entre os dois só aparece na janela do dia, não numa leitura.
+    const r = resumoDaExecucao(
+      { comecou_em: dias(0), achados: { cqcs: 0, apolice: 0 }, falhas: {} },
+      AGORA,
+      0
     );
     expect(r.tom).toBe("atencao");
   });
@@ -123,14 +144,15 @@ describe("o aviso sobre a última execução", () => {
   it("vigia parado há mais de um dia é alerta", () => {
     const r = resumoDaExecucao(
       { comecou_em: dias(2), achados: { cqcs: 5 }, falhas: {} },
-      AGORA
+      AGORA,
+      0
     );
     expect(r.tom).toBe("alerta");
     expect(r.texto).toMatch(/n[ãa]o roda/i);
   });
 
   it("nunca rodou é alerta, e diz isso", () => {
-    const r = resumoDaExecucao(null, AGORA);
+    const r = resumoDaExecucao(null, AGORA, 0);
     expect(r.tom).toBe("alerta");
     expect(r.texto).toMatch(/nunca/i);
   });

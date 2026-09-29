@@ -13,6 +13,8 @@ export const metadata: Metadata = { title: "Pautas" };
 
 const NOME_DA_FONTE = new Map(FONTES.map((f) => [f.chave, f.nome]));
 
+const VINTE_QUATRO_HORAS_MS = 24 * 60 * 60 * 1000;
+
 export default async function PautasPage() {
   await requireRole(["admin"]);
   const supabase = await createClient();
@@ -38,9 +40,17 @@ export default async function PautasPage() {
       .maybeSingle(),
   ]);
 
-  const pautas = pautasVisiveis(exigir(lista, "as pautas"), agora);
+  const listaBruta = exigir(lista, "as pautas");
+  const pautas = pautasVisiveis(listaBruta, agora);
+  // Derivada da mesma consulta acima, sem round-trip extra ao banco. É uma
+  // aproximação por só cobrir pautas ainda `nova` (a consulta já filtra por
+  // isso) — mas cobre o caso que importa: se uma pauta que entrou hoje já
+  // foi triada pelo dono, o dia obviamente não está em silêncio.
+  const pautasUltimas24h = listaBruta.filter(
+    (p) => agora.getTime() - new Date(p.criado_em).getTime() < VINTE_QUATRO_HORAS_MS
+  ).length;
   const execucao = exigir(ultima, "a última execução do vigia");
-  const estado = resumoDaExecucao(execucao, agora);
+  const estado = resumoDaExecucao(execucao, agora, pautasUltimas24h);
 
   return (
     <>

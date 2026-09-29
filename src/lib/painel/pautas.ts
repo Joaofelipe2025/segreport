@@ -35,10 +35,18 @@ export interface Execucao {
  *
  * Três tons, e a escolha não é decorativa. Vigia que parou e ninguém percebeu
  * é pior do que vigia nenhum: cria a impressão de cobertura que não existe.
+ *
+ * `pautasUltimas24h` existe porque o vigia roda três vezes ao dia sobre a
+ * MESMA janela de feed: a 2ª e a 3ª execução de um dia comum não trazem nada
+ * de novo, e isso é o normal, não um sintoma. "Três feeds que mudaram de
+ * formato ao mesmo tempo" (FR-2.3) é uma propriedade do DIA, não de uma
+ * execução isolada — por isso a suspeita só nasce quando NENHUMA pauta nova
+ * entrou nas últimas 24 horas, não quando só a última leitura ficou vazia.
  */
 export function resumoDaExecucao(
   exec: Execucao | null,
-  agora: Date
+  agora: Date,
+  pautasUltimas24h: number
 ): { texto: string; tom: "calmo" | "atencao" | "alerta" } {
   if (!exec) {
     return {
@@ -82,11 +90,22 @@ export function resumoDaExecucao(
 
   const total = Object.values(exec.achados).reduce((a, b) => a + b, 0);
   if (total === 0) {
+    // Silêncio NESTA execução é o normal na 2ª e na 3ª leitura do dia. Só
+    // vira aviso quando o dia inteiro ficou em silêncio — aí sim é a
+    // assinatura que a FR-2.3 pede.
+    if (pautasUltimas24h > 0) {
+      return {
+        texto: `Última execução, ${quando}, não trouxe pauta nova — normal quando é a 2ª ou 3ª leitura do dia sobre a mesma janela.`,
+        tom: "calmo",
+      };
+    }
     return {
-      texto: `A última execução, ${quando}, não trouxe nada de nenhuma fonte. Pode ser dia calmo — ou os feeds mudaram de formato.`,
+      texto: `A última execução, ${quando}, não trouxe pauta nova, e nenhuma entrou nas últimas 24 horas. Vale conferir se os três feeds ainda respondem.`,
       tom: "atencao",
     };
   }
 
-  return { texto: `Última execução, ${quando}, trouxe ${total} item(ns).`, tom: "calmo" };
+  // "item(ns)" seria ambíguo: achados já conta pautas NOVAS por fonte, não
+  // itens lidos do feed (ver rota de execução). Deixa isso explícito aqui.
+  return { texto: `Última execução, ${quando}, trouxe ${total} pauta(s) nova(s).`, tom: "calmo" };
 }

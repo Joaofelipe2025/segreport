@@ -106,6 +106,38 @@ describe("validação dos achados", () => {
     }
   });
 
+  it("recusa título grande demais como item, sem derrubar o lote", () => {
+    // A rota irmã (ingestão) limita o campo grande; esta não limitava campo
+    // nenhum, só a quantidade de itens — um título de 300 mil caracteres
+    // passava, e o índice único de btree em `url` estoura acima de ~2000.
+    const r = validarAchados([{ ...bom, titulo: "x".repeat(501) }]);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toEqual([]);
+    expect(r.ok && r.recusados).toHaveLength(1);
+    expect(r.ok && r.recusados[0].fonte).toBe("cqcs");
+  });
+
+  it("aceita título exatamente no teto (500)", () => {
+    const r = validarAchados([{ ...bom, titulo: "x".repeat(500) }]);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toHaveLength(1);
+  });
+
+  it("recusa resumo grande demais como item, sem derrubar o lote", () => {
+    const r = validarAchados([{ ...bom, resumo: "x".repeat(2001) }]);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toEqual([]);
+    expect(r.ok && r.recusados).toHaveLength(1);
+  });
+
+  it("recusa url grande demais como item, sem derrubar o lote", () => {
+    const url = "https://cqcs.com.br/" + "x".repeat(2001);
+    const r = validarAchados([{ ...bom, url }]);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toEqual([]);
+    expect(r.ok && r.recusados).toHaveLength(1);
+  });
+
   it("recusa lista grande demais", () => {
     const muitos = Array.from({ length: 501 }, (_, i) => ({
       ...bom,

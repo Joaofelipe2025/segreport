@@ -27,6 +27,14 @@ export type ValidacaoDeAchados =
 /** Teto por execução. Três feeds somam 80 itens; 500 é folga com limite. */
 const LIMITE = 500;
 
+// Tetos por campo. Sem eles, um título de 300 mil caracteres passava — só a
+// QUANTIDADE de itens era limitada, nunca o TAMANHO de cada um. Os números
+// batem com o que a rota irmã (ingestão) já usa para os mesmos campos; acima
+// disso o índice único de btree em `url` estoura de qualquer jeito.
+const TETO_TITULO = 500;
+const TETO_RESUMO = 2000;
+const TETO_URL = 2000;
+
 const recusar = (erro: string, comoCorrigir: string): ValidacaoDeAchados => ({
   ok: false,
   erro,
@@ -105,14 +113,35 @@ export function validarAchados(bruto: unknown): ValidacaoDeAchados {
       recusados.push({ fonte, motivo: "Achado sem título." });
       continue;
     }
+    if (titulo.length > TETO_TITULO) {
+      recusados.push({
+        fonte,
+        motivo: `Título com ${titulo.length} caracteres passa do teto de ${TETO_TITULO}.`,
+      });
+      continue;
+    }
 
     const url = typeof a.url === "string" ? a.url.trim() : "";
     if (!/^https?:\/\//i.test(url)) {
       recusados.push({ fonte, motivo: `Endereço inválido: "${url || "(vazio)"}".` });
       continue;
     }
+    if (url.length > TETO_URL) {
+      recusados.push({
+        fonte,
+        motivo: `Endereço com ${url.length} caracteres passa do teto de ${TETO_URL}.`,
+      });
+      continue;
+    }
 
     const resumo = typeof a.resumo === "string" ? a.resumo.trim() : "";
+    if (resumo.length > TETO_RESUMO) {
+      recusados.push({
+        fonte,
+        motivo: `Resumo com ${resumo.length} caracteres passa do teto de ${TETO_RESUMO}.`,
+      });
+      continue;
+    }
 
     achados.push({
       fonte,

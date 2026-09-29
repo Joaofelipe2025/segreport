@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/session";
 
-const ESTADOS = new Set(["nova", "lida", "descartada", "virou_materia"]);
+// Só os estados que a TELA manda (ver BotoesDaPauta.tsx: "Guardar" e
+// "Descartar"). `virou_materia` gravaria a pauta como tendo virado matéria
+// com `article_id` nulo — enquanto não existe o fluxo que preenche
+// `article_id`, isso seria um registro que mente. `nova` também fica de
+// fora: não há botão para devolver uma pauta a esse estado.
+const ESTADOS = new Set(["lida", "descartada"]);
 
 export async function mudarEstadoDaPauta(
   id: string,

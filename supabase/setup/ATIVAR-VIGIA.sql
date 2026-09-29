@@ -49,11 +49,27 @@ drop policy if exists vigia_execucoes_admin_select on public.vigia_execucoes;
 create policy vigia_execucoes_admin_select on public.vigia_execucoes
   for select to authenticated using (public.is_admin());
 
--- Conferência: devem sair duas linhas "ok".
+-- Escopo de coluna no update de pautas: RLS libera a LINHA a quem é admin,
+-- mas não a COLUNA — sem isto um admin autenticado via PostgREST reescrevia
+-- `tipo_de_fonte`, o campo que torna a CON-1 verificável. O revoke da tabela
+-- vem antes do grant coluna a coluna: privilégio de coluna é ignorado
+-- enquanto o papel ainda tem o privilégio da tabela inteira.
+revoke update on public.pautas from authenticated;
+grant update (estado, article_id) on public.pautas to authenticated;
+
+-- Conferência: devem sair três linhas "ok".
 select 'tabela de pautas' as item,
        case when to_regclass('public.pautas') is not null
             then 'ok' else 'FALTOU' end as estado
 union all
 select 'tabela de execucoes do vigia',
        case when to_regclass('public.vigia_execucoes') is not null
+            then 'ok' else 'FALTOU' end
+union all
+select 'update de pautas restrito por coluna',
+       case when (
+              select count(*) from information_schema.column_privileges
+               where table_schema = 'public' and table_name = 'pautas'
+                 and grantee = 'authenticated' and privilege_type = 'UPDATE'
+            ) = 2
             then 'ok' else 'FALTOU' end;

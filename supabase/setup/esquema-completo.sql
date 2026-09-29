@@ -1229,3 +1229,24 @@ create policy pautas_admin_update on public.pautas
 drop policy if exists vigia_execucoes_admin_select on public.vigia_execucoes;
 create policy vigia_execucoes_admin_select on public.vigia_execucoes
   for select to authenticated using (public.is_admin());
+
+-- ▼▼▼ 20260930000002_pautas_colunas.sql ▼▼▼
+
+-- ============================================================================
+-- Correção da revisão final: escopo de coluna no update de pautas
+--
+-- pautas_admin_update restringe a LINHA a quem é admin, mas não restringe a
+-- COLUNA — um admin autenticado via PostgREST podia reescrever
+-- `tipo_de_fonte`, que é justamente o campo que a spec chama de "o que torna
+-- a CON-1 verificável". RLS é row-level; isto é column-level, e é outra
+-- ferramenta — o mesmo raciocínio da migração de privilégio de coluna já
+-- aplicada a articles e authors.
+--
+-- MESMA SEMÂNTICA DO POSTGRES que já mordeu este repositório antes:
+-- privilégio de coluna só é consultado quando NÃO há privilégio de tabela.
+-- Por isso o `revoke` da tabela vem SEMPRE antes do `grant` coluna a coluna.
+-- ============================================================================
+
+revoke update on public.pautas from authenticated;
+
+grant update (estado, article_id) on public.pautas to authenticated;

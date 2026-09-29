@@ -34,3 +34,18 @@ describe("as fontes da etapa 1", () => {
     expect(fontePorChave("cqcs")?.nome).toBe("CQCS");
   });
 });
+
+describe("a lista do script não pode divergir da do código", () => {
+  it("as chaves e URLs são as mesmas", async () => {
+    const { readFileSync } = await import("node:fs");
+    const script = readFileSync("scripts/vigia.mjs", "utf8");
+
+    for (const f of FONTES) {
+      expect(script, `${f.chave} falta no script`).toContain(`"${f.chave}"`);
+      expect(script, `${f.url} falta no script`).toContain(f.url);
+    }
+
+    const noScript = [...script.matchAll(/chave: "([a-z-]+)"/g)].map((m) => m[1]);
+    expect(noScript.sort()).toEqual(FONTES.map((f) => f.chave).sort());
+  });
+});

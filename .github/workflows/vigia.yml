@@ -1,0 +1,30 @@
+name: Vigia de fontes
+
+on:
+  schedule:
+    # Três vezes ao dia, horário de Brasília (UTC-3): 7h, 13h e 18h.
+    # O cron do GitHub é sempre UTC.
+    - cron: "0 10,16,21 * * *"
+  # Para depurar sem esperar o horário.
+  workflow_dispatch:
+
+# Uma execução por vez: duas ao mesmo tempo leriam os mesmos itens e
+# disputariam a unicidade da URL sem ganho nenhum.
+concurrency:
+  group: vigia
+  cancel-in-progress: false
+
+jobs:
+  vigia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Ler as fontes e registrar a execução
+        env:
+          INGESTAO_TOKEN: ${{ secrets.INGESTAO_TOKEN }}
+          SEGREPORT_URL: ${{ vars.SEGREPORT_URL }}
+        run: node scripts/vigia.mjs

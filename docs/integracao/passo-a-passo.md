@@ -83,3 +83,20 @@ marcada **não lida**.
 Sem apagão: ponha a nova em `INGESTAO_TOKEN`, mova a antiga para
 `INGESTAO_TOKEN_ANTERIOR`, atualize o GPT, e só então apague a antiga. O
 endpoint aceita as duas durante a troca.
+
+---
+
+## O vigia de fontes
+
+Roda no GitHub Actions, três vezes ao dia, e não precisa de nada seu além de
+dois cadastros:
+
+1. **Settings → Secrets and variables → Actions → New repository secret**
+   Nome `INGESTAO_TOKEN`, valor igual ao que está na Vercel.
+2. Na aba **Variables** da mesma tela, `SEGREPORT_URL` com o endereço do site.
+
+Para rodar na hora, sem esperar o horário: **Actions → Vigia de fontes → Run
+workflow**.
+
+O painel, em **Pautas**, mostra quando ele rodou pela última vez e o que
+falhou. Se aparecer aviso vermelho, o vigia parou.

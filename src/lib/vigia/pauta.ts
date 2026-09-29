@@ -88,9 +88,14 @@ export function validarAchados(bruto: unknown): ValidacaoDeAchados {
     // adaptador de imprensa que se declarasse primária alcançaria, nas
     // etapas seguintes, o gerador de matéria.
     if (a.tipoDeFonte !== cadastro.tipo) {
+      // O conselho antigo ("não declare o tipo: ele sai do cadastro") não
+      // resolve nada: omitir o campo cai na MESMA comparação — undefined
+      // também é diferente de cadastro.tipo — e leva à mesma recusa. O que
+      // de fato resolve é declarar o tipo que o cadastro tem, ou corrigir o
+      // cadastro em src/lib/vigia/fontes.ts.
       recusados.push({
         fonte,
-        motivo: `A fonte "${fonte}" é de ${cadastro.tipo} e o achado veio como "${String(a.tipoDeFonte)}". Não declare o tipo: ele sai do cadastro da fonte.`,
+        motivo: `A fonte "${fonte}" é de ${cadastro.tipo} e o achado veio como "${String(a.tipoDeFonte)}". Declare tipoDeFonte como "${cadastro.tipo}", que é o que o cadastro tem, ou corrija o cadastro em src/lib/vigia/fontes.ts.`,
       });
       continue;
     }

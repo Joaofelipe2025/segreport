@@ -61,10 +61,21 @@ export function resumoDaExecucao(
   // FR-2.2 pede além de "o que falhou": também "quando foi".
   const quando = formatRelative(exec.comecou_em, agora);
 
-  const comFalha = Object.keys(exec.falhas);
-  if (comFalha.length > 0) {
+  // Chave iniciada por `_` é aviso do sistema (hoje só `_gravacao`, que a
+  // própria rota injeta quando o upsert de pautas falha) — não é nome de
+  // fonte, e listá-la ao lado de "cqcs" confunde o dono do veículo.
+  const chaves = Object.keys(exec.falhas);
+  const falhasDeFonte = chaves.filter((k) => !k.startsWith("_"));
+  const avisosDoSistema = chaves.filter((k) => k.startsWith("_"));
+
+  if (falhasDeFonte.length > 0 || avisosDoSistema.length > 0) {
+    const partes = [
+      falhasDeFonte.length > 0 ? `falhou em: ${falhasDeFonte.join(", ")}` : null,
+      avisosDoSistema.length > 0 ? "teve um aviso interno do vigia" : null,
+    ].filter((p): p is string => p !== null);
+
     return {
-      texto: `Última execução, ${quando}, falhou em: ${comFalha.join(", ")}.`,
+      texto: `Última execução, ${quando}, ${partes.join(" e ")}.`,
       tom: "atencao",
     };
   }

@@ -48,6 +48,16 @@ describe("validação dos achados", () => {
     expect(r.ok && r.recusados[0].motivo).toMatch(/imprensa/i);
   });
 
+  it("a recusa por tipo diz o que resolve, não manda omitir o campo", () => {
+    // Omitir tipoDeFonte cai na MESMA comparação (undefined !== cadastro.tipo)
+    // e leva à mesma recusa. Quem seguisse o conselho antigo ("não declare o
+    // tipo") continuaria sendo recusado.
+    const r = validarAchados([{ ...bom, tipoDeFonte: "primaria" }]);
+    const motivo = (r.ok && r.recusados[0].motivo) || "";
+    expect(motivo).not.toMatch(/não declare/i);
+    expect(motivo).toMatch(/declare.*imprensa|corrija o cadastro/i);
+  });
+
   it("recusa url que não é http, item a item, sem derrubar o lote", () => {
     for (const url of ["javascript:alert(1)", "ftp://x.test/a", "/relativo", ""]) {
       const r = validarAchados([{ ...bom, url }]);

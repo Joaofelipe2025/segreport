@@ -85,6 +85,31 @@ describe("o aviso sobre a última execução", () => {
     expect(r.texto).toMatch(/min/);
   });
 
+  it("chave de aviso do sistema (começa com _) não aparece como se fosse fonte", () => {
+    // `_gravacao` é injetada pela PRÓPRIA rota quando o upsert das pautas
+    // falha — não é o nome de uma fonte cadastrada, e listá-la ao lado de
+    // "cqcs" confunde o dono do veículo.
+    const r = resumoDaExecucao(
+      {
+        comecou_em: dias(0),
+        achados: { cqcs: 3 },
+        falhas: { cqcs: "HTTP 503", _gravacao: "não foi possível gravar as pautas" },
+      },
+      AGORA
+    );
+    expect(r.texto).not.toContain("_gravacao");
+    expect(r.tom).toBe("atencao");
+  });
+
+  it("aviso do sistema sozinho (sem falha de fonte nenhuma) ainda pede atenção", () => {
+    const r = resumoDaExecucao(
+      { comecou_em: dias(0), achados: {}, falhas: { _gravacao: "erro ao gravar" } },
+      AGORA
+    );
+    expect(r.tom).toBe("atencao");
+    expect(r.texto).not.toContain("_gravacao");
+  });
+
   it("nenhum achado em NENHUMA fonte é suspeito, não calmo", () => {
     // Pode ser dia calmo; também é como parecem três feeds que mudaram de
     // formato ao mesmo tempo, depois de uma atualização do WordPress.

@@ -108,7 +108,10 @@ export function lerFeed(xml: string): ItemDeFeed[] {
       // "#respond", e <guid isPermaLink="false">, que é identificador
       // interno e não endereço. Pegar qualquer um dos dois quebra o dedupe.
       const url = texto(i.link).trim();
-      const titulo = texto(i.title).trim();
+      // `decodificar`, igual ao resumo: o parser não toca entidade dentro de
+      // CDATA — é texto literal por definição do XML — e o WordPress usa
+      // CDATA também no título, com "&#038;" no lugar de "&".
+      const titulo = decodificar(texto(i.title).trim());
       if (!url || !titulo) return null;
 
       const resumoBruto = semHtml(texto(i.description));

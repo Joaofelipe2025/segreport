@@ -105,6 +105,19 @@ describe("entradas que não são feed bom", () => {
     </channel></rss>`;
     expect(lerFeed(xml)[0].publicadoEm).toBeNull();
   });
+
+  it("decodifica entidade numérica no título dentro de CDATA", () => {
+    // O parser NÃO decodifica entidade dentro de CDATA — é texto literal por
+    // definição do XML. O WordPress emite &#038; em vez de &amp; no título,
+    // e ele chegava cru à tela porque só o resumo passava por `decodificar`.
+    const xml = `<rss><channel>
+      <item>
+        <title><![CDATA[Susep &#038; CNseg fecham acordo]]></title>
+        <link>https://x.test/a</link>
+      </item>
+    </channel></rss>`;
+    expect(lerFeed(xml)[0].titulo).toBe("Susep & CNseg fecham acordo");
+  });
 });
 
 /**

@@ -88,6 +88,30 @@ describe("pautas", () => {
   });
 
   /**
+   * O `upsert(..., { ignoreDuplicates: true })` da rota vira, no Postgres,
+   * `on conflict do nothing`, e é do `returning` dele que saem os números
+   * `novas` e `repetidas` que o painel mostra. Se o `returning` trouxesse
+   * também as linhas ignoradas, `novas` seria o total em toda execução e
+   * ninguém perceberia — o painel diria "80 pautas novas" todo dia.
+   *
+   * A camada do PostgREST só se prova contra o banco de verdade, e é o que
+   * `scripts/fumaca-vigia.mjs` faz. O comportamento do SQL por baixo dela é
+   * este teste.
+   */
+  it("reinserir a mesma URL não devolve linha — é daí que sai a contagem", async () => {
+    await withRollback(async (db) => {
+      const primeira = await db.query(`${INSERE} on conflict (url) do nothing returning id`);
+      expect(primeira.rows).toHaveLength(1);
+
+      const segunda = await db.query(`${INSERE} on conflict (url) do nothing returning id`);
+      expect(segunda.rows).toHaveLength(0);
+
+      await actAsOwner(db);
+      expect((await db.query("select id from public.pautas")).rows).toHaveLength(1);
+    });
+  });
+
+  /**
    * `tipo_de_fonte` é o campo que a spec chama de "o que torna a CON-1
    * verificável": um adaptador de imprensa só produz `'imprensa'`, e o
    * gerador de matéria das etapas seguintes vai recusar tudo que não for

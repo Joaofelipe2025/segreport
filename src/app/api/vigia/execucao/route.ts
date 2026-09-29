@@ -106,7 +106,11 @@ export async function POST(request: NextRequest) {
       ? recusa(
           503,
           "O vigia ainda não foi instalado no banco.",
-          "Aplique supabase/migrations/20260930000001_vigia.sql no Supabase."
+          // Aponta o arquivo que o dono realmente cola, não a migração: o
+          // de setup é colável inteiro e confere no fim se as tabelas
+          // ficaram de pé. Mandar alguém abrir a pasta de migrações é como
+          // este projeto já perdeu um dia antes.
+          "Cole supabase/setup/ATIVAR-VIGIA.sql no editor SQL do Supabase."
         )
       : recusa(500, `Não foi possível registrar a execução: ${erroExecucao.message}`, "Tente de novo.");
   }

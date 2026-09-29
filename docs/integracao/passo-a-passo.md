@@ -18,7 +18,7 @@ Sobra **um passo**. Leva um minuto.
 1. Abra o Supabase, projeto **`hdzfleptasoepfsalqad`**
    (confira o endereço — há outro projeto antigo chamado SEGREPORTS que **não** é este)
 2. Menu lateral → **SQL Editor** → **New query**
-3. Abra `supabase/setup/ATIVAR-INGESTAO.sql`, copie **tudo**, cole e clique em **Run**
+3. Abra o arquivo **`supabase/setup/ATIVAR-INGESTAO.sql`** — é o que termina em **.sql**, não este guia — copie tudo, cole e clique em **Run**
 
 É seguro rodar mais de uma vez. Já validei o arquivo aplicando num Postgres limpo.
 

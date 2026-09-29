@@ -1,3 +1,5 @@
+import { formatRelative } from "@/lib/format";
+
 const DIA = 24 * 60 * 60 * 1000;
 
 /** Depois disto, pauta não lida sai da lista principal. */
@@ -53,10 +55,16 @@ export function resumoDaExecucao(
     };
   }
 
+  // A partir daqui a execução é recente (dentro de 24h), mas "recente" cobre
+  // de 1 minuto a 23 horas — e sem dizer QUANDO, uma execução de 20 minutos
+  // atrás e uma de 23 horas atrás rendem o mesmo texto. `quando` é o que a
+  // FR-2.2 pede além de "o que falhou": também "quando foi".
+  const quando = formatRelative(exec.comecou_em, agora);
+
   const comFalha = Object.keys(exec.falhas);
   if (comFalha.length > 0) {
     return {
-      texto: `Última execução falhou em: ${comFalha.join(", ")}.`,
+      texto: `Última execução, ${quando}, falhou em: ${comFalha.join(", ")}.`,
       tom: "atencao",
     };
   }
@@ -64,11 +72,10 @@ export function resumoDaExecucao(
   const total = Object.values(exec.achados).reduce((a, b) => a + b, 0);
   if (total === 0) {
     return {
-      texto:
-        "A última execução não trouxe nada de nenhuma fonte. Pode ser dia calmo — ou os feeds mudaram de formato.",
+      texto: `A última execução, ${quando}, não trouxe nada de nenhuma fonte. Pode ser dia calmo — ou os feeds mudaram de formato.`,
       tom: "atencao",
     };
   }
 
-  return { texto: `Última execução trouxe ${total} item(ns).`, tom: "calmo" };
+  return { texto: `Última execução, ${quando}, trouxe ${total} item(ns).`, tom: "calmo" };
 }

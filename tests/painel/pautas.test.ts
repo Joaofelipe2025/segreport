@@ -52,6 +52,39 @@ describe("o aviso sobre a última execução", () => {
     expect(r.texto).toContain("apolice");
   });
 
+  it("diferencia execução de 20 minutos da de 23 horas — não é texto idêntico", () => {
+    // A FR-2.2 pede "quando foi a última execução". Sem isto, duas execuções
+    // calmas em horários bem diferentes produzem o mesmo texto.
+    const vinteMinutos = new Date(AGORA.getTime() - 20 * 60 * 1000).toISOString();
+    const vinteETresHoras = new Date(AGORA.getTime() - 23 * 60 * 60 * 1000).toISOString();
+    const a = resumoDaExecucao({ comecou_em: vinteMinutos, achados: { cqcs: 3 }, falhas: {} }, AGORA);
+    const b = resumoDaExecucao(
+      { comecou_em: vinteETresHoras, achados: { cqcs: 3 }, falhas: {} },
+      AGORA
+    );
+    expect(a.texto).not.toBe(b.texto);
+    expect(a.texto).toMatch(/min/);
+    expect(b.texto).toMatch(/\d+h/);
+  });
+
+  it("o alerta de falha por fonte também diz quando foi a execução", () => {
+    const vinteMinutos = new Date(AGORA.getTime() - 20 * 60 * 1000).toISOString();
+    const r = resumoDaExecucao(
+      { comecou_em: vinteMinutos, achados: { cqcs: 3 }, falhas: { apolice: "HTTP 503" } },
+      AGORA
+    );
+    expect(r.texto).toMatch(/min/);
+  });
+
+  it("o aviso de silêncio total também diz quando foi a execução", () => {
+    const vinteMinutos = new Date(AGORA.getTime() - 20 * 60 * 1000).toISOString();
+    const r = resumoDaExecucao(
+      { comecou_em: vinteMinutos, achados: { cqcs: 0 }, falhas: {} },
+      AGORA
+    );
+    expect(r.texto).toMatch(/min/);
+  });
+
   it("nenhum achado em NENHUMA fonte é suspeito, não calmo", () => {
     // Pode ser dia calmo; também é como parecem três feeds que mudaram de
     // formato ao mesmo tempo, depois de uma atualização do WordPress.

@@ -32,7 +32,7 @@ describe("validação dos achados", () => {
     expect(r.ok).toBe(true);
     expect(r.ok && r.achados).toEqual([]);
     expect(r.ok && r.recusados).toHaveLength(1);
-    expect(r.ok && r.recusados[0].fonte).toBe("desconhecida");
+    expect(r.ok && r.recusados[0].fonte).toBe("_desconhecida");
   });
 
   it("RECUSA tipo que não bate com o cadastro da fonte, mas sem derrubar o lote", () => {
@@ -81,7 +81,7 @@ describe("validação dos achados", () => {
     expect(r.ok).toBe(true);
     expect(r.ok && r.achados).toHaveLength(2);
     expect(r.ok && r.recusados).toHaveLength(1);
-    expect(r.ok && r.recusados[0].fonte).toBe("desconhecida");
+    expect(r.ok && r.recusados[0].fonte).toBe("_desconhecida");
   });
 
   it("apara e normaliza", () => {
@@ -144,5 +144,38 @@ describe("validação dos achados", () => {
       url: `https://cqcs.com.br/n/${i}`,
     }));
     expect(validarAchados(muitos).ok).toBe(false);
+  });
+});
+
+describe("o teto da URL é medido em bytes, não em caracteres", () => {
+  const bom = {
+    fonte: "cqcs",
+    tipoDeFonte: "imprensa",
+    titulo: "Um título",
+    url: "https://cqcs.com.br/noticia/",
+    resumo: "Um resumo.",
+    publicadoEm: "2026-09-29T12:00:00.000Z",
+  };
+
+  it("URL acentuada que cabe em caracteres mas estoura em bytes é recusada", () => {
+    // O índice único de btree que garante o dedupe estoura por volta de
+    // 2704 bytes. 1500 caracteres acentuados ocupam 3000 bytes: passam no
+    // teto medido em caracteres e derrubariam o upsert do lote inteiro,
+    // levando junto os itens que estavam bons.
+    const url = "https://cqcs.com.br/" + "é".repeat(1500);
+    expect(url.length).toBeLessThan(2000);
+    expect(Buffer.byteLength(url, "utf8")).toBeGreaterThan(2000);
+
+    const r = validarAchados([{ ...bom, url }]);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toEqual([]);
+    expect(r.ok && r.recusados[0].motivo).toMatch(/bytes/);
+  });
+
+  it("URL acentuada dentro do teto em bytes passa", () => {
+    const url = "https://cqcs.com.br/" + "é".repeat(900);
+    expect(Buffer.byteLength(url, "utf8")).toBeLessThan(2000);
+    const r = validarAchados([{ ...bom, url }]);
+    expect(r.ok && r.achados).toHaveLength(1);
   });
 });

@@ -67,6 +67,9 @@ function decodificar(texto: string): string {
   });
 }
 
+/** O mesmo teto de `src/lib/vigia/pauta.ts`, para as duas cópias concordarem. */
+const TETO_RESUMO = 2000;
+
 /**
  * Tira marcação e comprime espaço. O resumo vai para a tela e para o banco.
  *
@@ -114,7 +117,10 @@ export function lerFeed(xml: string): ItemDeFeed[] {
       const titulo = decodificar(texto(i.title).trim());
       if (!url || !titulo) return null;
 
-      const resumoBruto = semHtml(texto(i.description));
+      // Cortado no mesmo teto do servidor, igual ao `vigia-feed.mjs`: as
+      // duas cópias precisam devolver a mesma coisa, e o teste contra as
+      // amostras reais exige isso.
+      const resumoBruto = semHtml(texto(i.description)).slice(0, TETO_RESUMO);
 
       return {
         titulo,

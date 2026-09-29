@@ -86,6 +86,67 @@ describe("pautas", () => {
       expect(r.rows[0].estado).toBe("nova");
     });
   });
+
+  /**
+   * `tipo_de_fonte` é o campo que a spec chama de "o que torna a CON-1
+   * verificável": um adaptador de imprensa só produz `'imprensa'`, e o
+   * gerador de matéria das etapas seguintes vai recusar tudo que não for
+   * `'primaria'`. Se um admin puder reescrever esse campo pelo PostgREST, a
+   * garantia vira honra.
+   *
+   * A policy de update sozinha não basta — ela autoriza a LINHA, não a
+   * COLUNA. Quem fecha isso é o privilégio de coluna da migração
+   * `20260930000002_pautas_colunas.sql`, e é ele que este teste guarda: uma
+   * migração futura com `grant all on public.pautas` reabriria tudo em
+   * silêncio.
+   */
+  describe("o admin muda o estado da pauta, e nada além disso", () => {
+    it("pode mudar `estado`", async () => {
+      await withRollback(async (db) => {
+        const ids = await seedUsers(db);
+        await db.query(INSERE);
+        await actAs(db, ids.adminId);
+
+        expect((await tryWrite(db, "update public.pautas set estado = 'lida'")).ok).toBe(true);
+
+        await actAsOwner(db);
+        expect((await db.query("select estado from public.pautas")).rows[0].estado).toBe("lida");
+      });
+    });
+
+    it("NÃO pode reescrever `tipo_de_fonte`", async () => {
+      await withRollback(async (db) => {
+        const ids = await seedUsers(db);
+        await db.query(INSERE);
+        await actAs(db, ids.adminId);
+
+        const t = await tryWrite(db, "update public.pautas set tipo_de_fonte = 'primaria'");
+        expect(t.ok).toBe(false);
+
+        await actAsOwner(db);
+        const r = await db.query("select tipo_de_fonte from public.pautas");
+        expect(r.rows[0].tipo_de_fonte).toBe("imprensa");
+      });
+    });
+
+    it("NÃO pode reescrever o título nem o endereço", async () => {
+      await withRollback(async (db) => {
+        const ids = await seedUsers(db);
+        await db.query(INSERE);
+        await actAs(db, ids.adminId);
+
+        expect((await tryWrite(db, "update public.pautas set titulo = 'trocado'")).ok).toBe(false);
+        expect(
+          (await tryWrite(db, "update public.pautas set url = 'https://outro.test/x'")).ok
+        ).toBe(false);
+
+        await actAsOwner(db);
+        const r = await db.query("select titulo, url from public.pautas");
+        expect(r.rows[0].titulo).toBe("Uma pauta");
+        expect(r.rows[0].url).toBe("https://cqcs.com.br/n/1");
+      });
+    });
+  });
 });
 
 describe("registro de execução", () => {

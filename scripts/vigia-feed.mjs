@@ -39,6 +39,22 @@ export function decodificar(texto) {
   });
 }
 
+/** O mesmo teto que o servidor aplica ao resumo, em `src/lib/vigia/pauta.ts`. */
+export const TETO_RESUMO = 2000;
+
+/**
+ * Corta o resumo no teto do servidor.
+ *
+ * Sem isto, um feed que passe a publicar o post inteiro em `<description>`
+ * monta um corpo acima dos 512 KiB que a rota aceita. O 413 acontece ANTES
+ * de a linha de execução ser gravada — ou seja, a execução sumiria sem
+ * deixar rastro, que é justamente o estado que `vigia_execucoes` existe
+ * para tornar impossível.
+ */
+function cortar(texto) {
+  return texto.length > TETO_RESUMO ? texto.slice(0, TETO_RESUMO) : texto;
+}
+
 /** Mesma regra de `feed.ts`: o link vem de `<link>`, nunca de comments nem guid. */
 export function lerItens(xml) {
   const itens = [];
@@ -60,9 +76,11 @@ export function lerItens(xml) {
     // Tira a marcação ANTES de decodificar, na mesma ordem de `feed.ts`:
     // ao contrário, `&lt;b&gt;` viraria `<b>` e seria removido em seguida,
     // apagando texto que o autor escreveu escapado para aparecer.
-    const resumo = decodificar(pegar("description").replace(/<[^>]*>/g, " "))
-      .replace(/\s+/g, " ")
-      .trim();
+    const resumo = cortar(
+      decodificar(pegar("description").replace(/<[^>]*>/g, " "))
+        .replace(/\s+/g, " ")
+        .trim()
+    );
 
     const data = new Date(pegar("pubDate"));
     itens.push({

@@ -11,7 +11,7 @@ export interface PautaRecebida {
 
 /**
  * Um achado recusado — não derruba o lote, mas também não some sem deixar
- * rastro. `fonte` é "desconhecida" quando o item nem chega a dizer, de forma
+ * rastro. `fonte` é "_desconhecida" quando o item nem chega a dizer, de forma
  * legível, de qual fonte cadastrada ele veio (campo ausente, ou fonte que
  * não está em `src/lib/vigia/fontes.ts`).
  */
@@ -75,7 +75,7 @@ export function validarAchados(bruto: unknown): ValidacaoDeAchados {
 
   for (const cru of bruto) {
     if (!cru || typeof cru !== "object") {
-      recusados.push({ fonte: "desconhecida", motivo: "Item de achado não é objeto." });
+      recusados.push({ fonte: "_desconhecida", motivo: "Item de achado não é objeto." });
       continue;
     }
     const a = cru as Record<string, unknown>;
@@ -84,7 +84,7 @@ export function validarAchados(bruto: unknown): ValidacaoDeAchados {
     const cadastro = fonteInformada ? fontePorChave(fonteInformada) : null;
     if (!cadastro) {
       recusados.push({
-        fonte: "desconhecida",
+        fonte: "_desconhecida",
         motivo: `Fonte "${fonteInformada || "(vazia)"}" não está cadastrada.`,
       });
       continue;
@@ -126,10 +126,15 @@ export function validarAchados(bruto: unknown): ValidacaoDeAchados {
       recusados.push({ fonte, motivo: `Endereço inválido: "${url || "(vazio)"}".` });
       continue;
     }
-    if (url.length > TETO_URL) {
+    // Em BYTES, não em caracteres: o índice único de btree que garante o
+    // dedupe estoura por volta de 2704 bytes, e 2000 caracteres acentuados
+    // passam disso. Medir errado aqui deixa a URL entrar e derruba o upsert
+    // inteiro lá na frente, levando junto o lote que estava bom.
+    const bytesDaUrl = Buffer.byteLength(url, "utf8");
+    if (bytesDaUrl > TETO_URL) {
       recusados.push({
         fonte,
-        motivo: `Endereço com ${url.length} caracteres passa do teto de ${TETO_URL}.`,
+        motivo: `Endereço com ${bytesDaUrl} bytes passa do teto de ${TETO_URL}.`,
       });
       continue;
     }

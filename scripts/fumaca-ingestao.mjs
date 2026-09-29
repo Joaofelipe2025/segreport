@@ -42,6 +42,29 @@ const enviar = (corpo, chave = CHAVE) =>
     body: JSON.stringify(corpo),
   });
 
+/**
+ * Uma sessão de admin de verdade, para conferir o corpo pelo mesmo caminho
+ * que o editor usa. `generate_link` não dispara e-mail, então não gasta a
+ * cota de SMTP.
+ */
+async function entrarComoAdmin() {
+  const email = process.env.ADMIN_EMAIL ?? "joao.rodrigues.santana@gmail.com";
+  const g = await fetch(`${SUPABASE}/auth/v1/admin/generate_link`, {
+    method: "POST",
+    headers: S,
+    body: JSON.stringify({ type: "magiclink", email }),
+  });
+  const { hashed_token: token } = await g.json();
+  if (!token) return null;
+
+  const v = await fetch(
+    `${SUPABASE}/auth/v1/verify?token=${token}&type=magiclink&redirect_to=${BASE}/auth/confirm`,
+    { redirect: "manual", headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY } }
+  );
+  const frag = new URLSearchParams((v.headers.get("location") ?? "").split("#")[1] ?? "");
+  return frag.get("access_token");
+}
+
 const resultados = [];
 const conferir = (ok, nome, detalhe = "") => resultados.push({ ok, nome, detalhe });
 
@@ -87,15 +110,29 @@ try {
     const [autor] = await (await rest(`authors?id=eq.${linha.author_id}&select=name,slug`)).json();
     conferir(autor?.slug === "da-redacao", "assinada pela redação", autor?.name ?? "—");
 
-    // O corpo sobreviveu?
+    // O corpo sobreviveu? Lido COMO O PAINEL LÊ — com sessão de admin.
+    //
+    // A chave de serviço não serve aqui, e a primeira versão deste teste
+    // usou ela e falhou: `article_body_json` exige `is_admin()` ou ser o
+    // autor, e a chave de serviço não é nenhum dos dois. O erro era do
+    // teste, mas só dá para saber isso conferindo pelo caminho verdadeiro.
+    const jwt = await entrarComoAdmin();
     const corpoVolta = await (
       await fetch(`${SUPABASE}/rest/v1/rpc/article_body_json`, {
         method: "POST",
-        headers: S,
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${jwt}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ p_slug: linha.slug }),
       })
     ).json();
-    conferir(JSON.stringify(corpoVolta).includes(MARCA), "o texto sobreviveu à ida e volta");
+    conferir(
+      JSON.stringify(corpoVolta).includes(MARCA),
+      "o texto sobrevive e o painel consegue lê-lo",
+      jwt ? "" : "não consegui sessão de admin"
+    );
 
     // Reenvio idêntico não duplica.
     const repetido = await enviar(base);

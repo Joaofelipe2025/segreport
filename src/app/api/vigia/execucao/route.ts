@@ -115,6 +115,15 @@ export async function POST(request: NextRequest) {
     : { data: [], error: null };
 
   if (erroPautas) {
+    // A linha de execução já foi gravada, e continua gravada de propósito:
+    // sem ela esta falha ficaria indistinguível de um dia calmo. Mas ela
+    // diria "3 achados" com zero pautas salvas, e registro que mente é pior
+    // do que registro que falta. Corrige antes de responder.
+    await admin
+      .from("vigia_execucoes")
+      .update({ achados: {}, falhas: { ...falhas, _gravacao: erroPautas.message } } as any)
+      .eq("id", execucao.id);
+
     return recusa(500, `Não foi possível gravar as pautas: ${erroPautas.message}`, "Tente de novo.");
   }
 

@@ -171,6 +171,13 @@ describe("RLS de matérias — escrita", () => {
         "update public.articles set title = 'Invadida' where slug = 'de-terceiro'"
       );
       expect(t.rowCount).toBe(0);
+
+      // rowCount sozinho prova pouco: uma policy escancarada também podia
+      // devolver 0 se a linha não fosse selecionável por outro motivo. A
+      // leitura como dono é que confirma que o título de fato não mudou.
+      await actAsOwner(db);
+      const r = await db.query("select title from public.articles where slug = 'de-terceiro'");
+      expect(r.rows[0].title).toBe("Matéria de teste");
     });
   });
 
@@ -185,6 +192,11 @@ describe("RLS de matérias — escrita", () => {
         "update public.articles set title = 'Alterada' where slug = 'no-ar'"
       );
       expect(t.rowCount).toBe(0);
+
+      // Mesmo motivo: confirma pela leitura como dono, não só pelo rowCount.
+      await actAsOwner(db);
+      const r = await db.query("select title from public.articles where slug = 'no-ar'");
+      expect(r.rows[0].title).toBe("Matéria de teste");
     });
   });
 

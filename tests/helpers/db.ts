@@ -162,7 +162,13 @@ async function boot() {
   const client: DbClient = {
     async query(sql, params) {
       const r = await pg.query(sql, params as unknown[]);
-      return { rows: r.rows as DbRow[], rowCount: r.rows.length };
+      // `r.rows.length` é a contagem de linhas DEVOLVIDAS. Num update sem
+      // `returning`, isso é sempre 0 — inclusive quando a policy deixou a
+      // escrita passar. O PGlite expõe a contagem real do command tag em
+      // `rowCount` (o mesmo campo que o backend de Postgres de verdade usa
+      // logo abaixo), com a mesma semântica: linhas afetadas por INSERT,
+      // UPDATE e DELETE, linhas devolvidas por SELECT.
+      return { rows: r.rows as DbRow[], rowCount: r.rowCount ?? 0 };
     },
     async exec(sql) {
       await pg.exec(sql);

@@ -65,11 +65,14 @@ describe("pautas", () => {
   });
 
   it("o colunista NÃO muda estado de pauta", async () => {
-    // A asserção que importa é `rowCount` da própria escrita, seguida de
-    // ler a linha COMO DONO. Conferir só que o select do colunista depois
-    // volta vazio não prova nada: ele voltaria vazio mesmo com a policy de
-    // update escancarada, porque é a policy de SELECT que esconde a linha
-    // de quem não é admin — o update podia ter passado por baixo dela.
+    // A asserção que importa é ler a linha COMO DONO depois da tentativa —
+    // não basta o `rowCount` da própria escrita nem, muito menos, o select
+    // do colunista logo em seguida. Este último não prova nada: voltaria
+    // vazio mesmo com a policy de update escancarada, porque é a policy de
+    // SELECT que esconde a linha de quem não é admin — o update podia ter
+    // passado por baixo dela. `rowCount` ajuda, mas só depois de
+    // tests/helpers/db.ts refletir linhas afetadas de verdade (ver conserto
+    // de rowCount); a leitura como dono é a prova que não depende disso.
     await withRollback(async (db) => {
       const ids = await seedUsers(db);
       await db.query(INSERE);

@@ -402,6 +402,53 @@ export interface Database {
         };
         Relationships: [];
       };
+      pautas: {
+        Row: {
+          id: string;
+          fonte: string;
+          tipo_de_fonte: string;
+          titulo: string;
+          url: string;
+          resumo: string | null;
+          publicado_em: string | null;
+          estado: string;
+          article_id: string | null;
+          criado_em: string;
+        };
+        Insert: {
+          id?: string;
+          fonte: string;
+          tipo_de_fonte: string;
+          titulo: string;
+          url: string;
+          resumo?: string | null;
+          publicado_em?: string | null;
+          estado?: string;
+          article_id?: string | null;
+          criado_em?: string;
+        };
+        Update: {
+          estado?: string;
+          article_id?: string | null;
+        };
+        Relationships: [];
+      };
+      vigia_execucoes: {
+        Row: {
+          id: string;
+          comecou_em: string;
+          achados: Record<string, number>;
+          falhas: Record<string, string>;
+        };
+        Insert: {
+          id?: string;
+          comecou_em?: string;
+          achados?: Record<string, number>;
+          falhas?: Record<string, string>;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

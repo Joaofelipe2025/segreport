@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
-import { validarAchados } from "@/lib/vigia/pauta";
+import { contarRecusados, validarAchados } from "@/lib/vigia/pauta";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -65,10 +65,20 @@ export async function POST(request: NextRequest) {
   const validacao = validarAchados(corpo.achados ?? []);
   if (!validacao.ok) return recusa(400, validacao.erro, validacao.comoCorrigir);
 
-  const falhas =
+  const falhasDoScript =
     corpo.falhas && typeof corpo.falhas === "object" && !Array.isArray(corpo.falhas)
       ? (corpo.falhas as Record<string, string>)
       : {};
+
+  // Itens recusados individualmente não derrubam mais o lote (ver
+  // validarAchados) — mas também não desaparecem: entram aqui, contados por
+  // fonte, para que o painel mostre "3 itens ilegíveis" em vez de silêncio.
+  // Concatena em vez de sobrescrever: a fonte pode já ter falha do próprio
+  // script (feed fora do ar) e recusa de item ao mesmo tempo.
+  const falhas: Record<string, string> = { ...falhasDoScript };
+  for (const [fonte, mensagem] of Object.entries(contarRecusados(validacao.recusados))) {
+    falhas[fonte] = falhas[fonte] ? `${falhas[fonte]}; ${mensagem}` : mensagem;
+  }
 
   const admin = criarClienteAdmin();
 

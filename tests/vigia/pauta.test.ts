@@ -15,36 +15,63 @@ describe("validação dos achados", () => {
     const r = validarAchados([bom]);
     expect(r.ok).toBe(true);
     expect(r.ok && r.achados).toHaveLength(1);
+    expect(r.ok && r.recusados).toEqual([]);
   });
 
   it("aceita lista vazia — dia calmo é resultado válido", () => {
     const r = validarAchados([]);
     expect(r.ok).toBe(true);
     expect(r.ok && r.achados).toEqual([]);
+    expect(r.ok && r.recusados).toEqual([]);
   });
 
-  it("recusa fonte desconhecida", () => {
+  it("recusa fonte desconhecida SEM derrubar o lote, e conta como desconhecida", () => {
+    // Um item ruim não pode fazer os outros 79 sumirem, e não pode sumir
+    // ele mesmo: vira recusa de item, não recusa de lote.
     const r = validarAchados([{ ...bom, fonte: "blog-do-vizinho" }]);
-    expect(r.ok).toBe(false);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toEqual([]);
+    expect(r.ok && r.recusados).toHaveLength(1);
+    expect(r.ok && r.recusados[0].fonte).toBe("desconhecida");
   });
 
-  it("RECUSA tipo que não bate com o cadastro da fonte", () => {
+  it("RECUSA tipo que não bate com o cadastro da fonte, mas sem derrubar o lote", () => {
     // Esta é a CON-1 em código: um adaptador de imprensa não pode se
     // declarar fonte primária e, nas etapas seguintes, alcançar o gerador
-    // de matéria.
+    // de matéria. A diferença desta revisão é que a recusa some do LOTE,
+    // não do RASTRO: o item não é gravado, mas aparece nos recusados.
     const r = validarAchados([{ ...bom, tipoDeFonte: "primaria" }]);
-    expect(r.ok).toBe(false);
-    expect(r.ok === false && r.erro).toMatch(/imprensa/i);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toEqual([]);
+    expect(r.ok && r.recusados).toHaveLength(1);
+    expect(r.ok && r.recusados[0].fonte).toBe("cqcs");
+    expect(r.ok && r.recusados[0].motivo).toMatch(/imprensa/i);
   });
 
-  it("recusa url que não é http", () => {
+  it("recusa url que não é http, item a item, sem derrubar o lote", () => {
     for (const url of ["javascript:alert(1)", "ftp://x.test/a", "/relativo", ""]) {
-      expect(validarAchados([{ ...bom, url }]).ok, url).toBe(false);
+      const r = validarAchados([{ ...bom, url }]);
+      expect(r.ok, url).toBe(true);
+      expect(r.ok && r.achados, url).toEqual([]);
+      expect(r.ok && r.recusados, url).toHaveLength(1);
     }
   });
 
-  it("recusa título vazio", () => {
-    expect(validarAchados([{ ...bom, titulo: "   " }]).ok).toBe(false);
+  it("recusa título vazio, item a item, sem derrubar o lote", () => {
+    const r = validarAchados([{ ...bom, titulo: "   " }]);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toEqual([]);
+    expect(r.ok && r.recusados).toHaveLength(1);
+  });
+
+  it("lote com itens bons e um ruim: devolve os bons e conta o ruim", () => {
+    const bom2 = { ...bom, url: "https://cqcs.com.br/noticia/y/" };
+    const ruim = { ...bom, fonte: "blog-do-vizinho", url: "https://blog.test/a" };
+    const r = validarAchados([bom, bom2, ruim]);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.achados).toHaveLength(2);
+    expect(r.ok && r.recusados).toHaveLength(1);
+    expect(r.ok && r.recusados[0].fonte).toBe("desconhecida");
   });
 
   it("apara e normaliza", () => {

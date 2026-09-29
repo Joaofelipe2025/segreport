@@ -9,8 +9,19 @@ export interface PautaRecebida {
   publicadoEm: string | null;
 }
 
+/**
+ * Um achado recusado — não derruba o lote, mas também não some sem deixar
+ * rastro. `fonte` é "desconhecida" quando o item nem chega a dizer, de forma
+ * legível, de qual fonte cadastrada ele veio (campo ausente, ou fonte que
+ * não está em `src/lib/vigia/fontes.ts`).
+ */
+export interface AchadoRecusado {
+  fonte: string;
+  motivo: string;
+}
+
 export type ValidacaoDeAchados =
-  | { ok: true; achados: PautaRecebida[] }
+  | { ok: true; achados: PautaRecebida[]; recusados: AchadoRecusado[] }
   | { ok: false; erro: string; comoCorrigir: string };
 
 /** Teto por execução. Três feeds somam 80 itens; 500 é folga com limite. */
@@ -28,6 +39,18 @@ function dataOuNula(valor: unknown): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+/**
+ * Valida o lote inteiro.
+ *
+ * Duas classes de erro, de propósito. ESTRUTURAL (não é lista, passa do
+ * limite de itens) derruba o lote inteiro com 400 — não há achado legível
+ * para separar dos outros. Erro DE ITEM (fonte errada, tipo divergente,
+ * campo vazio ou inválido) não derruba mais nada: o item vai para
+ * `recusados` e os demais seguem para `achados`. Antes desta revisão, um
+ * único link relativo numa fonte matava as outras duas e a execução inteira
+ * desaparecia sem gravar `vigia_execucoes` — exatamente o estado que a
+ * tabela existe para tornar impossível.
+ */
 export function validarAchados(bruto: unknown): ValidacaoDeAchados {
   if (!Array.isArray(bruto)) {
     return recusar("`achados` precisa ser uma lista.", "Envie um array, mesmo que vazio.");
@@ -40,44 +63,48 @@ export function validarAchados(bruto: unknown): ValidacaoDeAchados {
   }
 
   const achados: PautaRecebida[] = [];
+  const recusados: AchadoRecusado[] = [];
 
   for (const cru of bruto) {
     if (!cru || typeof cru !== "object") {
-      return recusar("Item de achado não é objeto.", "Cada achado é um objeto JSON.");
+      recusados.push({ fonte: "desconhecida", motivo: "Item de achado não é objeto." });
+      continue;
     }
     const a = cru as Record<string, unknown>;
 
-    const fonte = typeof a.fonte === "string" ? a.fonte.trim() : "";
-    const cadastro = fontePorChave(fonte);
+    const fonteInformada = typeof a.fonte === "string" ? a.fonte.trim() : "";
+    const cadastro = fonteInformada ? fontePorChave(fonteInformada) : null;
     if (!cadastro) {
-      return recusar(
-        `Fonte "${fonte || "(vazia)"}" não está cadastrada.`,
-        "Use uma das fontes de src/lib/vigia/fontes.ts."
-      );
+      recusados.push({
+        fonte: "desconhecida",
+        motivo: `Fonte "${fonteInformada || "(vazia)"}" não está cadastrada.`,
+      });
+      continue;
     }
+    const fonte = fonteInformada;
 
     // A CON-1, em código. O tipo NÃO vem do que a requisição disse: vem do
     // cadastro. Divergência é recusa, não correção silenciosa — um
     // adaptador de imprensa que se declarasse primária alcançaria, nas
     // etapas seguintes, o gerador de matéria.
     if (a.tipoDeFonte !== cadastro.tipo) {
-      return recusar(
-        `A fonte "${fonte}" é de ${cadastro.tipo} e o achado veio como "${String(a.tipoDeFonte)}".`,
-        "Não declare o tipo: ele sai do cadastro da fonte."
-      );
+      recusados.push({
+        fonte,
+        motivo: `A fonte "${fonte}" é de ${cadastro.tipo} e o achado veio como "${String(a.tipoDeFonte)}". Não declare o tipo: ele sai do cadastro da fonte.`,
+      });
+      continue;
     }
 
     const titulo = typeof a.titulo === "string" ? a.titulo.trim() : "";
     if (!titulo) {
-      return recusar("Achado sem título.", "Todo achado precisa de `titulo`.");
+      recusados.push({ fonte, motivo: "Achado sem título." });
+      continue;
     }
 
     const url = typeof a.url === "string" ? a.url.trim() : "";
     if (!/^https?:\/\//i.test(url)) {
-      return recusar(
-        `Endereço inválido: "${url || "(vazio)"}".`,
-        "`url` precisa começar com http:// ou https://."
-      );
+      recusados.push({ fonte, motivo: `Endereço inválido: "${url || "(vazio)"}".` });
+      continue;
     }
 
     const resumo = typeof a.resumo === "string" ? a.resumo.trim() : "";
@@ -92,5 +119,21 @@ export function validarAchados(bruto: unknown): ValidacaoDeAchados {
     });
   }
 
-  return { ok: true, achados };
+  return { ok: true, achados, recusados };
+}
+
+/**
+ * Agrupa os recusados por fonte, no formato que a execução grava em
+ * `falhas`: `"3 itens ilegíveis"`. Existe para que um link relativo numa
+ * fonte apareça no painel como contagem, não como sumiço.
+ */
+export function contarRecusados(recusados: AchadoRecusado[]): Record<string, string> {
+  const porFonte = new Map<string, number>();
+  for (const r of recusados) porFonte.set(r.fonte, (porFonte.get(r.fonte) ?? 0) + 1);
+
+  const resultado: Record<string, string> = {};
+  for (const [fonte, n] of porFonte) {
+    resultado[fonte] = `${n} ${n === 1 ? "item ilegível" : "itens ilegíveis"}`;
+  }
+  return resultado;
 }

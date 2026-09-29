@@ -23,7 +23,12 @@ export default async function PautasPage() {
       .from("pautas")
       .select("id, fonte, titulo, url, resumo, publicado_em, estado, criado_em")
       .eq("estado", "nova")
-      .order("publicado_em", { ascending: false, nullsFirst: false })
+      // Ordena por `criado_em` porque é por `criado_em` que `pautasVisiveis`
+      // corta a janela de sete dias. Ordenar por `publicado_em` desalinha as
+      // duas: pauta vista hoje, mas sem data no feed, iria para o fim da fila
+      // e sumiria no `.limit(200)` — justo a mais nova, e sem erro nenhum na
+      // tela. Assim o corte derruba as mais velhas, que a janela já esconde.
+      .order("criado_em", { ascending: false })
       .limit(200),
     supabase
       .from("vigia_execucoes")

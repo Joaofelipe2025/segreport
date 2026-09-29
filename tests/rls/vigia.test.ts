@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { actAs, closeDb, tryWrite, withRollback } from "../helpers/db";
+import { actAs, actAsOwner, closeDb, tryWrite, withRollback } from "../helpers/db";
 import { seedUsers } from "../helpers/seed";
 
 afterAll(closeDb);
@@ -65,14 +65,22 @@ describe("pautas", () => {
   });
 
   it("o colunista NÃO muda estado de pauta", async () => {
+    // A asserção que importa é `rowCount` da própria escrita, seguida de
+    // ler a linha COMO DONO. Conferir só que o select do colunista depois
+    // volta vazio não prova nada: ele voltaria vazio mesmo com a policy de
+    // update escancarada, porque é a policy de SELECT que esconde a linha
+    // de quem não é admin — o update podia ter passado por baixo dela.
     await withRollback(async (db) => {
       const ids = await seedUsers(db);
       await db.query(INSERE);
       await actAs(db, ids.columnistId);
+
       const t = await tryWrite(db, "update public.pautas set estado = 'lida'");
-      // A RLS não entrega a linha, então nada é atualizado.
-      expect((await db.query("select estado from public.pautas")).rows).toHaveLength(0);
-      expect(t.ok).toBe(true);
+      expect(t.rowCount).toBe(0);
+
+      await actAsOwner(db);
+      const r = await db.query("select estado from public.pautas");
+      expect(r.rows[0].estado).toBe("nova");
     });
   });
 });

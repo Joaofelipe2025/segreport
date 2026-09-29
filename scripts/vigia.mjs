@@ -16,12 +16,25 @@
 
 import { FONTES, lerItens } from "./vigia-feed.mjs";
 
+// `||`, não `??`: o GitHub Actions define a variável de ambiente como STRING
+// VAZIA quando ela não está cadastrada, e `??` só troca null/undefined —
+// "" passava direto, o endereço virava "" e o script morria em
+// `TypeError: Invalid URL` depois de já ter lido os três feeds, sem dizer o
+// que fazer, e o padrão de produção desta própria linha nunca era alcançado.
 const BASE =
-  process.argv[2] ?? process.env.SEGREPORT_URL ?? "https://segreport-five.vercel.app";
+  process.argv[2] || process.env.SEGREPORT_URL || "https://segreport-five.vercel.app";
 const CHAVE = process.env.INGESTAO_TOKEN;
 
 if (!CHAVE) {
   console.error("INGESTAO_TOKEN não definida.");
+  process.exit(1);
+}
+
+try {
+  new URL(BASE);
+} catch {
+  console.error(`Endereço do SegReport inválido: "${BASE}".`);
+  console.error("Passe como argumento ou configure a variável SEGREPORT_URL.");
   process.exit(1);
 }
 

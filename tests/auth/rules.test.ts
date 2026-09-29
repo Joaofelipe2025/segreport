@@ -54,6 +54,7 @@ describe("menu por papel", () => {
     expect(rotas).toEqual([
       "/admin",
       "/admin/materias",
+      "/admin/pautas",
       "/admin/colunistas",
       "/admin/midia",
       "/admin/ajustes",

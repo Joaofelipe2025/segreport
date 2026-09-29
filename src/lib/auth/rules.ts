@@ -41,6 +41,7 @@ export interface ItemDeMenu {
 const MENU: Array<ItemDeMenu & { papeis: Role[] }> = [
   { href: "/admin", rotulo: "Painel", papeis: ["admin", "columnist"] },
   { href: "/admin/materias", rotulo: "Matérias", papeis: ["admin", "columnist"] },
+  { href: "/admin/pautas", rotulo: "Pautas", papeis: ["admin"] },
   { href: "/admin/colunistas", rotulo: "Colunistas", papeis: ["admin"] },
   { href: "/admin/midia", rotulo: "Mídia", papeis: ["admin", "columnist"] },
   { href: "/admin/ajustes", rotulo: "Ajustes", papeis: ["admin"] },

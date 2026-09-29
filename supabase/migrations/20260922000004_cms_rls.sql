@@ -25,10 +25,10 @@ alter table public.articles enable row level security;
 -- Parece afrouxar o paywall, mas é o desenho da spec. A linha carrega título,
 -- linha de apoio, capa e metadados, que precisam ser públicos e indexáveis —
 -- são o canal de aquisição por busca. O que é restrito é o CORPO, e ele não
--- sai por aqui: a página estática entrega o documento até o corte, e a
--- continuação vem de /api/materia/[slug]/restrito, que confere o plano na
--- sessão. A policy antiga escondia a matéria inteira do não assinante, e
--- escondia do Google junto.
+-- sai por aqui: as colunas de corpo estão revogadas de anon e authenticated,
+-- e o texto só sai pelas funções article_body e article_body_json, que
+-- conferem o plano de quem pede. A policy antiga escondia a matéria inteira
+-- do não assinante, e escondia do Google junto.
 
 create policy articles_select_published on public.articles
   for select to anon, authenticated

@@ -39,7 +39,7 @@ const FILTROS_LEGADOS: Array<{ valor: EstadoEditorial; rotulo: string }> = [
 ];
 
 const CAMPOS =
-  "id, title, slug, status, updated_at, published_at, scheduled_for, category_id, cover_url, excerpt, reading_time, view_count, authors(name)";
+  "id, title, slug, status, updated_at, published_at, scheduled_for, category_id, cover_url, excerpt, reading_time, view_count, updated_by, authors(name)";
 
 export default async function MateriasPage(props: PageProps<"/admin/materias">) {
   const params = await props.searchParams;

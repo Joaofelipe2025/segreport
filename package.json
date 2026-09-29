@@ -10,12 +10,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:push:test": "supabase db push --db-url $TEST_DATABASE_URL",
-    "fumaca": "node scripts/fumaca-painel.mjs && node scripts/fumaca-publicacao.mjs && node scripts/fumaca-upload.mjs"
+    "fumaca": "node scripts/fumaca-painel.mjs && node scripts/fumaca-publicacao.mjs && node scripts/fumaca-upload.mjs && node scripts/fumaca-ingestao.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tiptap/core": "^3.31.3",
+    "@tiptap/markdown": "^3.31.3",
     "@tiptap/pm": "^3.31.3",
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",

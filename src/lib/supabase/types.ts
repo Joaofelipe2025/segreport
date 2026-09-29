@@ -374,6 +374,34 @@ export interface Database {
         };
         Relationships: [];
       };
+      /**
+       * Histórico do que chegou pelo agente externo.
+       *
+       * Guarda procedência (que `articles` não tem coluna para armazenar) e a
+       * chave de deduplicação por conteúdo. Só admin lê.
+       */
+      ingestao_recebidas: {
+        Row: {
+          id: string;
+          article_id: string | null;
+          hash_conteudo: string;
+          titulo: string;
+          recebido_em: string;
+        };
+        Insert: {
+          id?: string;
+          article_id?: string | null;
+          hash_conteudo: string;
+          titulo: string;
+          recebido_em?: string;
+        };
+        Update: {
+          article_id?: string | null;
+          hash_conteudo?: string;
+          titulo?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

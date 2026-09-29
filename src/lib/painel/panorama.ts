@@ -23,6 +23,7 @@ export interface LinhaDoPanorama {
   excerpt: string | null;
   reading_time: number | null;
   view_count: number | null;
+  updated_by: string | null;
   authors: { name: string | null } | null;
 }
 
@@ -145,4 +146,23 @@ export function contarPorEstado(
     if (estadoValido(linha.status)) contagem[linha.status] += 1;
   }
   return contagem;
+}
+
+/**
+ * Ninguém abriu esta matéria ainda.
+ *
+ * `updated_by` é preenchido em toda gravação pelo painel, então nulo numa
+ * matéria em revisão significa que ela entrou por fora — hoje, pela ingestão
+ * do agente — e nenhuma pessoa a tocou.
+ *
+ * É sinal de FILA, não de procedência, e a diferença importa: o sinal se
+ * apaga no primeiro salvamento, que é exatamente o que se quer de uma
+ * pendência e exatamente o que inutilizaria uma marca de origem. A
+ * procedência mora em `ingestao_recebidas`, onde não se apaga.
+ */
+export function ninguemRevisou(linha: {
+  status: string;
+  updated_by: string | null;
+}): boolean {
+  return linha.status === "in_review" && linha.updated_by === null;
 }

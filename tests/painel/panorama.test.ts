@@ -6,6 +6,7 @@ import {
   problemasDaPublicada,
   publicadasDesde,
   rascunhosParados,
+  ninguemRevisou,
   rascunhosVazios,
   type LinhaDoPanorama,
 } from "@/lib/painel/panorama";
@@ -25,6 +26,7 @@ const linha = (p: Partial<LinhaDoPanorama> = {}): LinhaDoPanorama => ({
   excerpt: "Resumo da matéria.",
   reading_time: 4,
   view_count: 0,
+  updated_by: "perfil-humano",
   authors: { name: "Da Redação" },
   ...p,
 });
@@ -216,5 +218,24 @@ describe("endereço vazio em matéria publicada", () => {
     expect(problemasDaPublicada(linha({ status: "published", slug: "" }))).toContain(
       "sem endereço"
     );
+  });
+});
+
+describe("matéria que nenhuma pessoa tocou", () => {
+  it("acusa quando updated_by é nulo", () => {
+    // Sinal de FILA, não de procedência: toda gravação pelo painel preenche
+    // updated_by, então ele se limpa sozinho quando alguém revisa.
+    expect(ninguemRevisou({ status: "in_review", updated_by: null })).toBe(true);
+  });
+
+  it("não acusa depois que alguém salvou", () => {
+    expect(ninguemRevisou({ status: "in_review", updated_by: "perfil-1" })).toBe(false);
+  });
+
+  it("só vale para matéria em revisão", () => {
+    // Rascunho recém-criado pelo painel também tem updated_by; e publicada
+    // sempre passou por alguém. O aviso só faz sentido na fila.
+    expect(ninguemRevisou({ status: "draft", updated_by: null })).toBe(false);
+    expect(ninguemRevisou({ status: "published", updated_by: null })).toBe(false);
   });
 });

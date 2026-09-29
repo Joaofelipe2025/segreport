@@ -2,7 +2,7 @@
 
 import { EditorContent, useEditor, type Editor as TiptapEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { BLOCOS_PROPRIOS } from "@/lib/editor/extensions";
 import type { DocumentoBlocos } from "@/lib/editor/document";
 
@@ -20,12 +20,23 @@ export default function Editor({
   inicial: DocumentoBlocos;
   onChange: (doc: DocumentoBlocos) => void;
 }) {
+  const [falha, setFalha] = useState<string | null>(null);
+
   const editor = useEditor({
     extensions: [StarterKit, ...BLOCOS_PROPRIOS],
     content: inicial,
     // O Next renderiza no servidor primeiro; sem isto o React acusa
     // divergência de hidratação ao montar o editor no cliente.
     immediatelyRender: false,
+    // SEM ISTO O TIPTAP ESVAZIA O DOCUMENTO INTEIRO diante de um nó que o
+    // esquema não conhece — com um console.warn que ninguém lê. A matéria
+    // abriria em branco e a primeira tecla gravaria o vazio por cima do
+    // texto: a etapa de revisão destruindo o que ela existe para revisar.
+    //
+    // O caso concreto: `BlockRenderer` desenha `image`, e o StarterKit não
+    // tem esse nó.
+    enableContentCheck: true,
+    onContentError: ({ error }) => setFalha(error.message),
     editorProps: {
       attributes: {
         class:
@@ -34,6 +45,24 @@ export default function Editor({
     },
     onUpdate: ({ editor }) => onChange(editor.getJSON() as DocumentoBlocos),
   });
+
+  if (falha) {
+    return (
+      <div className="rounded-lg border border-down/40 bg-[#fdf3f3] p-5">
+        <p className="text-sm font-semibold text-[#a5252a]">
+          Não foi possível abrir o texto desta matéria
+        </p>
+        <p className="mt-1.5 text-xs leading-relaxed text-[#a5252a]">
+          O editor não reconhece um dos blocos do corpo. Nada foi perdido: o
+          texto continua gravado. Avise quem administra em vez de digitar
+          aqui — salvar agora gravaria um documento vazio por cima.
+        </p>
+        <p className="mt-2 overflow-x-auto rounded bg-white/70 px-2 py-1.5 font-mono text-[11px] text-ink-3">
+          {falha}
+        </p>
+      </div>
+    );
+  }
 
   if (!editor) {
     return <div className="min-h-[420px] animate-pulse rounded-lg bg-paper" />;

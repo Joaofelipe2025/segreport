@@ -18,6 +18,7 @@ import { ESTADOS_DO_FLUXO } from "@/lib/painel/fluxo";
 import { nomeDoAutor } from "@/lib/painel/resumo";
 import {
   DIAS_ATE_PARADO,
+  ninguemRevisou,
   agendadasAtrasadas,
   contarPorEstado,
   porEditoria,
@@ -32,7 +33,7 @@ import { formatRelative } from "@/lib/format";
 export const metadata: Metadata = { title: "Painel" };
 
 const CAMPOS =
-  "id, title, slug, status, updated_at, published_at, scheduled_for, category_id, cover_url, excerpt, reading_time, view_count, authors(name)";
+  "id, title, slug, status, updated_at, published_at, scheduled_for, category_id, cover_url, excerpt, reading_time, view_count, updated_by, authors(name)";
 
 export default async function PainelInicial() {
   const perfil = await requirePainel();
@@ -189,6 +190,13 @@ export default async function PainelInicial() {
                 >
                   <span className="min-w-0 truncate text-sm">{m.title}</span>
                   <span className="shrink-0 text-[11px]">
+                    {/* Chegou por fora e ninguém abriu ainda. Some no
+                        primeiro salvamento, que é o que se quer de pendência. */}
+                    {ninguemRevisou(m) && (
+                      <span className="mr-2 rounded bg-[#f0e3c0] px-1.5 py-0.5 font-semibold">
+                        não lida
+                      </span>
+                    )}
                     {nomeDoAutor(m)} · parada {formatRelative(m.updated_at, agora)}
                   </span>
                 </Link>

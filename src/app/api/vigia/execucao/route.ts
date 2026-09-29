@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { contarRecusados, validarAchados } from "@/lib/vigia/pauta";
+import { FONTES } from "@/lib/vigia/fontes";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -82,14 +83,19 @@ export async function POST(request: NextRequest) {
 
   const admin = criarClienteAdmin();
 
-  // Contagem por fonte, inclusive as que vieram zeradas — é o que permite
-  // ver no painel que uma fonte parou de trazer coisa.
-  const porFonte: Record<string, number> = {};
-  for (const a of validacao.achados) porFonte[a.fonte] = (porFonte[a.fonte] ?? 0) + 1;
+  // Semeia com zero TODAS as fontes cadastradas — não só as que apareceram
+  // no lote. É o que faz uma fonte sem achado nenhum aparecer como `0` em
+  // vez de sumir da chave, e é o que torna alcançável o ramo de "silêncio em
+  // todas as fontes" de `resumoDaExecucao`. A contagem final, com os números
+  // reais, só existe depois do upsert abaixo — aqui ela ainda conta o que o
+  // script LEU, não o que é NOVO.
+  const achadosPorFonte: Record<string, number> = Object.fromEntries(
+    FONTES.map((f) => [f.chave, 0])
+  );
 
   const { data: execucao, error: erroExecucao } = await admin
     .from("vigia_execucoes")
-    .insert({ achados: porFonte, falhas })
+    .insert({ achados: achadosPorFonte, falhas })
     .select("id")
     .single();
 
@@ -121,7 +127,7 @@ export async function POST(request: NextRequest) {
           })),
           { onConflict: "url", ignoreDuplicates: true }
         )
-        .select("id")
+        .select("id, fonte")
     : { data: [], error: null };
 
   if (erroPautas) {
@@ -135,6 +141,33 @@ export async function POST(request: NextRequest) {
       .eq("id", execucao.id);
 
     return recusa(500, `Não foi possível gravar as pautas: ${erroPautas.message}`, "Tente de novo.");
+  }
+
+  // Conta as pautas de fato INSERIDAS por fonte — não os itens que o script
+  // leu. É a diferença entre "trouxe 80" e "80 são novas": item repetido é
+  // descartado pelo `ignoreDuplicates` acima e não deve inflar a contagem
+  // que o painel lê como novidade.
+  const novasPorFonte: Record<string, number> = { ...achadosPorFonte };
+  for (const p of inseridas ?? []) {
+    novasPorFonte[p.fonte] = (novasPorFonte[p.fonte] ?? 0) + 1;
+  }
+
+  if (validacao.achados.length > 0) {
+    const { error: erroContagem } = await admin
+      .from("vigia_execucoes")
+      .update({ achados: novasPorFonte })
+      .eq("id", execucao.id);
+
+    if (erroContagem) {
+      // As pautas já estão salvas, e a linha de execução já existe com os
+      // zeros — perder só a atualização da contagem final é bem menos grave
+      // do que perder a linha inteira, que é o que este endpoint existe
+      // para evitar. Registra e segue: a resposta abaixo já reflete sucesso
+      // real.
+      console.error(
+        `[vigia] execução ${execucao.id}: não foi possível atualizar a contagem final: ${erroContagem.message}`
+      );
+    }
   }
 
   const novas = inseridas?.length ?? 0;

@@ -106,3 +106,25 @@ describe("entradas que não são feed bom", () => {
     expect(lerFeed(xml)[0].publicadoEm).toBeNull();
   });
 });
+
+/**
+ * Comparar as duas cópias do parse não basta: elas podem concordar e estar
+ * erradas juntas. Estes testes conferem contra as amostras reais que nada
+ * de entidade chega à tela cru — o defeito já escapou duas vezes, primeiro
+ * no título (referência numérica sem `htmlEntities`) e depois no resumo
+ * (entidade dentro de CDATA, que o parser não toca por definição).
+ */
+describe("nenhuma entidade sobra nas amostras reais", () => {
+  const AMOSTRAS = ["cqcs", "apolice", "sonho-seguro"] as const;
+
+  it.each(AMOSTRAS)("nem no título nem no resumo de %s", async (amostra) => {
+    const { readFileSync } = await import("node:fs");
+    const itens = lerFeed(readFileSync(`tests/vigia/amostras/${amostra}.xml`, "utf8"));
+
+    expect(itens.length).toBeGreaterThan(0);
+    for (const i of itens) {
+      expect(i.titulo, `título com entidade: ${i.titulo}`).not.toMatch(/&#?\w+;/);
+      expect(i.resumo ?? "", `resumo com entidade em ${i.url}`).not.toMatch(/&#?\w+;/);
+    }
+  });
+});

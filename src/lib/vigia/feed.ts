@@ -39,11 +39,43 @@ function texto(valor: unknown): string {
   return "";
 }
 
-/** Tira marcação e comprime espaço. O resumo vai para a tela e para o banco. */
+const NOMEADAS: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+};
+
+/**
+ * Decodifica entidade de HTML.
+ *
+ * O `htmlEntities` do parser resolve o texto comum, mas NÃO o que está
+ * dentro de CDATA — ali entidade é texto literal, e tem de ser, porque
+ * CDATA existe para não ser interpretado. Os três feeds põem a descrição em
+ * CDATA, então sem isto o resumo chega à tela com `&#8230;` e `&#38;` à
+ * mostra. O ramo numérico é o que morde: o WordPress emite `&#038;` no
+ * lugar de `&amp;` para não codificar duas vezes.
+ */
+function decodificar(texto: string): string {
+  return texto.replace(/&(#[xX]?[0-9a-fA-F]+|[a-zA-Z]+);/g, (bruto, corpo: string) => {
+    if (corpo[0] !== "#") return NOMEADAS[corpo.toLowerCase()] ?? bruto;
+    const hex = corpo[1] === "x" || corpo[1] === "X";
+    const n = parseInt(corpo.slice(hex ? 2 : 1), hex ? 16 : 10);
+    return Number.isFinite(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : bruto;
+  });
+}
+
+/**
+ * Tira marcação e comprime espaço. O resumo vai para a tela e para o banco.
+ *
+ * Tira a marcação ANTES de decodificar: ao contrário, `&lt;b&gt;` viraria
+ * `<b>` e seria removido em seguida, apagando texto que o autor escreveu
+ * escapado justamente para aparecer.
+ */
 function semHtml(bruto: string): string {
-  return bruto
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
+  return decodificar(bruto.replace(/<[^>]*>/g, " "))
     .replace(/\s+/g, " ")
     .trim();
 }

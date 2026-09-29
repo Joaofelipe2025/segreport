@@ -8,6 +8,11 @@ on:
   # Para depurar sem esperar o horário.
   workflow_dispatch:
 
+# O job não faz checkout com escrita, não abre PR, não publica nada: só lê
+# feeds públicos e chama uma rota nossa. Declarado vazio de propósito, para
+# não herdar um default mais generoso do repositório.
+permissions: {}
+
 # Uma execução por vez: duas ao mesmo tempo leriam os mesmos itens e
 # disputariam a unicidade da URL sem ganho nenhum.
 concurrency:

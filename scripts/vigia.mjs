@@ -8,10 +8,14 @@
  * diferente de zero só quando NÃO conseguiu registrar nada — fonte que
  * falhou é registrada e não derruba a execução.
  *
- * A lista de fontes é duplicada aqui de propósito: este script roda no
- * GitHub Actions, sem o build do Next, então não dá para importar
- * `src/lib/vigia/fontes.ts`. Um teste amarra as duas listas.
+ * A lista de fontes e o parse moram em `vigia-feed.mjs`, duplicando o que
+ * existe em `src/lib/vigia/` de propósito: este script roda no GitHub
+ * Actions, sem o build do Next. Um teste roda as duas cópias contra as
+ * mesmas amostras reais e exige resultado idêntico.
  */
+
+import { FONTES, lerItens } from "./vigia-feed.mjs";
+
 const BASE =
   process.argv[2] ?? process.env.SEGREPORT_URL ?? "https://segreport-five.vercel.app";
 const CHAVE = process.env.INGESTAO_TOKEN;
@@ -21,51 +25,6 @@ if (!CHAVE) {
   process.exit(1);
 }
 
-const FONTES = [
-  { chave: "cqcs", url: "https://cqcs.com.br/feed/", tipo: "imprensa" },
-  { chave: "apolice", url: "https://www.revistaapolice.com.br/feed/", tipo: "imprensa" },
-  { chave: "sonho-seguro", url: "https://sonhoseguro.com.br/feed/", tipo: "imprensa" },
-];
-
-/** Mesma regra de `src/lib/vigia/feed.ts`: link, nunca comments nem guid. */
-function lerItens(xml) {
-  const itens = [];
-  for (const bruto of xml.split("<item>").slice(1)) {
-    const item = bruto.slice(0, bruto.indexOf("</item>"));
-    const pegar = (tag) => {
-      const m = item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`));
-      if (!m) return "";
-      return m[1]
-        .replace(/^\s*<!\[CDATA\[/, "")
-        .replace(/\]\]>\s*$/, "")
-        .trim();
-    };
-
-    const url = pegar("link");
-    const titulo = pegar("title")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#8217;/g, "'");
-    if (!url || !titulo) continue;
-
-    const resumo = pegar("description")
-      .replace(/<[^>]*>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const data = new Date(pegar("pubDate"));
-    itens.push({
-      titulo,
-      url,
-      resumo: resumo || null,
-      publicadoEm: Number.isNaN(data.getTime()) ? null : data.toISOString(),
-    });
-  }
-  return itens;
-}
 
 const achados = [];
 const falhas = {};
@@ -102,14 +61,14 @@ const envio = await fetch(`${BASE}/api/vigia/execucao`, {
 const resposta = await envio.json().catch(() => ({}));
 
 if (!envio.ok) {
-  if (envio.status === 503) {
-    console.error(
-      `falhou ao registrar: o vigia ainda não foi instalado no banco (HTTP 503).`,
-      resposta.comoCorrigir ?? resposta.erro ?? resposta
-    );
-  } else {
-    console.error(`falhou ao registrar: HTTP ${envio.status}`, resposta);
-  }
+  // Imprime o que a rota disse, sem cravar a causa. O 503 dela vale tanto
+  // para "migração não aplicada" quanto para "INGESTAO_TOKEN ausente no
+  // servidor", e nomear o banco nos dois casos manda quem lê o log de
+  // Actions procurar o arquivo errado.
+  console.error(
+    `falhou ao registrar (HTTP ${envio.status}): ${resposta.erro ?? JSON.stringify(resposta)}`
+  );
+  if (resposta.comoCorrigir) console.error(resposta.comoCorrigir);
   process.exit(1);
 }
 

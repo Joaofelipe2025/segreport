@@ -6,6 +6,40 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
+  /**
+   * Cabeçalhos de segurança.
+   *
+   * O site subiu só com HSTS. Sem `frame-ancestors`, qualquer um embute o
+   * SegReport num iframe e monta uma fachada — num veículo de notícia isso
+   * vira golpe com a sua marca.
+   *
+   * A CSP aqui cobre só `frame-ancestors` e `upgrade-insecure-requests`.
+   * Uma CSP completa de script exige nonce por requisição, gerado no
+   * middleware; sem isso ela quebra o próprio Next e acaba sendo removida na
+   * primeira tela branca. Fica como trabalho próprio, não como remendo.
+   */
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          // Duas camadas para a mesma coisa: `frame-ancestors` é o padrão
+          // atual, `X-Frame-Options` cobre navegador antigo.
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'; upgrade-insecure-requests" },
+          { key: "X-Frame-Options", value: "DENY" },
+          // Impede o navegador de "adivinhar" o tipo de um arquivo enviado e
+          // executá-lo como script.
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // O endereço completo não vaza para terceiros; o domínio, sim —
+          // que é o que o veículo quer, para aparecer em relatório de origem.
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // O portal não usa nada disso. Negar por padrão evita que um script
+          // de anúncio futuro peça sozinho.
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+        ],
+      },
+    ];
+  },
   images: {
     // As capas enviadas pelo CMS moram no balde público `midia` do Supabase
     // Storage. O padrão é estreito de propósito: só este projeto, só este

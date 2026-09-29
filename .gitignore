@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Credenciais do banco de testes
 .env.test
+
+.vercel
+.env*

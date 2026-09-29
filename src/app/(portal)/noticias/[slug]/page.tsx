@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { getArticle, getArticleBody, getArticles, getAuthor } from "@/lib/data";
 import BlockRenderer from "@/components/article/BlockRenderer";
 import { CategoryBadge, TierBadge } from "@/components/ui/Badge";
+import ContarLeitura from "./ContarLeitura";
 import { ListRow } from "@/components/portal/ArticleCard";
 import {
   NewsletterWidget,
@@ -66,6 +67,10 @@ export default async function ArticlePage(props: PageProps<"/noticias/[slug]">) 
 
   return (
     <article className="mx-auto max-w-[1400px] px-4 py-8 lg:px-8">
+      {/* Conta no navegador, não na renderização: o Next pré-carrega a rota
+          quando o mouse passa no link, e contar aqui faria passar o mouse
+          pela home virar leitura. */}
+      <ContarLeitura slug={article.slug} />
       <nav aria-label="Trilha" className="mb-5 text-xs font-medium text-ink-3">
         <Link href="/" className="hover:text-forest-700">
           Home

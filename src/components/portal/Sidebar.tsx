@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getMostRead } from "@/lib/data";
 import { RankedRow } from "./ArticleCard";
 import { PRO_BENEFITS } from "@/lib/tier";
+import FormularioDeNewsletter from "./FormularioDeNewsletter";
 
 /** Bloco de assinatura da newsletter. */
 export function NewsletterWidget() {
@@ -23,24 +24,7 @@ export function NewsletterWidget() {
         Receba nossa curadoria diária de notícias no seu e-mail.
       </p>
 
-      <form className="space-y-2.5">
-        <label htmlFor="newsletter-email" className="sr-only">
-          Seu e-mail profissional
-        </label>
-        <input
-          id="newsletter-email"
-          type="email"
-          required
-          placeholder="Seu e-mail profissional..."
-          className="w-full rounded-lg border border-hairline bg-paper px-4 py-3 text-sm outline-none transition-colors placeholder:text-ink-4 focus:border-forest-500 focus:bg-white"
-        />
-        <button
-          type="submit"
-          className="w-full rounded-lg bg-forest-800 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-forest-700"
-        >
-          Inscrever-se
-        </button>
-      </form>
+      <FormularioDeNewsletter />
     </section>
   );
 }

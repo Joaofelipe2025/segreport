@@ -21,8 +21,11 @@ import { FONTES, lerItens } from "./vigia-feed.mjs";
 // "" passava direto, o endereço virava "" e o script morria em
 // `TypeError: Invalid URL` depois de já ter lido os três feeds, sem dizer o
 // que fazer, e o padrão de produção desta própria linha nunca era alcançado.
-const BASE =
-  process.argv[2] || process.env.SEGREPORT_URL || "https://segreport-five.vercel.app";
+// Sem endereço padrão de propósito. Um padrão chumbado aqui sobreviveria a
+// uma troca de domínio ou de conta: quem esquecesse a variável veria o vigia
+// rodar sem erro nenhum, escrevendo no endereço antigo — ou em nada, se ele
+// já tiver sido apagado. Falhar alto é a única leitura honesta disso.
+const BASE = process.argv[2] || process.env.SEGREPORT_URL || "";
 const CHAVE = process.env.INGESTAO_TOKEN;
 
 if (!CHAVE) {
@@ -31,10 +34,12 @@ if (!CHAVE) {
 }
 
 try {
+  if (!BASE) throw new Error("vazio");
   new URL(BASE);
 } catch {
-  console.error(`Endereço do SegReport inválido: "${BASE}".`);
-  console.error("Passe como argumento ou configure a variável SEGREPORT_URL.");
+  console.error(`Endereço do SegReport inválido ou ausente: "${BASE}".`);
+  console.error("Cadastre a variável SEGREPORT_URL no GitHub (aba Variables,");
+  console.error("não Secrets), ou passe o endereço como argumento.");
   process.exit(1);
 }
 
@@ -45,7 +50,10 @@ const falhas = {};
 for (const fonte of FONTES) {
   try {
     const r = await fetch(fonte.url, {
-      headers: { "User-Agent": "SegReport-Vigia/1.0 (+https://segreport-five.vercel.app)" },
+      // O User-Agent sai do próprio BASE: é cortesia com quem é lido dizer
+      // quem está lendo e onde reclamar, e um endereço chumbado aqui viraria
+      // mentira na primeira troca de domínio.
+      headers: { "User-Agent": `SegReport-Vigia/1.0 (+${BASE})` },
       signal: AbortSignal.timeout(30_000),
     });
     if (!r.ok) {

@@ -52,7 +52,7 @@ grep INGESTAO_TOKEN .env.local
 ## Conferir que funcionou
 
 ```bash
-node scripts/fumaca-ingestao.mjs https://segreport-five.vercel.app
+node scripts/fumaca-ingestao.mjs https://segreport.com.br
 ```
 
 Esperado: **5/5**. Ele cria uma matéria de teste, confere que entrou em

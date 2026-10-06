@@ -37,7 +37,7 @@ antiga em `INGESTAO_TOKEN_ANTERIOR`, atualize o GPT, e depois remova a antiga.
 Em **Configure → Actions → Create new action**, cole o esquema abaixo. Em
 *Authentication*, escolha **API Key**, tipo **Bearer**, e cole a chave.
 
-Troque `segreport-five.vercel.app` pelo seu domínio quando ele entrar.
+O endereço é `segreport.com.br`, o domínio próprio do veículo.
 
 ```yaml
 openapi: 3.1.0
@@ -45,7 +45,7 @@ info:
   title: Ingestão de matérias do SegReport
   version: "1.0.0"
 servers:
-  - url: https://segreport-five.vercel.app
+  - url: https://segreport.com.br
 paths:
   /api/ingestao/materias:
     post:
@@ -166,7 +166,7 @@ Não reenvie o mesmo conteúdo sem mudar nada.
 ## 4. Conferir que funcionou
 
 ```bash
-curl -X POST https://segreport-five.vercel.app/api/ingestao/materias \
+curl -X POST https://segreport.com.br/api/ingestao/materias \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{

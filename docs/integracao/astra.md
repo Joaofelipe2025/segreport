@@ -7,28 +7,29 @@ recusa matéria publicada vinda de fora do painel.
 
 ---
 
-## 1. Antes de tudo: dois passos seus
+## 1. O lado do servidor já está pronto
 
-**No Supabase**, cole `supabase/migrations/20260929000002_ingestao.sql` no
-editor SQL. Sem isso o endpoint responde 503 dizendo exatamente qual arquivo
-falta, e nada mais do site muda.
+A tabela de ingestão está aplicada no banco e a `INGESTAO_TOKEN` está
+cadastrada na Vercel, **só em Production** — implantações de preview herdam
+variáveis, e um endereço de preview aceitaria a mesma chave escrevendo no
+mesmo banco de produção.
 
-Opcionalmente cole também `20260929000003_ingestao_trava_opcional.sql` — é a
-trava citada acima. Nada depende dela; ela só impede que um erro futuro no
-código quebre a promessa de que nada publica sozinho.
+Conferido em produção pela fumaça (`node scripts/fumaca-ingestao.mjs
+https://www.segreport.com.br`): 12 de 12 verificações, incluindo recusa de
+chave errada, de imagem no corpo e de tabela, e a matéria entrando em
+revisão com assinatura "Da Redação".
 
-**Na Vercel**, defina `INGESTAO_TOKEN` com uma chave longa:
+Você só precisa da chave para colar no GPT. Ela não pode ser lida de volta na
+Vercel (é do tipo Secret, por isso), mas está no `.env.local` deste projeto:
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+grep '^INGESTAO_TOKEN=' .env.local | cut -d= -f2
 ```
 
-> Marque **só Production**. Implantações de preview herdam variáveis, e
-> `segreport-<hash>.vercel.app` aceitaria a mesma chave escrevendo no mesmo
-> banco de produção.
-
-Para trocar a chave sem derrubar o Astra: ponha a nova em `INGESTAO_TOKEN`, a
-antiga em `INGESTAO_TOKEN_ANTERIOR`, atualize o GPT, e depois remova a antiga.
+**Para trocar a chave sem derrubar o Astra:** ponha a nova em
+`INGESTAO_TOKEN`, a antiga em `INGESTAO_TOKEN_ANTERIOR`, atualize o GPT, e só
+depois remova a antiga. A rota aceita as duas ao mesmo tempo justamente para
+isso.
 
 ---
 

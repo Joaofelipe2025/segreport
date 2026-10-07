@@ -116,11 +116,15 @@ describe("o esquema que o Astra recebe não pode divergir do portal", () => {
     const { readFileSync } = await import("node:fs");
     const doc = readFileSync("docs/integracao/astra.md", "utf8");
 
-    const bloco = doc.match(/enum:\n((?:\s+- [a-z]+\n)+)/);
+    // `\r?\n` e não `\n`: o git entrega este repositório em CRLF no Windows,
+    // então um padrão preso a LF passa na máquina de quem escreveu e falha em
+    // todas as outras. Consertar o arquivo não resolveria — o git converte de
+    // volta no próximo checkout. Quem tem de tolerar é o teste.
+    const bloco = doc.match(/enum:\r?\n((?:\s+- [a-z]+\r?\n)+)/);
     expect(bloco, "não achei o enum no arquivo de integração").not.toBeNull();
 
     const noDoc = bloco![1]
-      .split("\n")
+      .split(/\r?\n/)
       .map((l) => l.replace(/^\s*-\s*/, "").trim())
       .filter(Boolean);
 

@@ -37,7 +37,8 @@ antiga em `INGESTAO_TOKEN_ANTERIOR`, atualize o GPT, e depois remova a antiga.
 Em **Configure → Actions → Create new action**, cole o esquema abaixo. Em
 *Authentication*, escolha **API Key**, tipo **Bearer**, e cole a chave.
 
-O endereço é `segreport.com.br`, o domínio próprio do veículo.
+O endereço é `www.segreport.com.br`. Use o `www`: a raiz ainda não resolve,
+e uma action apontada para ela falha em toda chamada.
 
 ```yaml
 openapi: 3.1.0
@@ -45,7 +46,7 @@ info:
   title: Ingestão de matérias do SegReport
   version: "1.0.0"
 servers:
-  - url: https://segreport.com.br
+  - url: https://www.segreport.com.br
 paths:
   /api/ingestao/materias:
     post:
@@ -166,7 +167,7 @@ Não reenvie o mesmo conteúdo sem mudar nada.
 ## 4. Conferir que funcionou
 
 ```bash
-curl -X POST https://segreport.com.br/api/ingestao/materias \
+curl -X POST https://www.segreport.com.br/api/ingestao/materias \
   -H "Authorization: Bearer SUA_CHAVE" \
   -H "Content-Type: application/json" \
   -d '{

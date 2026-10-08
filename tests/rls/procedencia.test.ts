@@ -220,6 +220,36 @@ describe("procedência da matéria", () => {
     });
   });
 
+  it("admin confirma a checagem e fica registrado quem confirmou", async () => {
+    // Mesma forma do update de `confirmarChecagem`: a marca sai e o
+    // responsável entra, num update só.
+    await withRollback(async (db) => {
+      const ids = await seedUsers(db);
+      const id = await seedArticle(db, ids.columnistAuthorId, "in_review", "confirma");
+      await db.query(
+        `update public.articles
+            set origem = 'derivada', fonte_original_url = 'https://cqcs.com.br/n/1',
+                precisa_checagem = true
+          where id = $1`,
+        [id]
+      );
+      await actAs(db, ids.adminId);
+      const t = await tryWrite(
+        db,
+        `update public.articles
+            set precisa_checagem = false, updated_by = '${ids.adminId}'
+          where id = '${id}'`
+      );
+      expect(t.ok).toBe(true);
+      await actAsOwner(db);
+      const r = await db.query(
+        "select precisa_checagem, updated_by from public.articles where id = $1",
+        [id]
+      );
+      expect(r.rows[0]).toEqual({ precisa_checagem: false, updated_by: ids.adminId });
+    });
+  });
+
   it("pautas tem carimbo de atualização, e o gatilho o move ao reservar", async () => {
     // Sem ele a reserva (`em_producao`) não tem como expirar: só haveria
     // `criado_em`, que nunca muda, e toda pauta antiga pareceria vencida.

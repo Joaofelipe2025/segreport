@@ -373,14 +373,17 @@ export async function excluirMateria(id: string): Promise<EstadoMateria> {
  * Quem clica aqui assume a checagem.
  *
  * Só admin: confirmar apuração é decisão editorial, e colunista não publica.
+ * A responsabilidade fica registrada: `updated_by` recebe quem confirmou, no
+ * mesmo update que apaga a marca. Isso também apaga o sinal "ninguém
+ * revisou" da fila — certo, porque quem confirmou a checagem tocou a matéria.
  */
 export async function confirmarChecagem(id: string): Promise<EstadoMateria> {
-  await requireRole(["admin"]);
+  const perfil = await requireRole(["admin"]);
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("articles")
-    .update({ precisa_checagem: false })
+    .update({ precisa_checagem: false, updated_by: perfil.id })
     .eq("id", id)
     .select("id");
 

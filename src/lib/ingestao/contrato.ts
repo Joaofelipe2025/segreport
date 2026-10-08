@@ -156,6 +156,15 @@ export function validarPedido(corpo: unknown): Validacao {
 
   // Lista de texto, ou nada. Elemento de outro tipo é recusado: descartá-lo
   // deixaria uma pauta na fila sem ninguém saber.
+  // O campo singular antigo não é ignorado: ignorá-lo devolveria 201 sem
+  // marcar pauta nenhuma e sem nenhum log (a lista nova ficaria vazia).
+  if (c.pautaId !== undefined) {
+    return recusar(
+      "O campo `pautaId` não existe mais: virou `pautaIds` e é uma lista.",
+      "Envie `pautaIds` como lista de textos (strings) com o id de TODAS as pautas do grupo, por exemplo [\"id1\", \"id2\"], e remova `pautaId`."
+    );
+  }
+
   let pautaIds: string[] = [];
   if (c.pautaIds !== undefined && c.pautaIds !== null) {
     if (!Array.isArray(c.pautaIds) || c.pautaIds.some((i) => typeof i !== "string")) {

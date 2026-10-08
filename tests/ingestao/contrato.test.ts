@@ -235,6 +235,16 @@ describe("procedência no contrato de entrada", () => {
     expect(vazio.ok && vazio.pedido.pautaIds).toEqual([]);
   });
 
+  it("pautaId no singular é recusado, dizendo que virou pautaIds e é lista", () => {
+    // Ignorar em silêncio devolveria 201 sem marcar pauta nenhuma e sem log.
+    for (const velho of ["abc", "", null, 5]) {
+      const r = validarPedido({ ...base, pautaId: velho });
+      expect(r.ok, String(velho)).toBe(false);
+      expect(r.ok === false && r.comoCorrigir).toMatch(/pautaIds/);
+      expect(r.ok === false && r.comoCorrigir).toMatch(/lista/);
+    }
+  });
+
   it("pautaIds com elemento que não é texto é recusado", () => {
     for (const ruim of [["abc", 7], [null], [{ id: "x" }], "abc", 42]) {
       const r = validarPedido({ ...base, pautaIds: ruim });

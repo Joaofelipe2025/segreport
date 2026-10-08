@@ -32,7 +32,8 @@ alter table public.articles drop constraint if exists articles_fonte_eh_http;
 alter table public.articles
   add constraint articles_fonte_eh_http
     check (fonte_original_url is null
-           or fonte_original_url ~* '^https?://[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}(:[0-9]+)?(/|$|\?|#)');
+           or (fonte_original_url ~* '^https?://([^[:space:]/\\?#@]*@)?[^.[:space:]/\\?#@:%<>^|\[\]][^[:space:]/\\?#@:%<>^|\[\]]*\.[^[:space:]/\\?#@:%<>^|\[\]]*[^.[:space:]/\\?#@:%<>^|\[\]](:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?(/|\\|\?|#|$)'
+               and fonte_original_url !~ '[[:space:]\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]'));
 
 -- Estado de reserva da pauta. A coluna tem check desde o vigia, então o
 -- valor novo precisa entrar nela.
@@ -111,3 +112,32 @@ begin
   return new;
 end;
 $$;
+
+-- A procedência também não nasce por mão de não-admin.
+--
+-- `articles_insert_columnist` deixa o colunista inserir a própria matéria, e
+-- `insert` é privilégio de tabela: sem isto ele grava `origem = 'derivada'`
+-- com `precisa_checagem = false` pelo PostgREST e a barreira de checagem nunca
+-- existe. Não dá para reusar `guard_article_columns`: no insert não há `old`.
+-- Admin e chamada sem sessão (ingestão, migração, semente) passam direto.
+create or replace function public.guard_article_insert_procedencia() returns trigger
+  language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or public.is_admin() then
+    return new;
+  end if;
+
+  if new.origem is not null
+     or new.fonte_original_url is not null
+     or new.fonte_original_nome is not null then
+    raise exception 'a procedência da matéria só é definida por administrador';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists articles_guard_insert_procedencia on public.articles;
+create trigger articles_guard_insert_procedencia
+  before insert on public.articles
+  for each row execute function public.guard_article_insert_procedencia();

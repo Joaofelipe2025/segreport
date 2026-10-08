@@ -220,6 +220,69 @@ describe("procedência da matéria", () => {
     });
   });
 
+  describe("a procedência não nasce por mão de não-admin", () => {
+    const INSERE = (autor: string) =>
+      `insert into public.articles (slug, title, status, author_id, origem, fonte_original_url, precisa_checagem)
+       values ('ins', 'Derivada', 'draft', '${autor}', 'derivada', 'https://cqcs.com.br/n/1', false)`;
+
+    it("colunista NÃO insere derivada com a marca limpa", async () => {
+      await withRollback(async (db) => {
+        const ids = await seedUsers(db);
+        await actAs(db, ids.columnistId);
+        const t = await tryWrite(db, INSERE(ids.columnistAuthorId));
+        expect(t.ok).toBe(false);
+        expect(t.error).toMatch(/procedência/);
+      });
+    });
+
+    it("colunista continua inserindo matéria sem procedência", async () => {
+      await withRollback(async (db) => {
+        const ids = await seedUsers(db);
+        await actAs(db, ids.columnistId);
+        const t = await tryWrite(
+          db,
+          `insert into public.articles (slug, title, status, author_id)
+           values ('manual', 'Manual', 'draft', '${ids.columnistAuthorId}')`
+        );
+        expect(t.ok).toBe(true);
+      });
+    });
+
+    it("admin insere", async () => {
+      await withRollback(async (db) => {
+        const ids = await seedUsers(db);
+        await actAs(db, ids.adminId);
+        const t = await tryWrite(db, INSERE(ids.adminAuthorId));
+        expect(t.ok).toBe(true);
+      });
+    });
+  });
+
+  it("derivada com espaço no endereço é recusada pelo banco", async () => {
+    await withRollback(async (db) => {
+      await actAsOwner(db);
+      const t = await tryWrite(
+        db,
+        `insert into public.articles (slug, title, status, origem, fonte_original_url)
+         values ('esp', 'Espaço', 'draft', 'derivada', 'https://a.com/b c')`
+      );
+      expect(t.ok).toBe(false);
+      expect(t.error).toMatch(/fonte_eh_http/);
+    });
+  });
+
+  it("domínio acentuado é aceito pelo banco", async () => {
+    await withRollback(async (db) => {
+      await actAsOwner(db);
+      const t = await tryWrite(
+        db,
+        `insert into public.articles (slug, title, status, origem, fonte_original_url)
+         values ('acc', 'Acento', 'draft', 'derivada', 'https://segurosé.com.br/x')`
+      );
+      expect(t.ok).toBe(true);
+    });
+  });
+
   it("admin confirma a checagem e fica registrado quem confirmou", async () => {
     // Mesma forma do update de `confirmarChecagem`: a marca sai e o
     // responsável entra, num update só.

@@ -65,6 +65,7 @@ export default async function ArticlePage(props: PageProps<"/noticias/[slug]">) 
   // acesso. Nulo significa matéria sem corpo ainda — rascunho recém-criado
   // ou publicação sem texto.
   const body = await getArticleBody(slug);
+  const credito = creditoDaFonte(article);
 
   return (
     <article className="mx-auto max-w-[1400px] px-4 py-8 lg:px-8">
@@ -156,24 +157,20 @@ export default async function ArticlePage(props: PageProps<"/noticias/[slug]">) 
             )}
           </div>
 
-          {(() => {
-            const credito = creditoDaFonte(article);
-            if (!credito || !article.fonteUrl) return null;
-            return (
-              <p className="mt-8 border-t border-forest-100 pt-4 text-xs text-ink-4">
-                Com informações de{" "}
-                <a
-                  href={article.fonteUrl}
-                  rel="noopener noreferrer nofollow"
-                  target="_blank"
-                  className="underline underline-offset-2 hover:text-forest-700"
-                >
-                  {credito}
-                </a>
-                .
-              </p>
-            );
-          })()}
+          {credito && (
+            <p className="mt-8 border-t border-forest-100 pt-4 text-xs text-ink-4">
+              Com informações de{" "}
+              <a
+                href={credito.href}
+                rel="noopener noreferrer nofollow"
+                target="_blank"
+                className="underline underline-offset-2 hover:text-forest-700"
+              >
+                {credito.rotulo}
+              </a>
+              .
+            </p>
+          )}
 
           {related.length > 0 && (
             <section className="mt-14">

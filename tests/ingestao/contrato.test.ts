@@ -322,6 +322,18 @@ describe("camposDaProcedencia — o que a rota grava", () => {
     });
   });
 
+  it("a invariante: só derivada nasce marcada, e só derivada é recusada sem fonte", () => {
+    // A regra do dono ("não quero plágio, apenas inspiração") em um lugar só.
+    const sem = { titulo: "Um título que serve", categoria: "regulacao", corpoMarkdown: "Texto com tamanho suficiente." };
+    for (const o of ["release", "primaria", "derivada", null]) {
+      const marcada = o === "derivada";
+      const comFonte = pedidoDe({ origem: o, fonteOriginalUrl: "https://cqcs.com.br/n/1" });
+      expect(camposDaProcedencia(comFonte).precisa_checagem, String(o)).toBe(marcada);
+      const semFonte = validarPedido({ ...sem, origem: o });
+      expect(semFonte.ok, String(o)).toBe(!marcada);
+    }
+  });
+
   it("release e primaria não são marcadas", () => {
     for (const o of ["release", "primaria"]) {
       expect(camposDaProcedencia(pedidoDe({ origem: o })).precisa_checagem, o).toBe(false);

@@ -20,7 +20,13 @@ const pauta = (over: Partial<PautaBruta> = {}): PautaBruta => ({
 });
 
 const grupo = (n: number, over: Partial<PautaBruta> = {}): Grupo => {
-  const ps = Array.from({ length: n }, () => pauta(over));
+  // Veículos distintos por padrão: repercussão é quantos veículos cobriram.
+  const ps = Array.from({ length: n }, (_, i) => pauta({ fonte: `veiculo-${i}`, ...over }));
+  return { pautas: ps, principal: ps[0] };
+};
+
+const grupoDe = (fontes: string[]): Grupo => {
+  const ps = fontes.map((fonte) => pauta({ fonte }));
   return { pautas: ps, principal: ps[0] };
 };
 
@@ -45,6 +51,15 @@ describe("a seleção do que vira matéria", () => {
     const pouco = grupo(1);
     const [primeiro] = selecionar([pouco, muito]);
     expect(primeiro.pautas).toHaveLength(3);
+  });
+
+  it("conta veículos, não pautas: um veículo com três peças perde para dois veículos", () => {
+    // `agrupar` não distingue fonte. Um veículo só publicando três peças de
+    // título quase igual não é repercussão; um release replicado por dois é.
+    const umVeiculoTresPecas = grupoDe(["cqcs", "cqcs", "cqcs"]);
+    const doisVeiculos = grupoDe(["cqcs", "apolice"]);
+    const [primeiro] = selecionar([umVeiculoTresPecas, doisVeiculos]);
+    expect(primeiro).toBe(doisVeiculos);
   });
 
   it("empate desempata pela mais recente", () => {

@@ -1307,3 +1307,8 @@ grant select (
   seo_description, updated_by,
   origem, fonte_original_url, fonte_original_nome
 ) on public.articles to anon, authenticated;
+
+-- A marca é informação de redação: `authenticated` lê, `anon` não. Não é
+-- afrouxamento — a marca bloqueia a publicação, então matéria publicada tem
+-- sempre `false`, e não há o que vazar para leitor logado.
+grant select (precisa_checagem) on public.articles to authenticated;

@@ -38,6 +38,7 @@ describe("procedência da matéria", () => {
          values ('d3', 'Origem torta', 'draft', 'copiada')`
       );
       expect(t.ok).toBe(false);
+      expect(t.error).toMatch(/origem_valida/);
     });
   });
 
@@ -64,6 +65,43 @@ describe("procedência da matéria", () => {
         `insert into public.articles (slug, title, status)
          values ('manual-1', 'Escrita por uma pessoa', 'draft')`
       );
+      expect(t.ok).toBe(true);
+    });
+  });
+
+  it("fonte que não é http(s) é recusada", async () => {
+    // Única defesa contra `javascript:` virar <a href> clicável no crédito.
+    await withRollback(async (db) => {
+      await actAsOwner(db);
+      const t = await tryWrite(
+        db,
+        `insert into public.articles (slug, title, status, origem, fonte_original_url)
+         values ('h1', 'Fonte maliciosa', 'draft', 'derivada', 'javascript:alert(1)')`
+      );
+      expect(t.ok).toBe(false);
+      expect(t.error).toMatch(/fonte_eh_http/);
+    });
+  });
+
+  it("fonte feita só de espaços é recusada", async () => {
+    // Passa o `is not null` da regra da derivada; precisa cair no http.
+    await withRollback(async (db) => {
+      await actAsOwner(db);
+      const t = await tryWrite(
+        db,
+        `insert into public.articles (slug, title, status, origem, fonte_original_url)
+         values ('h2', 'Fonte em branco', 'draft', 'derivada', '   ')`
+      );
+      expect(t.ok).toBe(false);
+      expect(t.error).toMatch(/fonte_eh_http/);
+    });
+  });
+
+  it("precisa_checagem é legível por usuário autenticado", async () => {
+    // O painel admin lê como `authenticated`; a fila de checagem depende disto.
+    await withRollback(async (db) => {
+      await actAs(db, "00000000-0000-0000-0000-0000000000aa");
+      const t = await tryWrite(db, `select precisa_checagem from public.articles limit 1`);
       expect(t.ok).toBe(true);
     });
   });

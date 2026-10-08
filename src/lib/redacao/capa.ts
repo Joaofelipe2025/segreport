@@ -5,28 +5,16 @@
  * imagem sintética de um fato real é fabricar fotografia documental, que as
  * regras editoriais do veículo proíbem. Também não se usa foto de terceiro.
  *
- * Sem conjunto para a editoria, devolve nulo — a matéria fica sem
- * `cover_url` e o portal cai na imagem gerada pela semente do slug, que já
- * existe. O fallback vale SÓ nesse caso.
+ * O mapa está VAZIO de propósito. Os caminhos (`/capas/x.jpg`) entram junto
+ * com os arquivos de `public/capas/`, na etapa 4 — nunca antes. O portal não
+ * tem como saber se o arquivo existe: gravar o caminho em `cover_url` antes
+ * disso põe capa 404 em toda matéria, e quem descobre é o dono. Comentário
+ * não é portão; mapa vazio é.
  *
- * Para editoria conhecida devolve `/capas/x.jpg`, e o portal não tem como
- * saber se o arquivo existe. Pré-condição de quem for consumir isto: os
- * arquivos de `public/capas/` precisam estar no projeto. Gravar o caminho em
- * `cover_url` antes disso põe 404 em toda matéria.
+ * Sem caminho para a editoria, devolve nulo — a matéria fica sem `cover_url`
+ * e o portal cai na imagem gerada pela semente do slug, que já existe.
  */
-const CAPAS = new Map<string, string>([
-  ["mercado", "/capas/mercado.jpg"],
-  ["tecnologia", "/capas/tecnologia.jpg"],
-  ["politica", "/capas/politica.jpg"],
-  ["regulacao", "/capas/regulacao.jpg"],
-  ["saude", "/capas/saude.jpg"],
-  ["auto", "/capas/auto.jpg"],
-  ["vida", "/capas/vida.jpg"],
-  ["agronegocio", "/capas/agronegocio.jpg"],
-  ["cyber", "/capas/cyber.jpg"],
-  ["beneficios", "/capas/beneficios.jpg"],
-  ["resseguros", "/capas/resseguros.jpg"],
-]);
+const CAPAS = new Map<string, string>();
 
 /** `Map` e não objeto: busca literal responderia a `constructor` e `__proto__`. */
 export function capaDaEditoria(editoria: string): string | null {

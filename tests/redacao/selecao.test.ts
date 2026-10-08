@@ -75,9 +75,12 @@ describe("a seleção do que vira matéria", () => {
 });
 
 describe("a capa por editoria", () => {
-  it("editoria conhecida devolve um caminho do projeto", () => {
-    const c = capaDaEditoria("regulacao");
-    expect(c).toMatch(/^\/capas\//);
+  it("hoje nenhuma editoria devolve capa: os arquivos ainda não existem", () => {
+    // O portal não sabe se o arquivo existe; gravar o caminho antes dos
+    // arquivos põe capa 404 em toda matéria. ESTE TESTE VIRA AO CONTRÁRIO
+    // quando as imagens entrarem em public/capas (etapa 4): aí toda editoria
+    // passa a exigir um caminho `/capas/...` e um arquivo que exista.
+    expect(capaDaEditoria("regulacao")).toBeNull();
   });
 
   it("editoria sem conjunto devolve nulo, não lança", () => {
@@ -90,10 +93,11 @@ describe("a capa por editoria", () => {
     expect(capaDaEditoria("mercado")).toBe(capaDaEditoria("mercado"));
   });
 
-  it("nenhuma editoria do portal fica sem capa", () => {
+  it("nenhuma editoria do portal tem capa enquanto os arquivos não existem", () => {
+    // Inverte quando as imagens entrarem (ver o teste acima).
     expect(CATEGORIES.length).toBeGreaterThan(0);
     for (const c of CATEGORIES) {
-      expect(capaDaEditoria(c.slug), c.slug).not.toBeNull();
+      expect(capaDaEditoria(c.slug), c.slug).toBeNull();
     }
   });
 

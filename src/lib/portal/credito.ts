@@ -48,8 +48,16 @@ export function creditoDaFonte(a: {
   if (!enderecoDeCredito(bruto)) return null;
   const url = new URL(bruto);
 
+  // Credencial embutida (`https://cqcs.com.br@evil.com`) faz o endereço
+  // parecer de um veículo e apontar para outro. Saem usuário e senha e, como o
+  // nome vem de terceiro assim como o endereço, o rótulo deixa de poder
+  // afirmar quem é o dono do link: vira o domínio real.
+  const comCredencial = url.username !== "" || url.password !== "";
+  url.username = "";
+  url.password = "";
+
   const dominio = url.hostname.replace(/^www\./, "");
-  const rotulo = a.fonteNome?.trim() || dominio;
+  const rotulo = (!comCredencial && a.fonteNome?.trim()) || dominio;
   if (!rotulo) return null;
 
   return { href: url.href, rotulo };

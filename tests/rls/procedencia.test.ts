@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { actAs, actAsOwner, closeDb, tryWrite, withRollback } from "../helpers/db";
+import { seedArticle, seedUsers } from "../helpers/seed";
 
 afterAll(closeDb);
 
@@ -164,6 +165,58 @@ describe("procedência da matéria", () => {
            from public.articles limit 1`
       );
       expect(t.ok).toBe(true);
+    });
+  });
+
+  describe("a marca de procedência não é apagável por quem não é admin", () => {
+    const CAMPOS: Array<[string, string]> = [
+      ["precisa_checagem", "precisa_checagem = false"],
+      ["origem", "origem = 'release'"],
+      ["fonte_original_url", "fonte_original_url = 'https://outro.com.br/x'"],
+      ["fonte_original_nome", "fonte_original_nome = 'Outro'"],
+    ];
+
+    const semear = async (db: Parameters<typeof seedUsers>[0]) => {
+      const ids = await seedUsers(db);
+      const id = await seedArticle(db, ids.columnistAuthorId, "draft", "marcada");
+      await db.query(
+        `update public.articles
+            set origem = 'derivada', fonte_original_url = 'https://cqcs.com.br/n/1',
+                fonte_original_nome = 'CQCS', precisa_checagem = true
+          where id = $1`,
+        [id]
+      );
+      return { ids, id };
+    };
+
+    it.each(CAMPOS)("colunista NÃO muda %s da própria matéria", async (campo, atribuicao) => {
+      await withRollback(async (db) => {
+        const { ids, id } = await semear(db);
+        await actAs(db, ids.columnistId);
+        const t = await tryWrite(db, `update public.articles set ${atribuicao} where id = '${id}'`);
+        expect(t.ok, campo).toBe(false);
+        await actAsOwner(db);
+        const r = await db.query(
+          `select origem, fonte_original_url, fonte_original_nome, precisa_checagem
+             from public.articles where id = $1`,
+          [id]
+        );
+        expect(r.rows[0]).toEqual({
+          origem: "derivada",
+          fonte_original_url: "https://cqcs.com.br/n/1",
+          fonte_original_nome: "CQCS",
+          precisa_checagem: true,
+        });
+      });
+    });
+
+    it.each(CAMPOS)("admin muda %s", async (campo, atribuicao) => {
+      await withRollback(async (db) => {
+        const { ids, id } = await semear(db);
+        await actAs(db, ids.adminId);
+        const t = await tryWrite(db, `update public.articles set ${atribuicao} where id = '${id}'`);
+        expect(t.ok, campo).toBe(true);
+      });
     });
   });
 

@@ -73,3 +73,41 @@ grant select (
 -- afrouxamento — a marca bloqueia a publicação, então matéria publicada tem
 -- sempre `false`, e não há o que vazar para leitor logado.
 grant select (precisa_checagem) on public.articles to authenticated;
+
+-- A marca de procedência só muda por administrador.
+--
+-- `update` de `articles` é privilégio de TABELA, e a policy
+-- `articles_update_columnist` deixa o colunista editar a própria matéria em
+-- rascunho: sem isto ele grava `precisa_checagem = false` (a barreira some) ou
+-- reescreve `fonte_original_nome` (o rótulo do link público). O gatilho já
+-- retorna cedo para `is_admin()`, então `confirmarChecagem` segue funcionando.
+create or replace function public.guard_article_columns() returns trigger
+  language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or public.is_admin() then
+    return new;
+  end if;
+
+  if new.view_count is distinct from old.view_count then
+    raise exception 'contagem de leituras não é editável';
+  end if;
+  if new.is_premium is distinct from old.is_premium
+     or new.is_exclusive is distinct from old.is_exclusive then
+    raise exception 'acesso da matéria é decisão comercial';
+  end if;
+  if new.slug is distinct from old.slug then
+    raise exception 'o endereço da matéria só muda por administrador';
+  end if;
+  if new.published_at is distinct from old.published_at then
+    raise exception 'a data de publicação é definida na publicação';
+  end if;
+  if new.origem is distinct from old.origem
+     or new.fonte_original_url is distinct from old.fonte_original_url
+     or new.fonte_original_nome is distinct from old.fonte_original_nome
+     or new.precisa_checagem is distinct from old.precisa_checagem then
+    raise exception 'a procedência da matéria só muda por administrador';
+  end if;
+
+  return new;
+end;
+$$;

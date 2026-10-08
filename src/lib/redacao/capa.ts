@@ -7,7 +7,12 @@
  *
  * Sem conjunto para a editoria, devolve nulo — a matéria fica sem
  * `cover_url` e o portal cai na imagem gerada pela semente do slug, que já
- * existe. Nenhuma matéria quebra por falta de foto.
+ * existe. O fallback vale SÓ nesse caso.
+ *
+ * Para editoria conhecida devolve `/capas/x.jpg`, e o portal não tem como
+ * saber se o arquivo existe. Pré-condição de quem for consumir isto: os
+ * arquivos de `public/capas/` precisam estar no projeto. Gravar o caminho em
+ * `cover_url` antes disso põe 404 em toda matéria.
  */
 const CAPAS = new Map<string, string>([
   ["mercado", "/capas/mercado.jpg"],

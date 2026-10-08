@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { selecionar, TETO_POR_EXECUCAO } from "@/lib/redacao/selecao";
 import { capaDaEditoria } from "@/lib/redacao/capa";
+import { CATEGORIES } from "@/lib/categories";
 import type { Grupo } from "@/lib/redacao/agrupamento";
 import type { PautaBruta } from "@/lib/redacao/pauta";
 
@@ -74,12 +75,16 @@ describe("a capa por editoria", () => {
   });
 
   it("nenhuma editoria do portal fica sem capa", () => {
-    const EDITORIAS = [
-      "mercado", "tecnologia", "politica", "regulacao", "saude",
-      "auto", "vida", "agronegocio", "cyber", "beneficios", "resseguros",
-    ];
-    for (const e of EDITORIAS) {
-      expect(capaDaEditoria(e), e).not.toBeNull();
+    expect(CATEGORIES.length).toBeGreaterThan(0);
+    for (const c of CATEGORIES) {
+      expect(capaDaEditoria(c.slug), c.slug).not.toBeNull();
+    }
+  });
+
+  it("nomes herdados de objeto não viram capa", () => {
+    // A razão de usar Map: busca literal em objeto responderia a estes.
+    for (const nome of ["constructor", "__proto__", "toString", "hasOwnProperty"]) {
+      expect(capaDaEditoria(nome), nome).toBeNull();
     }
   });
 });

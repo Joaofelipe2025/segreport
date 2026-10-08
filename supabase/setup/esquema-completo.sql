@@ -1286,7 +1286,8 @@ alter table public.articles
 alter table public.articles drop constraint if exists articles_fonte_eh_http;
 alter table public.articles
   add constraint articles_fonte_eh_http
-    check (fonte_original_url is null or fonte_original_url ~* '^https?://');
+    check (fonte_original_url is null
+           or fonte_original_url ~* '^https?://[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}(:[0-9]+)?(/|$|\?|#)');
 
 -- Estado de reserva da pauta. A coluna tem check desde o vigia, então o
 -- valor novo precisa entrar nela.

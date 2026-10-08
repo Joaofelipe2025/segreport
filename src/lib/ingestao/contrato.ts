@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { CATEGORIES } from "@/lib/categories";
+import { enderecoDeCredito } from "@/lib/portal/credito";
 
 /**
  * O que o Astra manda, e o que aceitamos.
@@ -149,10 +150,12 @@ export function validarPedido(corpo: unknown): Validacao {
   }
 
   const fonteUrl = typeof c.fonteOriginalUrl === "string" ? c.fonteOriginalUrl.trim() : "";
-  if (fonteUrl && !/^https?:\/\//i.test(fonteUrl)) {
+  // A MESMA noção de endereço que a página usa para montar o crédito: o que
+  // a página não consegue renderizar a rota não pode aceitar.
+  if (fonteUrl && !enderecoDeCredito(fonteUrl)) {
     return recusar(
-      "O endereço de origem precisa começar com http:// ou https://.",
-      "Envie `fonteOriginalUrl` como endereço completo."
+      "O endereço de origem não é um endereço completo, com domínio.",
+      "Envie `fonteOriginalUrl` como endereço completo, com http:// ou https:// e o domínio do veículo, sem espaços. Exemplo: https://cqcs.com.br/noticia/123."
     );
   }
 

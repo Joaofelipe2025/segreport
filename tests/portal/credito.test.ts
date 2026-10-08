@@ -1,5 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { creditoDaFonte } from "@/lib/portal/credito";
+import { creditoDaFonte, enderecoDeCredito } from "@/lib/portal/credito";
+
+describe("enderecoDeCredito — a única noção de endereço", () => {
+  it.each([
+    ["https://cqcs.com.br/n/1"],
+    ["http://exemplo.com"],
+    ["https://www.cqcs.com.br/n/1?utm=x"],
+  ])("%j serve", (u) => expect(enderecoDeCredito(u)).toBe(true));
+
+  it.each([
+    ["https://"],
+    ["http://"],
+    ["https://?a=1"],
+    ["https://localhost/x"],
+    ["https://a.com/b c"],
+    ["javascript:alert(1)"],
+    ["ftp://x.test/a"],
+    ["nem-url"],
+    [""],
+  ])("%j não serve", (u) => expect(enderecoDeCredito(u)).toBe(false));
+});
 
 describe("o crédito ao veículo de origem", () => {
   it("sem fonte, não há crédito", () => {

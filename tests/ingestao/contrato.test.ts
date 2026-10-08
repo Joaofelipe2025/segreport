@@ -182,6 +182,17 @@ describe("procedência no contrato de entrada", () => {
     expect(r.ok).toBe(false);
   });
 
+  it.each([["https://"], ["http://"], ["https://?a=1"], ["https://localhost/x"], ["https://a.com/b c"]])(
+    "endereço %j não serve de crédito e é recusado, com a regra do domínio",
+    (fonteOriginalUrl) => {
+      // A página não consegue extrair domínio destes; aceitar aqui publicaria
+      // matéria derivada sem uma linha de atribuição.
+      const r = validarPedido({ ...base, origem: "derivada", fonteOriginalUrl });
+      expect(r.ok).toBe(false);
+      expect(r.ok === false && r.comoCorrigir).toMatch(/domínio/);
+    }
+  );
+
   it("release e primaria não exigem fonte", () => {
     for (const o of ["release", "primaria"]) {
       expect(validarPedido({ ...base, origem: o }).ok, o).toBe(true);

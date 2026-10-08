@@ -4,6 +4,29 @@ export interface Credito {
 }
 
 /**
+ * O endereço serve como crédito?
+ *
+ * Exportado porque a rota precisa recusar EXATAMENTE o que a página não
+ * consegue renderizar. Duas noções de "é um endereço" produziam matéria
+ * derivada sem atribuição: a rota aceitava `https://` e a página, que não
+ * consegue extrair hostname dali, não mostrava nada.
+ *
+ * Exige: parseia como URL, protocolo `http:` ou `https:`, hostname não
+ * vazio e com pelo menos um ponto, e nenhum espaço.
+ */
+export function enderecoDeCredito(url: string): boolean {
+  if (/\s/.test(url)) return false;
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+  return u.hostname.includes(".") && !u.hostname.startsWith(".") && !u.hostname.endsWith(".");
+}
+
+/**
  * O crédito ao veículo de origem: para onde o link aponta e o que ele diz.
  *
  * Uma função só responde as duas coisas, de propósito: o rótulo nunca pode
@@ -22,13 +45,8 @@ export function creditoDaFonte(a: {
   const bruto = a.fonteUrl?.trim();
   if (!bruto) return null;
 
-  let url: URL;
-  try {
-    url = new URL(bruto);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+  if (!enderecoDeCredito(bruto)) return null;
+  const url = new URL(bruto);
 
   const dominio = url.hostname.replace(/^www\./, "");
   const rotulo = a.fonteNome?.trim() || dominio;

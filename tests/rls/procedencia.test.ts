@@ -83,6 +83,44 @@ describe("procedência da matéria", () => {
     });
   });
 
+  it.each([["https://"], ["http://"], ["https://?a=1"], ["https://localhost/x"]])(
+    "fonte sem domínio %j é recusada",
+    async (url) => {
+      // A página não extrai domínio daqui: aceitar publicaria derivada sem crédito.
+      await withRollback(async (db) => {
+        await actAsOwner(db);
+        const t = await tryWrite(
+          db,
+          `insert into public.articles (slug, title, status, origem, fonte_original_url)
+           values ('sd', 'Sem domínio', 'draft', 'derivada', '${url}')`
+        );
+        expect(t.ok).toBe(false);
+        expect(t.error).toMatch(/fonte_eh_http/);
+      });
+    }
+  );
+
+  it("fonte com domínio, porta, consulta e âncora passa", async () => {
+    await withRollback(async (db) => {
+      await actAsOwner(db);
+      let i = 0;
+      for (const url of [
+        "https://cqcs.com.br/n/1",
+        "https://www.cqcs.com.br",
+        "http://exemplo.com?a=1",
+        "https://exemplo.com#topo",
+        "https://exemplo.com:8080/x",
+      ]) {
+        const t = await tryWrite(
+          db,
+          `insert into public.articles (slug, title, status, origem, fonte_original_url)
+           values ('ok${i++}', 'Com domínio', 'draft', 'derivada', '${url}')`
+        );
+        expect(t.ok, url).toBe(true);
+      }
+    });
+  });
+
   it("fonte feita só de espaços é recusada", async () => {
     // Passa o `is not null` da regra da derivada; precisa cair no http.
     await withRollback(async (db) => {

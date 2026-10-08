@@ -152,8 +152,16 @@ try {
   const [linhaMista] = await (
     await rest(`vigia_execucoes?id=eq.${corpoMisto.execucaoId}&select=achados,falhas`)
   ).json();
+  // As duas classes de falha convivem na MESMA linha: a da fonte inteira
+  // ("apolice: HTTP 503", que o vigia mandou) e a do item recusado, atribuída
+  // à fonte DELE — `cqcs`, porque o item disse de onde veio. `_desconhecida`
+  // é só para item que não diz, e isso tem teste de unidade em pauta.test.ts.
+  //
+  // Esta expectativa dizia `_desconhecida` e nunca tinha rodado: a fumaça do
+  // vigia foi escrita antes de a migração estar no banco. A primeira execução
+  // real mostrou que o teste é que estava errado, não o código.
   conferir(
-    !!linhaMista?.falhas?.apolice && !!linhaMista?.falhas?._desconhecida,
+    !!linhaMista?.falhas?.apolice && !!linhaMista?.falhas?.cqcs,
     "a falha da fonte e o item recusado ficam os dois registrados",
     JSON.stringify(linhaMista?.falhas ?? {})
   );

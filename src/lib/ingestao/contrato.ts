@@ -59,21 +59,19 @@ function opcional(valor: unknown): string | null {
 }
 
 /**
- * Caminho começando com uma barra, que não escapa para outro host nem sobe
- * de diretório. O navegador trata `\` como `/`, então `/\evil.com` vira
- * `//evil.com`; `..` pode vir codificado (`%2e%2e`).
+ * Caminho de arquivo do projeto, por lista de permissão: começa com uma
+ * barra e só tem letras, números, `/`, `.`, `-` e `_`.
+ *
+ * Lista de proibição não fecha a família: `\` vira `/` no navegador, tab/LF/CR
+ * são removidos pelo parser de URL (`/\t/evil.com` vira `//evil.com`), `..`
+ * vem codificado, `?` e `#` fazem do caminho uma URL com parâmetros. Sem `%`
+ * não há escape de nenhuma camada. Só `//` e segmento `..` precisam de regra
+ * à parte, porque `/` e `.` são permitidos.
  */
 function caminhoLocalSeguro(caminho: string): boolean {
-  if (!caminho.startsWith("/") || caminho.startsWith("//")) return false;
-  if (caminho.includes("\\")) return false;
-  let decodificado: string;
-  try {
-    decodificado = decodeURIComponent(caminho);
-  } catch {
-    return false;
-  }
-  if (decodificado.includes("\\") || decodificado.startsWith("//")) return false;
-  return !decodificado.split("/").some((s) => s === "..");
+  if (!/^\/[A-Za-z0-9._\/-]*$/.test(caminho)) return false;
+  if (caminho.startsWith("//")) return false;
+  return !caminho.split("/").some((s) => s === "..");
 }
 
 /** O que a rota grava em `articles` a partir da procedência do pedido. */
@@ -174,7 +172,7 @@ export function validarPedido(corpo: unknown): Validacao {
   if (capaUrl && !caminhoLocalSeguro(capaUrl)) {
     return recusar(
       "A capa precisa ser um caminho do projeto, como /capas/mercado.jpg.",
-      "Envie `capaUrl` como caminho do projeto: começa com uma barra, sem esquema (http, https), sem `\\` e sem `..`. Imagem hospedada fora entra pelo upload do painel."
+      "Envie `capaUrl` como caminho do projeto: começa com uma barra e usa só letras, números, `/`, `.`, `-` e `_` (sem esquema, espaço, `?`, `#`, `%` ou `..`). Imagem hospedada fora entra pelo upload do painel."
     );
   }
 

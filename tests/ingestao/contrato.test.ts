@@ -213,6 +213,35 @@ describe("procedência no contrato de entrada", () => {
       }
     });
 
+    it("recusa caractere de controle e espaço no meio, cru ou codificado", () => {
+      // O parser de URL remove tab, LF e CR antes de interpretar: "/\t/evil.com"
+      // é lido pelo navegador como "//evil.com".
+      const perigosas = [
+        "/\t/evil.com/a.png",
+        "/\n/evil.com/a.png",
+        "/\r/evil.com/a.png",
+        "/%09/evil.com/a.png",
+        "/%0a/evil.com/a.png",
+        "/%0d/evil.com/a.png",
+        "/%0A/evil.com/a.png",
+        "/capas/a\u0000.jpg",
+        "/capas/a .jpg",
+        "/capas/%20a.jpg",
+        "/capas/a\u007f.jpg",
+      ];
+      for (const capa of perigosas) {
+        const r = validarPedido({ ...base, capaUrl: capa });
+        expect(r.ok, JSON.stringify(capa)).toBe(false);
+      }
+    });
+
+    it("recusa query, fragmento e escape duplo — a capa é arquivo, não URL", () => {
+      for (const capa of ["/capas/a.jpg?x=1", "/capas/a.jpg#topo", "/%252e%252e/x", "/capas/%2e%2e%2fx", "/capas/a%2Ejpg"]) {
+        const r = validarPedido({ ...base, capaUrl: capa });
+        expect(r.ok, capa).toBe(false);
+      }
+    });
+
     it("recusa barra invertida e segmento ..", () => {
       for (const capa of ["/\\evil.com/a.png", "/capas\\a.png", "/../x", "/capas/../x", "/%2e%2e/x", "/%2E%2E/x", "/capas/%2e./x", "/%5cevil.com/a.png"]) {
         const r = validarPedido({ ...base, capaUrl: capa });

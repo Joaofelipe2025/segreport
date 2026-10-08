@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
-import { chaveDeConteudo, validarPedido } from "@/lib/ingestao/contrato";
+import { camposDaProcedencia, chaveDeConteudo, validarPedido } from "@/lib/ingestao/contrato";
 import { converterMarkdown } from "@/lib/ingestao/markdown";
 import { enderecoDisponivel } from "@/lib/painel/endereco";
 import { slugDeNome } from "@/lib/auth/rules";
@@ -200,13 +200,7 @@ export async function POST(request: NextRequest) {
       excerpt: pedido.resumo,
       seo_title: pedido.seoTitulo,
       seo_description: pedido.seoDescricao,
-      cover_url: pedido.capaUrl,
-      origem: pedido.origem,
-      fonte_original_url: pedido.fonteOriginalUrl,
-      fonte_original_nome: pedido.fonteOriginalNome,
-      // Derivada nasce marcada: saiu de cobertura de terceiro sem que a
-      // fonte primária fosse encontrada, e ninguém conferiu ainda.
-      precisa_checagem: pedido.origem === "derivada",
+      ...camposDaProcedencia(pedido),
       category_id: categoria.id,
       author_id: autorId,
       // Sempre. A aprovação é do dono do veículo, e a fila de revisão é o
@@ -246,12 +240,20 @@ export async function POST(request: NextRequest) {
   // matéria já existe, e perder a marcação custa uma duplicata que a pessoa
   // vê, enquanto devolver erro aqui faria o chamador reenviar o texto todo.
   if (pedido.pautaId) {
-    const { error: erroPauta } = await admin
+    // `.select` é o que distingue zero linhas de uma: sem ele, um `pautaId`
+    // errado passaria em silêncio, a pauta ficaria `nova` e a próxima
+    // execução geraria a mesma matéria de novo.
+    const { data: marcadas, error: erroPauta } = await admin
       .from("pautas")
       .update({ estado: "virou_materia", article_id: criada.id })
-      .eq("id", pedido.pautaId);
+      .eq("id", pedido.pautaId)
+      .select("id");
     if (erroPauta) {
       console.error("[ingestao] pauta não marcada:", erroPauta.message);
+    } else if (!marcadas || marcadas.length === 0) {
+      console.error(
+        `[ingestao] pauta não marcada: nenhuma pauta com id "${pedido.pautaId}" (matéria ${criada.id} criada mesmo assim)`
+      );
     }
   }
 

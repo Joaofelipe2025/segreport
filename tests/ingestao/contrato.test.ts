@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CATEGORIAS_ACEITAS, LIMITE_DE_MARKDOWN, validarPedido } from "@/lib/ingestao/contrato";
+import { CATEGORIAS_ACEITAS, LIMITE_DE_MARKDOWN, camposDaProcedencia, validarPedido } from "@/lib/ingestao/contrato";
 import { CATEGORIES } from "@/lib/categories";
 import { chaveDeConteudo } from "@/lib/ingestao/contrato";
 
@@ -196,20 +196,94 @@ describe("procedência no contrato de entrada", () => {
   });
 
   describe("capaUrl", () => {
-    it("aceita http, https e caminho absoluto do site", () => {
-      for (const capa of ["https://x.com/a.png", "http://x.com/a.png", "/capas/regulacao.jpg"]) {
+    it("aceita só caminho do projeto", () => {
+      for (const capa of ["/capas/regulacao.jpg", "/capas/mercado.jpg"]) {
         const r = validarPedido({ ...base, capaUrl: capa });
         expect(r.ok, capa).toBe(true);
         expect(r.ok && r.pedido.capaUrl).toBe(capa);
       }
     });
 
-    it("recusa outra coisa, dizendo como corrigir", () => {
-      for (const capa of ["javascript:alert(1)", "capas/a.png", "//evil.com/a.png", "data:image/png;base64,AA"]) {
+    it("recusa qualquer esquema: o otimizador só conhece o armazenamento do portal", () => {
+      for (const capa of ["https://x.com/a.png", "http://x.com/a.png", "javascript:alert(1)", "data:image/png;base64,AA", "capas/a.png", "//evil.com/a.png"]) {
+        const r = validarPedido({ ...base, capaUrl: capa });
+        expect(r.ok, capa).toBe(false);
+        expect(r.ok === false && r.comoCorrigir).toMatch(/caminho do projeto/);
+        expect(r.ok === false && r.comoCorrigir).toMatch(/upload do painel/);
+      }
+    });
+
+    it("recusa barra invertida e segmento ..", () => {
+      for (const capa of ["/\\evil.com/a.png", "/capas\\a.png", "/../x", "/capas/../x", "/%2e%2e/x", "/%2E%2E/x", "/capas/%2e./x", "/%5cevil.com/a.png"]) {
         const r = validarPedido({ ...base, capaUrl: capa });
         expect(r.ok, capa).toBe(false);
         expect(r.ok === false && r.comoCorrigir).toMatch(/capaUrl/);
       }
+    });
+  });
+
+  describe("campo de tipo errado não é descartado em silêncio", () => {
+    it("recusa, dizendo o tipo esperado", () => {
+      const casos: Array<[string, unknown]> = [
+        ["origem", 1],
+        ["fonteOriginalUrl", ["x"]],
+        ["fonteOriginalNome", { a: 1 }],
+        ["capaUrl", 5],
+        ["pautaId", 42],
+      ];
+      for (const [campo, valor] of casos) {
+        const r = validarPedido({ ...base, [campo]: valor });
+        expect(r.ok, campo).toBe(false);
+        expect(r.ok === false && r.comoCorrigir, campo).toMatch(new RegExp(campo));
+        expect(r.ok === false && r.comoCorrigir, campo).toMatch(/texto/);
+      }
+    });
+
+    it("nulo conta como ausente", () => {
+      const r = validarPedido({ ...base, origem: null, capaUrl: null, pautaId: null });
+      expect(r.ok).toBe(true);
+    });
+  });
+});
+
+describe("camposDaProcedencia — o que a rota grava", () => {
+  const pedidoDe = (extra: Record<string, unknown>) => {
+    const r = validarPedido({
+      titulo: "Um título que serve",
+      categoria: "regulacao",
+      corpoMarkdown: "Um parágrafo com texto suficiente para passar.",
+      ...extra,
+    });
+    if (!r.ok) throw new Error(r.erro);
+    return r.pedido;
+  };
+
+  it("derivada nasce marcada para checagem", () => {
+    const c = camposDaProcedencia(
+      pedidoDe({ origem: "derivada", fonteOriginalUrl: "https://cqcs.com.br/n/1", fonteOriginalNome: "CQCS", capaUrl: "/capas/mercado.jpg" })
+    );
+    expect(c).toEqual({
+      origem: "derivada",
+      fonte_original_url: "https://cqcs.com.br/n/1",
+      fonte_original_nome: "CQCS",
+      precisa_checagem: true,
+      cover_url: "/capas/mercado.jpg",
+    });
+  });
+
+  it("release e primaria não são marcadas", () => {
+    for (const o of ["release", "primaria"]) {
+      expect(camposDaProcedencia(pedidoDe({ origem: o })).precisa_checagem, o).toBe(false);
+    }
+  });
+
+  it("pedido sem procedência grava tudo nulo e sem marca", () => {
+    expect(camposDaProcedencia(pedidoDe({}))).toEqual({
+      origem: null,
+      fonte_original_url: null,
+      fonte_original_nome: null,
+      precisa_checagem: false,
+      cover_url: null,
     });
   });
 });

@@ -116,7 +116,7 @@ paths:
                   description: Nome do veículo de origem. Sem ele, o crédito usa o domínio.
                 capaUrl:
                   type: string
-                  description: Imagem de capa. Endereço http(s) ou caminho do site começando com barra.
+                  description: Capa como caminho do projeto, começando com barra (por exemplo /capas/mercado.jpg). Não é URL; endereços com http(s) são recusados.
       responses:
         "201":
           description: Matéria criada e aguardando revisão

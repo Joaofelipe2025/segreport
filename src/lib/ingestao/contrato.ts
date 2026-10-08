@@ -58,6 +58,37 @@ function opcional(valor: unknown): string | null {
   return t || null;
 }
 
+/**
+ * Caminho começando com uma barra, que não escapa para outro host nem sobe
+ * de diretório. O navegador trata `\` como `/`, então `/\evil.com` vira
+ * `//evil.com`; `..` pode vir codificado (`%2e%2e`).
+ */
+function caminhoLocalSeguro(caminho: string): boolean {
+  if (!caminho.startsWith("/") || caminho.startsWith("//")) return false;
+  if (caminho.includes("\\")) return false;
+  let decodificado: string;
+  try {
+    decodificado = decodeURIComponent(caminho);
+  } catch {
+    return false;
+  }
+  if (decodificado.includes("\\") || decodificado.startsWith("//")) return false;
+  return !decodificado.split("/").some((s) => s === "..");
+}
+
+/** O que a rota grava em `articles` a partir da procedência do pedido. */
+export function camposDaProcedencia(pedido: PedidoDeIngestao) {
+  return {
+    origem: pedido.origem,
+    fonte_original_url: pedido.fonteOriginalUrl,
+    fonte_original_nome: pedido.fonteOriginalNome,
+    // Derivada nasce marcada: saiu de cobertura de terceiro sem que a fonte
+    // primária fosse encontrada, e ninguém conferiu ainda.
+    precisa_checagem: pedido.origem === "derivada",
+    cover_url: pedido.capaUrl,
+  };
+}
+
 export function validarPedido(corpo: unknown): Validacao {
   if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) {
     return recusar(
@@ -99,6 +130,18 @@ export function validarPedido(corpo: unknown): Validacao {
     );
   }
 
+  // Campo presente com tipo errado é recusado, nunca tratado como ausente:
+  // `origem: 1` viraria matéria sem origem e sem marca de checagem.
+  for (const campo of ["origem", "fonteOriginalUrl", "fonteOriginalNome", "capaUrl", "pautaId"]) {
+    const v = c[campo];
+    if (v !== undefined && v !== null && typeof v !== "string") {
+      return recusar(
+        `O campo \`${campo}\` veio com tipo errado.`,
+        `Envie \`${campo}\` como texto (string), ou omita o campo.`
+      );
+    }
+  }
+
   const origem = typeof c.origem === "string" ? c.origem.trim() : "";
   if (origem && !ORIGENS.includes(origem)) {
     return recusar(
@@ -124,15 +167,14 @@ export function validarPedido(corpo: unknown): Validacao {
     );
   }
 
-  // Caminho do site OU endereço http(s). `//host` fica de fora: o navegador o
-  // lê como endereço externo com o protocolo da página.
+  // Só caminho do projeto (`/capas/mercado.jpg`). O portal só otimiza imagem
+  // do próprio armazenamento; um host qualquer gravaria e quebraria na página
+  // enquanto o remetente recebe 201.
   const capaUrl = typeof c.capaUrl === "string" ? c.capaUrl.trim() : "";
-  const capaValida =
-    /^https?:\/\//i.test(capaUrl) || (capaUrl.startsWith("/") && !capaUrl.startsWith("//"));
-  if (capaUrl && !capaValida) {
+  if (capaUrl && !caminhoLocalSeguro(capaUrl)) {
     return recusar(
-      "O endereço da capa não é válido.",
-      "Envie `capaUrl` começando com http://, https:// ou uma barra (caminho do próprio site), ou omita o campo."
+      "A capa precisa ser um caminho do projeto, como /capas/mercado.jpg.",
+      "Envie `capaUrl` como caminho do projeto: começa com uma barra, sem esquema (http, https), sem `\\` e sem `..`. Imagem hospedada fora entra pelo upload do painel."
     );
   }
 

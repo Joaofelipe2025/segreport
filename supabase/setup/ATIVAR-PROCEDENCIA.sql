@@ -35,6 +35,21 @@ alter table public.pautas
   add constraint pautas_estado_check
     check (estado in ('nova', 'em_producao', 'lida', 'descartada', 'virou_materia'));
 
+-- Carimbo de atualização da pauta. Sem ele a reserva (`em_producao`) não tem
+-- como expirar: só existe `criado_em`, que nunca muda, e toda pauta da fila
+-- é mais velha que o prazo — a expiração devolveria a pauta à fila em 100% dos
+-- casos e autorizaria matéria duplicada.
+--
+-- O nome é `updated_at` (e não `atualizado_em`) porque é a coluna que a função
+-- `set_updated_at()` grava; um nome português exigiria um gatilho novo.
+alter table public.pautas
+  add column if not exists updated_at timestamptz not null default now();
+
+drop trigger if exists pautas_updated_at on public.pautas;
+create trigger pautas_updated_at
+  before update on public.pautas
+  for each row execute function public.set_updated_at();
+
 -- Privilégio de coluna: o crédito é público, a marca de checagem não.
 --
 -- O revoke da TABELA vem primeiro. Privilégio de coluna é ignorado enquanto
@@ -95,6 +110,14 @@ select 'precisa_checagem fechada ao publico (anon)',
                  and column_name = 'precisa_checagem'
                  and grantee = 'anon' and privilege_type = 'SELECT'
             ) = 0
+            then 'ok' else 'FALTOU' end
+union all
+select 'carimbo updated_at em pautas (a reserva precisa expirar)',
+       case when (
+              select count(*) from information_schema.columns
+               where table_schema = 'public' and table_name = 'pautas'
+                 and column_name = 'updated_at'
+            ) = 1
             then 'ok' else 'FALTOU' end
 union all
 select 'credito da fonte legivel pelo publico (anon)',

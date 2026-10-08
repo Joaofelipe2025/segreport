@@ -15,6 +15,7 @@ const pauta = (over: Partial<PautaBruta> = {}): PautaBruta => ({
   publicadoEm: "2026-10-08T10:00:00.000Z",
   estado: "nova",
   criadoEm: "2026-10-08T10:00:00.000Z",
+  atualizadoEm: "2026-10-08T10:00:00.000Z",
   ...over,
 });
 

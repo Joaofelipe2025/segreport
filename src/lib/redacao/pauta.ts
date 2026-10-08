@@ -9,6 +9,12 @@ export interface PautaBruta {
   publicadoEm: string | null;
   estado: string;
   criadoEm: string;
+  /**
+   * Quando a pauta mudou pela última vez (coluna `updated_at`, que o gatilho
+   * move). É o dado de `reservaExpirada`: `criadoEm` nunca muda, e com ele
+   * toda pauta antiga pareceria ter a reserva vencida.
+   */
+  atualizadoEm: string;
 }
 
 /**

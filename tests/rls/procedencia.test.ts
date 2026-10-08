@@ -167,6 +167,39 @@ describe("procedência da matéria", () => {
     });
   });
 
+  it("pautas tem carimbo de atualização, e o gatilho o move ao reservar", async () => {
+    // Sem ele a reserva (`em_producao`) não tem como expirar: só haveria
+    // `criado_em`, que nunca muda, e toda pauta antiga pareceria vencida.
+    await withRollback(async (db) => {
+      await actAsOwner(db);
+      const ins = await tryWrite(
+        db,
+        `insert into public.pautas (fonte, tipo_de_fonte, titulo, url, updated_at)
+         values ('cqcs', 'imprensa', 'T', 'https://x.test/carimbo', '2020-01-01T00:00:00Z')`
+      );
+      expect(ins.ok).toBe(true);
+      const up = await tryWrite(db, `update public.pautas set estado = 'em_producao'`);
+      expect(up.ok).toBe(true);
+      const r = await db.query(
+        `select updated_at > '2020-01-02T00:00:00Z' as moveu from public.pautas`
+      );
+      expect(r.rows[0].moveu).toBe(true);
+    });
+  });
+
+  it("pauta nova nasce com o carimbo preenchido", async () => {
+    await withRollback(async (db) => {
+      await actAsOwner(db);
+      await tryWrite(
+        db,
+        `insert into public.pautas (fonte, tipo_de_fonte, titulo, url)
+         values ('cqcs', 'imprensa', 'T', 'https://x.test/nasce')`
+      );
+      const r = await db.query(`select updated_at is not null as ok from public.pautas`);
+      expect(r.rows[0].ok).toBe(true);
+    });
+  });
+
   it("pautas aceita o estado em_producao", async () => {
     await withRollback(async (db) => {
       await actAsOwner(db);

@@ -14,7 +14,11 @@ import {
   type EstadoEditorial,
 } from "@/lib/painel/estados";
 import { nomeDoAutor } from "@/lib/painel/resumo";
-import { problemasDaPublicada, type LinhaDoPanorama } from "@/lib/painel/panorama";
+import {
+  precisaChecagem,
+  problemasDaPublicada,
+  type LinhaDoPanorama,
+} from "@/lib/painel/panorama";
 
 export const metadata: Metadata = { title: "Matérias" };
 
@@ -180,6 +184,11 @@ export default async function MateriasPage(props: PageProps<"/admin/materias">) 
                       </span>
                       <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="font-mono text-[11px] text-ink-4">/{m.slug}</span>
+                        {precisaChecagem(m) && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900">
+                            Precisa checagem
+                          </span>
+                        )}
                         {problemas.map((p) => (
                           <span
                             key={p}

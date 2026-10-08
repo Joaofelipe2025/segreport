@@ -2,12 +2,16 @@
  * As fontes que o vigia acompanha.
  *
  * `tipo` não é rótulo: é o que separa as duas saídas do sistema. Fonte de
- * imprensa produz PAUTA e nada mais — o texto dela nunca alcança um gerador
- * de matéria. Fonte primária, que entra nas etapas 2 e 3, produz matéria
+ * imprensa produz PAUTA: serve de alerta e de inspiração, não de texto para
+ * copiar. Fonte primária, que entra nas etapas 2 e 3, produz matéria
  * redigida a partir do documento.
  *
- * A decisão é editorial e foi tomada pelo dono do veículo: outros veículos
- * servem de alerta, nunca de texto. Este campo é o que torna isso
+ * A decisão é editorial e foi tomada pelo dono do veículo: "não quero
+ * plágio, apenas inspiração". A pergunta que o código faz não é mais "o
+ * texto de imprensa alcança o gerador?" — pode alcançar —, e sim "esta
+ * matéria precisa citar a origem?". Matéria derivada de cobertura alheia
+ * nasce com `origem = 'derivada'`, exige o endereço da fonte (restrição do
+ * banco) e nasce marcada para checagem. Este campo é o que torna isso
  * verificável no código em vez de confiável por disciplina.
  */
 export type TipoDeFonte = "imprensa" | "primaria";

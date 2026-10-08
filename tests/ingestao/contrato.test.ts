@@ -193,6 +193,33 @@ describe("procedência no contrato de entrada", () => {
     }
   );
 
+  describe("tetos de tamanho", () => {
+    it("fonteOriginalNome acima de 200 caracteres é recusado, e 200 passa", () => {
+      const ok = validarPedido({ ...base, origem: "release", fonteOriginalNome: "N".repeat(200) });
+      expect(ok.ok).toBe(true);
+      const r = validarPedido({ ...base, origem: "release", fonteOriginalNome: "N".repeat(201) });
+      expect(r.ok).toBe(false);
+      expect(r.ok === false && r.comoCorrigir).toMatch(/fonteOriginalNome/);
+    });
+
+    it("fonteOriginalUrl acima de 2000 BYTES é recusado", () => {
+      // Em bytes, não em caracteres: acento passa de um byte.
+      const longa = (n: number) => "https://cqcs.com.br/" + "a".repeat(n - 20);
+      expect(validarPedido({ ...base, origem: "derivada", fonteOriginalUrl: longa(2000) }).ok).toBe(true);
+      const r = validarPedido({ ...base, origem: "derivada", fonteOriginalUrl: longa(2001) });
+      expect(r.ok).toBe(false);
+      expect(r.ok === false && r.comoCorrigir).toMatch(/fonteOriginalUrl/);
+      const acentuada = "https://cqcs.com.br/" + "é".repeat(1000);
+      expect(validarPedido({ ...base, origem: "derivada", fonteOriginalUrl: acentuada }).ok).toBe(false);
+    });
+
+    it("capaUrl acima de 300 caracteres é recusada", () => {
+      const r = validarPedido({ ...base, capaUrl: "/capas/" + "a".repeat(300) + ".jpg" });
+      expect(r.ok).toBe(false);
+      expect(r.ok === false && r.comoCorrigir).toMatch(/capaUrl/);
+    });
+  });
+
   it("release e primaria não exigem fonte", () => {
     for (const o of ["release", "primaria"]) {
       expect(validarPedido({ ...base, origem: o }).ok, o).toBe(true);
@@ -232,6 +259,14 @@ describe("procedência no contrato de entrada", () => {
         expect(r.ok, capa).toBe(false);
         expect(r.ok === false && r.comoCorrigir).toMatch(/caminho do projeto/);
         expect(r.ok === false && r.comoCorrigir).toMatch(/upload do painel/);
+      }
+    });
+
+    it("recusa caminho sem arquivo: raiz, pasta, sem extensão", () => {
+      // `<Image src="/">` quebra a imagem em toda a listagem.
+      for (const capa of ["/", "/capas/", "/capas", "/capas/a", "/capas/.jpg"]) {
+        const r = validarPedido({ ...base, capaUrl: capa });
+        expect(r.ok, capa).toBe(false);
       }
     });
 

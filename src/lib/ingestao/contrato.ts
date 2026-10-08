@@ -76,8 +76,17 @@ function opcional(valor: unknown): string | null {
 function caminhoLocalSeguro(caminho: string): boolean {
   if (!/^\/[A-Za-z0-9._\/-]*$/.test(caminho)) return false;
   if (caminho.startsWith("//")) return false;
-  return !caminho.split("/").some((s) => s === "..");
+  const segmentos = caminho.split("/");
+  if (segmentos.some((s) => s === "..")) return false;
+  // Precisa apontar para um ARQUIVO: `/` ou `/capas/` passariam na lista de
+  // caracteres e quebrariam a imagem em toda a listagem.
+  return /^[A-Za-z0-9_-][A-Za-z0-9._-]*\.[A-Za-z0-9]+$/.test(segmentos[segmentos.length - 1]);
 }
+
+/** Tetos de tamanho de texto de terceiro que acaba numa página pública. */
+const TETO_NOME_DA_FONTE = 200;
+const TETO_URL_DA_FONTE_BYTES = 2000;
+const TETO_CAPA = 300;
 
 /** O que a rota grava em `articles` a partir da procedência do pedido. */
 export function camposDaProcedencia(pedido: PedidoDeIngestao) {
@@ -171,6 +180,24 @@ export function validarPedido(corpo: unknown): Validacao {
   }
 
   const fonteUrl = typeof c.fonteOriginalUrl === "string" ? c.fonteOriginalUrl.trim() : "";
+  // `fonteOriginalNome` é texto de terceiro renderizado como rótulo de link
+  // público; o único limite que havia era o do corpo inteiro.
+  const nomeDaFonte = typeof c.fonteOriginalNome === "string" ? c.fonteOriginalNome.trim() : "";
+  if (nomeDaFonte.length > TETO_NOME_DA_FONTE) {
+    return recusar(
+      `O nome da fonte tem ${nomeDaFonte.length} caracteres e o limite é ${TETO_NOME_DA_FONTE}.`,
+      "Envie `fonteOriginalNome` só com o nome do veículo, como \"CQCS\"."
+    );
+  }
+  // Em BYTES, como o teto de URL do vigia: acento ocupa mais de um.
+  const bytesDaFonte = Buffer.byteLength(fonteUrl, "utf8");
+  if (bytesDaFonte > TETO_URL_DA_FONTE_BYTES) {
+    return recusar(
+      `O endereço de origem tem ${bytesDaFonte} bytes e o limite é ${TETO_URL_DA_FONTE_BYTES}.`,
+      "Envie `fonteOriginalUrl` sem parâmetros de rastreio: só o endereço da matéria."
+    );
+  }
+
   // A MESMA noção de endereço que a página usa para montar o crédito: o que
   // a página não consegue renderizar a rota não pode aceitar.
   if (fonteUrl && !enderecoDeCredito(fonteUrl)) {
@@ -193,6 +220,12 @@ export function validarPedido(corpo: unknown): Validacao {
   // do próprio armazenamento; um host qualquer gravaria e quebraria na página
   // enquanto o remetente recebe 201.
   const capaUrl = typeof c.capaUrl === "string" ? c.capaUrl.trim() : "";
+  if (capaUrl.length > TETO_CAPA) {
+    return recusar(
+      `O caminho da capa tem ${capaUrl.length} caracteres e o limite é ${TETO_CAPA}.`,
+      "Envie `capaUrl` como um caminho curto do projeto, como /capas/mercado.jpg."
+    );
+  }
   if (capaUrl && !caminhoLocalSeguro(capaUrl)) {
     return recusar(
       "A capa precisa ser um caminho do projeto, como /capas/mercado.jpg.",

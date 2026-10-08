@@ -4,7 +4,8 @@
 create table if not exists public.pautas (
   id            uuid primary key default gen_random_uuid(),
   fonte         text not null,
-  -- 'imprensa' nunca alcança o gerador de matéria. Ver src/lib/vigia/fontes.ts.
+  -- 'imprensa': texto de outro veículo não é fonte de redação; matéria que derive
+  -- dele nasce com origem 'derivada' e PRECISA citar a origem. Ver src/lib/vigia/fontes.ts.
   tipo_de_fonte text not null check (tipo_de_fonte in ('imprensa', 'primaria')),
   titulo        text not null,
   -- A chave de dedupe. Não é o título: veículos diferentes cobrem o mesmo

@@ -1,5 +1,11 @@
 -- SEGREPORT — ativar a procedência da matéria (origem, fonte e marca de checagem)
 -- Projeto: hdzfleptasoepfsalqad   |   Seguro reexecutar.
+--
+-- COLE O ARQUIVO INTEIRO. Está numa transação (begin/commit): ou entra tudo, ou
+-- nada. Rodar só uma seleção no editor do Supabase pularia o begin, e um
+-- `revoke` isolado deixaria o portal sem privilégio de leitura.
+
+begin;
 
 alter table public.articles
   add column if not exists origem              text,
@@ -106,7 +112,9 @@ begin
 end;
 $$;
 
--- Conferência: devem sair seis linhas "ok".
+commit;
+
+-- Conferência: devem sair oito linhas "ok".
 select 'colunas de procedencia em articles' as item,
        case when (
               select count(*) from information_schema.columns
@@ -165,4 +173,13 @@ select 'credito da fonte legivel pelo publico (anon)',
                  and column_name in ('origem', 'fonte_original_url', 'fonte_original_nome')
                  and grantee = 'anon' and privilege_type = 'SELECT'
             ) = 3
+            then 'ok' else 'FALTOU' end
+union all
+select 'pautas_estado_check aceita em_producao',
+       case when exists (
+              select 1 from pg_constraint
+               where conname = 'pautas_estado_check'
+                 and conrelid = 'public.pautas'::regclass
+                 and pg_get_constraintdef(oid) like '%em_producao%'
+            )
             then 'ok' else 'FALTOU' end;

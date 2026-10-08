@@ -91,10 +91,11 @@ export function validarAchados(bruto: unknown): ValidacaoDeAchados {
     }
     const fonte = fonteInformada;
 
-    // A CON-1, em código. O tipo NÃO vem do que a requisição disse: vem do
-    // cadastro. Divergência é recusa, não correção silenciosa — um
-    // adaptador de imprensa que se declarasse primária alcançaria, nas
-    // etapas seguintes, o gerador de matéria.
+    // O tipo NÃO vem do que a requisição disse: vem do cadastro. Divergência
+    // é recusa, não correção silenciosa — um adaptador de imprensa que se
+    // declarasse primária escaparia da pergunta "esta matéria precisa citar
+    // a origem?", que é o que separa inspiração de plágio nas etapas
+    // seguintes.
     if (a.tipoDeFonte !== cadastro.tipo) {
       // O conselho antigo ("não declare o tipo: ele sai do cadastro") não
       // resolve nada: omitir o campo cai na MESMA comparação — undefined

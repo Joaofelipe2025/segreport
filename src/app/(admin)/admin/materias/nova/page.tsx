@@ -57,6 +57,9 @@ export default async function NovaMateriaPage() {
           updated_at: "",
           is_premium: false,
           precisa_checagem: false,
+          origem: null,
+          fonte_original_url: null,
+          fonte_original_nome: null,
         }}
         corpo={documentoVazio()}
         categorias={categorias}

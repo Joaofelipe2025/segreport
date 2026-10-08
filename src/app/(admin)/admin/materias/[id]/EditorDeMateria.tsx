@@ -17,6 +17,7 @@ import { useGuardaDeSaida } from "@/components/admin/GuardaDeSaida";
 import CampoDeCapa from "./CampoDeCapa";
 import CampoDeEndereco from "./CampoDeEndereco";
 import { transicoesDe } from "@/lib/painel/fluxo";
+import { procedenciaParaExibir } from "@/lib/painel/procedencia";
 
 // O editor só existe no navegador: o ProseMirror precisa de DOM.
 const Editor = dynamic(() => import("@/components/editor/Editor"), {
@@ -42,6 +43,10 @@ export interface MateriaParaEditar {
   is_premium: boolean;
   /** Sai por ato humano: o botão do aviso, nunca um salvamento. */
   precisa_checagem: boolean;
+  /** Procedência, só para leitura: de onde veio quem se está avalizando. */
+  origem: string | null;
+  fonte_original_url: string | null;
+  fonte_original_nome: string | null;
 }
 
 export default function EditorDeMateria({
@@ -139,6 +144,7 @@ export default function EditorDeMateria({
   }
 
   const ocupado = pendente || transicionando;
+  const procedencia = procedenciaParaExibir(materia);
 
   return (
     <form action={acao} onInput={() => setSujo(true)}>
@@ -238,6 +244,29 @@ export default function EditorDeMateria({
               <p className="min-w-0 flex-1">
                 Esta matéria saiu de cobertura de terceiro e a fonte primária não foi
                 encontrada. Confira as afirmações antes de publicar.
+                {procedencia && (
+                  <span className="mt-1 block text-xs">
+                    Origem: {procedencia.origem}
+                    {procedencia.veiculo && <> · {procedencia.veiculo}</>}
+                    {procedencia.endereco && (
+                      <>
+                        {" · "}
+                        {procedencia.href ? (
+                          <a
+                            href={procedencia.href}
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                            className="break-all underline"
+                          >
+                            {procedencia.endereco}
+                          </a>
+                        ) : (
+                          <span className="break-all">{procedencia.endereco}</span>
+                        )}
+                      </>
+                    )}
+                  </span>
+                )}
               </p>
               {ehAdmin && (
                 <button

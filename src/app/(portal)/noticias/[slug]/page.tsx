@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getArticle, getArticleBody, getArticles, getAuthor } from "@/lib/data";
 import BlockRenderer from "@/components/article/BlockRenderer";
+import { creditoDaFonte } from "@/lib/portal/credito";
 import { CategoryBadge, TierBadge } from "@/components/ui/Badge";
 import ContarLeitura from "./ContarLeitura";
 import { ListRow } from "@/components/portal/ArticleCard";
@@ -154,6 +155,25 @@ export default async function ArticlePage(props: PageProps<"/noticias/[slug]">) 
               </p>
             )}
           </div>
+
+          {(() => {
+            const credito = creditoDaFonte(article);
+            if (!credito || !article.fonteUrl) return null;
+            return (
+              <p className="mt-8 border-t border-forest-100 pt-4 text-xs text-ink-4">
+                Com informações de{" "}
+                <a
+                  href={article.fonteUrl}
+                  rel="noopener noreferrer nofollow"
+                  target="_blank"
+                  className="underline underline-offset-2 hover:text-forest-700"
+                >
+                  {credito}
+                </a>
+                .
+              </p>
+            );
+          })()}
 
           {related.length > 0 && (
             <section className="mt-14">

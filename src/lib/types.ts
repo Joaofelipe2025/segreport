@@ -61,6 +61,10 @@ export interface Article {
   /** Parágrafos do corpo. Vira rich text quando o CMS entrar. */
   body: string[];
   tags: string[];
+  /** Endereço do veículo de origem, quando a matéria derivou de cobertura alheia. */
+  fonteUrl?: string;
+  /** Nome do veículo de origem. Sem ele, o crédito usa o domínio. */
+  fonteNome?: string;
   featured?: "lead" | "secondary" | "strip";
   /** Matéria de análise restrita a assinantes. */
   minTier?: Tier;

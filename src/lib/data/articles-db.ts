@@ -20,6 +20,7 @@ import type { DocumentoBlocos } from "@/lib/editor/document";
 const CAMPOS = `
   id, slug, title, standfirst, excerpt, cover_url, status, is_premium,
   reading_time, published_at, updated_at,
+  fonte_original_url, fonte_original_nome,
   categories ( key ),
   authors ( slug, name )
 ` as const;
@@ -36,6 +37,8 @@ interface LinhaDeMateria {
   reading_time: number | null;
   published_at: string | null;
   updated_at: string;
+  fonte_original_url: string | null;
+  fonte_original_nome: string | null;
   categories: { key: string } | null;
   authors: { slug: string | null; name: string } | null;
 }
@@ -59,6 +62,8 @@ function paraArticle(linha: LinhaDeMateria): Article {
     imageAlt: linha.title,
     body: [],
     tags: [],
+    fonteUrl: linha.fonte_original_url ?? undefined,
+    fonteNome: linha.fonte_original_nome ?? undefined,
     minTier: linha.is_premium ? "pro" : undefined,
   };
 }

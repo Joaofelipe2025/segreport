@@ -5,6 +5,7 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import {
   salvarMateria,
   mudarEstado,
+  confirmarChecagem,
   excluirMateria,
   type EstadoMateria,
 } from "../actions";
@@ -39,6 +40,8 @@ export interface MateriaParaEditar {
   excerpt: string | null;
   updated_at: string;
   is_premium: boolean;
+  /** Sai por ato humano: o botão do aviso, nunca um salvamento. */
+  precisa_checagem: boolean;
 }
 
 export default function EditorDeMateria({
@@ -68,6 +71,7 @@ export default function EditorDeMateria({
   const [confirmacao, setConfirmacao] = useState("");
   const [titulo, setTitulo] = useState(materia.title);
   const [transicionando, iniciarTransicao] = useTransition();
+  const [checagemPendente, setChecagemPendente] = useState(materia.precisa_checagem);
 
   const carimbo = estado.updatedAt ?? materia.updated_at;
   const ehAdmin = papel === "admin";
@@ -117,6 +121,20 @@ export default function EditorDeMateria({
       const r = await mudarEstado(idDaMateria, novo);
       setAvisoEstado(r.mensagem);
       if (r.status === "salvo") setStatusAtual(novo);
+    });
+  }
+
+  function confirmar() {
+    if (!materia.id) return;
+    const idDaMateria = materia.id;
+
+    setAvisoEstado(undefined);
+    iniciarTransicao(async () => {
+      const r = await confirmarChecagem(idDaMateria);
+      setAvisoEstado(r.mensagem);
+      // Só some o aviso se o banco confirmou; recusa silenciosa já vem
+      // como erro da ação.
+      if (r.status === "salvo") setChecagemPendente(false);
     });
   }
 
@@ -211,6 +229,28 @@ export default function EditorDeMateria({
             status={statusAtual}
             ehAdmin={ehAdmin}
           />
+
+          {existe && checagemPendente && (
+            <div
+              role="alert"
+              className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-100 px-4 py-3 text-sm leading-relaxed text-amber-900"
+            >
+              <p className="min-w-0 flex-1">
+                Esta matéria saiu de cobertura de terceiro e a fonte primária não foi
+                encontrada. Confira as afirmações antes de publicar.
+              </p>
+              {ehAdmin && (
+                <button
+                  type="button"
+                  disabled={ocupado}
+                  onClick={confirmar}
+                  className="shrink-0 rounded-lg bg-amber-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-800 disabled:opacity-60"
+                >
+                  Confirmei a checagem
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="mt-6">
             <Editor inicial={doc} onChange={mudouOCorpo} />

@@ -274,7 +274,7 @@ export async function mudarEstado(id: string, novoEstado: string): Promise<Estad
   if (novoEstado === "published") {
     const { data: linha, error: erroLinha } = await supabase
       .from("articles")
-      .select("title, category_id, slug")
+      .select("title, category_id, slug, precisa_checagem")
       .eq("id", id)
       .maybeSingle();
 
@@ -307,6 +307,7 @@ export async function mudarEstado(id: string, novoEstado: string): Promise<Estad
       category_id: linha.category_id,
       slug: linha.slug ?? "",
       corpo: corpo as unknown as DocumentoBlocos | null,
+      precisa_checagem: linha.precisa_checagem,
     });
 
     if (faltas.length > 0) {
@@ -366,4 +367,33 @@ export async function excluirMateria(id: string): Promise<EstadoMateria> {
 
   revalidatePath("/admin/materias");
   redirect("/admin/materias");
+}
+
+/**
+ * Quem clica aqui assume a checagem.
+ *
+ * Só admin: confirmar apuração é decisão editorial, e colunista não publica.
+ */
+export async function confirmarChecagem(id: string): Promise<EstadoMateria> {
+  await requireRole(["admin"]);
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("articles")
+    .update({ precisa_checagem: false })
+    .eq("id", id)
+    .select("id");
+
+  if (error) {
+    return { status: "erro", mensagem: `Não foi possível confirmar: ${error.message}` };
+  }
+  if (!data || data.length === 0) {
+    // A RLS recusou em silêncio, ou a matéria não existe. Dizer "salvo"
+    // aqui seria mentir para quem está prestes a publicar.
+    return { status: "erro", mensagem: "A matéria não foi encontrada ou você não pode alterá-la." };
+  }
+
+  revalidatePath("/admin/materias");
+  revalidatePath(`/admin/materias/${id}`);
+  return { status: "salvo", mensagem: "Checagem confirmada." };
 }

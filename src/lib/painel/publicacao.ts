@@ -5,6 +5,7 @@ export interface MateriaParaPublicar {
   category_id: number | null;
   slug: string;
   corpo: DocumentoBlocos | null;
+  precisa_checagem: boolean;
 }
 
 /**
@@ -48,6 +49,14 @@ export function pendenciasParaPublicar(materia: MateriaParaPublicar): string[] {
   // um gráfico embutido não tem texto, e não é matéria.
   if (!materia.corpo || extrairTexto(materia.corpo).trim().length === 0) {
     faltas.push("escreva o corpo da matéria");
+  }
+
+  // Não é conveniência de interface como as demais: é a única barreira entre
+  // texto derivado e o leitor. Sai por ato humano, no editor.
+  if (materia.precisa_checagem) {
+    faltas.push(
+      "confirme a checagem — esta matéria saiu de cobertura de terceiro e a fonte primária não foi encontrada"
+    );
   }
 
   return faltas;

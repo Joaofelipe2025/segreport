@@ -12,6 +12,7 @@ const completa = {
   category_id: 3,
   slug: "susep-muda-a-regra-de-capital",
   corpo: corpoBom,
+  precisa_checagem: false,
 };
 
 describe("portão de publicação", () => {
@@ -85,6 +86,7 @@ describe("portão de publicação", () => {
       category_id: null,
       slug: "rascunho-abc",
       corpo: null,
+      precisa_checagem: false,
     });
     expect(p).toHaveLength(4);
   });
@@ -101,5 +103,26 @@ describe("endereço vazio", () => {
     expect(pendenciasParaPublicar({ ...completa, slug: "   " })).toContain(
       "a matéria precisa de um endereço"
     );
+  });
+});
+
+describe("matéria que precisa de checagem", () => {
+  const semMarca = completa;
+
+  it("sem a marca, publica", () => {
+    expect(pendenciasParaPublicar(semMarca)).toEqual([]);
+  });
+
+  it("com a marca, NÃO publica", () => {
+    // A marca só protege se fizer parar. Numa manhã corrida, cinco matérias
+    // marcadas e um botão de aprovar viram cinco aprovações.
+    const p = pendenciasParaPublicar({ ...semMarca, precisa_checagem: true });
+    expect(p).toHaveLength(1);
+    expect(p[0]).toMatch(/checagem/i);
+  });
+
+  it("a pendência diz o que fazer, não só o que falta", () => {
+    const [aviso] = pendenciasParaPublicar({ ...semMarca, precisa_checagem: true });
+    expect(aviso).toMatch(/confirme|conferi/i);
   });
 });

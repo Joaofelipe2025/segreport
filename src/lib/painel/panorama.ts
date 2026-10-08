@@ -24,6 +24,7 @@ export interface LinhaDoPanorama {
   reading_time: number | null;
   view_count: number | null;
   updated_by: string | null;
+  precisa_checagem: boolean;
   authors: { name: string | null } | null;
 }
 
@@ -165,4 +166,16 @@ export function ninguemRevisou(linha: {
   updated_by: string | null;
 }): boolean {
   return linha.status === "in_review" && linha.updated_by === null;
+}
+
+/**
+ * A matéria foi escrita a partir de cobertura de terceiro sem que a fonte
+ * primária fosse encontrada.
+ *
+ * Diferente de `ninguemRevisou`, que é sinal de FILA e se apaga no primeiro
+ * salvamento: esta é afirmação sobre a apuração, e só sai por ato humano
+ * explícito de quem conferiu.
+ */
+export function precisaChecagem(linha: { precisa_checagem: boolean }): boolean {
+  return linha.precisa_checagem === true;
 }

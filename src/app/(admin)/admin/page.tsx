@@ -19,6 +19,7 @@ import { nomeDoAutor } from "@/lib/painel/resumo";
 import {
   DIAS_ATE_PARADO,
   ninguemRevisou,
+  precisaChecagem,
   agendadasAtrasadas,
   contarPorEstado,
   porEditoria,
@@ -33,7 +34,7 @@ import { formatRelative } from "@/lib/format";
 export const metadata: Metadata = { title: "Painel" };
 
 const CAMPOS =
-  "id, title, slug, status, updated_at, published_at, scheduled_for, category_id, cover_url, excerpt, reading_time, view_count, updated_by, authors(name)";
+  "id, title, slug, status, updated_at, published_at, scheduled_for, category_id, cover_url, excerpt, reading_time, view_count, updated_by, precisa_checagem, authors(name)";
 
 export default async function PainelInicial() {
   const perfil = await requirePainel();
@@ -195,6 +196,13 @@ export default async function PainelInicial() {
                     {ninguemRevisou(m) && (
                       <span className="mr-2 rounded bg-[#f0e3c0] px-1.5 py-0.5 font-semibold">
                         não lida
+                      </span>
+                    )}
+                    {/* Afirmação sobre a apuração: só sai por ato humano, no
+                        editor. Não se confunde com "não lida". */}
+                    {precisaChecagem(m) && (
+                      <span className="mr-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-900">
+                        Precisa checagem
                       </span>
                     )}
                     {nomeDoAutor(m)} · parada {formatRelative(m.updated_at, agora)}

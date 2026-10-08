@@ -7,6 +7,7 @@ import {
   publicadasDesde,
   rascunhosParados,
   ninguemRevisou,
+  precisaChecagem,
   rascunhosVazios,
   type LinhaDoPanorama,
 } from "@/lib/painel/panorama";
@@ -27,6 +28,7 @@ const linha = (p: Partial<LinhaDoPanorama> = {}): LinhaDoPanorama => ({
   reading_time: 4,
   view_count: 0,
   updated_by: "perfil-humano",
+  precisa_checagem: false,
   authors: { name: "Da Redação" },
   ...p,
 });
@@ -237,5 +239,15 @@ describe("matéria que nenhuma pessoa tocou", () => {
     // sempre passou por alguém. O aviso só faz sentido na fila.
     expect(ninguemRevisou({ status: "draft", updated_by: null })).toBe(false);
     expect(ninguemRevisou({ status: "published", updated_by: null })).toBe(false);
+  });
+});
+
+describe("a marca de checagem na fila", () => {
+  it("marcada é marcada", () => {
+    expect(precisaChecagem({ precisa_checagem: true })).toBe(true);
+  });
+
+  it("não marcada não é", () => {
+    expect(precisaChecagem({ precisa_checagem: false })).toBe(false);
   });
 });

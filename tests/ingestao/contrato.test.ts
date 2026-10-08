@@ -144,7 +144,7 @@ describe("procedência no contrato de entrada", () => {
     expect(r.ok).toBe(true);
     expect(r.ok && r.pedido.origem).toBeNull();
     expect(r.ok && r.pedido.capaUrl).toBeNull();
-    expect(r.ok && r.pedido.pautaId).toBeNull();
+    expect(r.ok && r.pedido.pautaIds).toEqual([]);
   });
 
   it("derivada SEM fonte é recusada aqui, com mensagem legível", () => {
@@ -199,11 +199,22 @@ describe("procedência no contrato de entrada", () => {
     }
   });
 
-  it("pautaId vem aparado, e vazio vira nulo", () => {
-    const r = validarPedido({ ...base, pautaId: "  abc  " });
-    expect(r.ok && r.pedido.pautaId).toBe("abc");
-    const vazio = validarPedido({ ...base, pautaId: "   " });
-    expect(vazio.ok && vazio.pedido.pautaId).toBeNull();
+  it("pautaIds vem aparado, sem vazios, e ausente vira lista vazia", () => {
+    // Um grupo tem N pautas: marcar só uma deixaria as outras na fila, que
+    // reagrupariam e gerariam a mesma matéria outra vez.
+    const r = validarPedido({ ...base, pautaIds: ["  abc  ", "def", "   ", "abc"] });
+    expect(r.ok && r.pedido.pautaIds).toEqual(["abc", "def"]);
+    const vazio = validarPedido({ ...base, pautaIds: [] });
+    expect(vazio.ok && vazio.pedido.pautaIds).toEqual([]);
+  });
+
+  it("pautaIds com elemento que não é texto é recusado", () => {
+    for (const ruim of [["abc", 7], [null], [{ id: "x" }], "abc", 42]) {
+      const r = validarPedido({ ...base, pautaIds: ruim });
+      expect(r.ok, JSON.stringify(ruim)).toBe(false);
+      expect(r.ok === false && r.comoCorrigir).toMatch(/pautaIds/);
+      expect(r.ok === false && r.comoCorrigir).toMatch(/texto/);
+    }
   });
 
   describe("capaUrl", () => {
@@ -269,7 +280,6 @@ describe("procedência no contrato de entrada", () => {
         ["fonteOriginalUrl", ["x"]],
         ["fonteOriginalNome", { a: 1 }],
         ["capaUrl", 5],
-        ["pautaId", 42],
       ];
       for (const [campo, valor] of casos) {
         const r = validarPedido({ ...base, [campo]: valor });
@@ -280,8 +290,9 @@ describe("procedência no contrato de entrada", () => {
     });
 
     it("nulo conta como ausente", () => {
-      const r = validarPedido({ ...base, origem: null, capaUrl: null, pautaId: null });
+      const r = validarPedido({ ...base, origem: null, capaUrl: null, pautaIds: null });
       expect(r.ok).toBe(true);
+      expect(r.ok && r.pedido.pautaIds).toEqual([]);
     });
   });
 });

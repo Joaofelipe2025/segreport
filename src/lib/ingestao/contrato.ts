@@ -35,8 +35,12 @@ export interface PedidoDeIngestao {
   origem: "release" | "primaria" | "derivada" | null;
   fonteOriginalUrl: string | null;
   fonteOriginalNome: string | null;
-  /** A pauta que originou a matéria, para marcá-la como usada. */
-  pautaId: string | null;
+  /**
+   * TODAS as pautas do grupo que originou a matéria, para marcá-las como
+   * usadas. Um grupo tem N pautas: marcar uma só deixaria as outras na fila,
+   * e a execução seguinte geraria a mesma matéria outra vez.
+   */
+  pautaIds: string[];
   /** Endereço http(s) ou caminho do próprio site (começa com uma barra). */
   capaUrl: string | null;
 }
@@ -131,7 +135,7 @@ export function validarPedido(corpo: unknown): Validacao {
 
   // Campo presente com tipo errado é recusado, nunca tratado como ausente:
   // `origem: 1` viraria matéria sem origem e sem marca de checagem.
-  for (const campo of ["origem", "fonteOriginalUrl", "fonteOriginalNome", "capaUrl", "pautaId"]) {
+  for (const campo of ["origem", "fonteOriginalUrl", "fonteOriginalNome", "capaUrl"]) {
     const v = c[campo];
     if (v !== undefined && v !== null && typeof v !== "string") {
       return recusar(
@@ -139,6 +143,23 @@ export function validarPedido(corpo: unknown): Validacao {
         `Envie \`${campo}\` como texto (string), ou omita o campo.`
       );
     }
+  }
+
+  // Lista de texto, ou nada. Elemento de outro tipo é recusado: descartá-lo
+  // deixaria uma pauta na fila sem ninguém saber.
+  let pautaIds: string[] = [];
+  if (c.pautaIds !== undefined && c.pautaIds !== null) {
+    if (!Array.isArray(c.pautaIds) || c.pautaIds.some((i) => typeof i !== "string")) {
+      return recusar(
+        "O campo `pautaIds` veio com tipo errado.",
+        "Envie `pautaIds` como lista de textos (strings), um id por pauta do grupo, ou omita o campo."
+      );
+    }
+    // Sem repetição: o banco casa cada id uma vez, e a conferência de
+    // contagem da rota compararia errado.
+    pautaIds = [
+      ...new Set((c.pautaIds as string[]).map((i) => i.trim()).filter((i) => i.length > 0)),
+    ];
   }
 
   const origem = typeof c.origem === "string" ? c.origem.trim() : "";
@@ -192,7 +213,7 @@ export function validarPedido(corpo: unknown): Validacao {
       origem: (origem || null) as PedidoDeIngestao["origem"],
       fonteOriginalUrl: fonteUrl || null,
       fonteOriginalNome: opcional(c.fonteOriginalNome),
-      pautaId: opcional(c.pautaId),
+      pautaIds,
       capaUrl: capaUrl || null,
     },
   };

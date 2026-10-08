@@ -239,20 +239,21 @@ export async function POST(request: NextRequest) {
   // A pauta sai da fila. O erro é registrado e não derruba a resposta: a
   // matéria já existe, e perder a marcação custa uma duplicata que a pessoa
   // vê, enquanto devolver erro aqui faria o chamador reenviar o texto todo.
-  if (pedido.pautaId) {
-    // `.select` é o que distingue zero linhas de uma: sem ele, um `pautaId`
-    // errado passaria em silêncio, a pauta ficaria `nova` e a próxima
-    // execução geraria a mesma matéria de novo.
+  if (pedido.pautaIds.length > 0) {
+    // `.select` é o que distingue zero linhas de N: sem ele, um id errado
+    // passaria em silêncio, a pauta ficaria `nova` e a próxima execução
+    // geraria a mesma matéria de novo. Comparar a contagem com o pedido
+    // mostra quantas casaram.
     const { data: marcadas, error: erroPauta } = await admin
       .from("pautas")
       .update({ estado: "virou_materia", article_id: criada.id })
-      .eq("id", pedido.pautaId)
+      .in("id", pedido.pautaIds)
       .select("id");
     if (erroPauta) {
       console.error("[ingestao] pauta não marcada:", erroPauta.message);
-    } else if (!marcadas || marcadas.length === 0) {
+    } else if (!marcadas || marcadas.length !== pedido.pautaIds.length) {
       console.error(
-        `[ingestao] pauta não marcada: nenhuma pauta com id "${pedido.pautaId}" (matéria ${criada.id} criada mesmo assim)`
+        `[ingestao] pautas não marcadas: ${marcadas?.length ?? 0} de ${pedido.pautaIds.length} casaram com os ids [${pedido.pautaIds.join(", ")}] (matéria ${criada.id} criada mesmo assim)`
       );
     }
   }

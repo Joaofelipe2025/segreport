@@ -114,6 +114,13 @@ paths:
                 fonteOriginalNome:
                   type: string
                   description: Nome do veículo de origem. Sem ele, o crédito usa o domínio.
+                pautaIds:
+                  type: array
+                  items: { type: string }
+                  description: >
+                    Ids de TODAS as pautas do grupo que originou a matéria
+                    (uma pauta por veículo que cobriu o fato). Elas saem da fila;
+                    omitir uma a deixa na fila, e a matéria seria gerada de novo.
                 capaUrl:
                   type: string
                   description: Capa como caminho do projeto, começando com barra (por exemplo /capas/mercado.jpg). Não é URL; endereços com http(s) são recusados.

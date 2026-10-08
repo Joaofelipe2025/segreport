@@ -1,7 +1,7 @@
 -- ============================================================================
 -- SEGREPORT — esquema completo, para colar no SQL Editor do Supabase
 --
--- Gerado a partir de 7 migrações do repositório, na ordem.
+-- Gerado a partir das migrações do repositório (nove blocos), na ordem.
 -- Rode UMA vez, num projeto novo e vazio.
 --
 -- Painel → SQL Editor → New query → colar tudo → Run.

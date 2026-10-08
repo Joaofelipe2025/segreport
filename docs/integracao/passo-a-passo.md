@@ -105,3 +105,49 @@ workflow**.
 
 O painel, em **Pautas**, mostra quando ele rodou pela última vez e o que
 falhou. Se aparecer aviso vermelho, o vigia parou.
+
+---
+
+## A procedência da matéria — ANTES do deploy
+
+Este é o passo que a regra "não quero plágio, apenas inspiração" exige no
+banco. É DDL — o mesmo tipo de passo da ingestão e do vigia — e **vem antes do
+deploy**, não depois.
+
+**Por que a ordem importa:** o portal passou a pedir ao banco as colunas de
+crédito (`origem`, `fonte_original_url`, `fonte_original_nome`). Com o código
+no ar e o SQL ainda sem rodar, a consulta pública falha e o portal **não dá
+erro nenhum**: a home, as editorias, o feed e o sitemap ficam **vazios**, e
+toda matéria responde 404. O painel, ao contrário, grita 500 — o portal só
+fica em silêncio. E o Next pode guardar a home vazia em cache.
+
+1. Abra o Supabase, projeto **`hdzfleptasoepfsalqad`**.
+2. **SQL Editor** → **New query** → abra **`supabase/setup/ATIVAR-PROCEDENCIA.sql`**
+   — termina em **.sql**, não este guia — copie tudo, cole e clique em **Run**.
+3. Confira as oito linhas abaixo. Só então faça o deploy.
+
+É seguro rodar mais de uma vez. O arquivo roda numa transação só (`begin` /
+`commit`): ou entra tudo, ou nada. **Cole o arquivo inteiro**, nunca uma
+seleção — um `revoke` rodado sozinho deixa o portal sem permissão de leitura.
+
+Pré-requisito: `ATIVAR-INGESTAO.sql` e `ATIVAR-VIGIA.sql` já aplicados (este
+arquivo altera a tabela `pautas`, que vem do vigia).
+
+### O que você deve ver
+
+Oito linhas, todas `ok`:
+
+```
+item                                                        estado
+──────────────────────────────────────────────────────────  ──────
+colunas de procedencia em articles                          ok
+restricao articles_derivada_tem_fonte                       ok
+restricao articles_fonte_eh_http                            ok
+precisa_checagem legivel pelo painel (authenticated)        ok
+precisa_checagem fechada ao publico (anon)                  ok
+carimbo updated_at em pautas (a reserva precisa expirar)    ok
+credito da fonte legivel pelo publico (anon)                ok
+pautas_estado_check aceita em_producao                      ok
+```
+
+Se alguma disser `FALTOU`, me mande a mensagem de erro **e não faça o deploy**.

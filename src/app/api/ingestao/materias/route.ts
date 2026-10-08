@@ -200,6 +200,13 @@ export async function POST(request: NextRequest) {
       excerpt: pedido.resumo,
       seo_title: pedido.seoTitulo,
       seo_description: pedido.seoDescricao,
+      cover_url: pedido.capaUrl,
+      origem: pedido.origem,
+      fonte_original_url: pedido.fonteOriginalUrl,
+      fonte_original_nome: pedido.fonteOriginalNome,
+      // Derivada nasce marcada: saiu de cobertura de terceiro sem que a
+      // fonte primária fosse encontrada, e ninguém conferiu ainda.
+      precisa_checagem: pedido.origem === "derivada",
       category_id: categoria.id,
       author_id: autorId,
       // Sempre. A aprovação é do dono do veículo, e a fila de revisão é o
@@ -233,6 +240,19 @@ export async function POST(request: NextRequest) {
 
   if (erroHistorico) {
     console.error("[ingestao] histórico não gravado:", erroHistorico.message);
+  }
+
+  // A pauta sai da fila. O erro é registrado e não derruba a resposta: a
+  // matéria já existe, e perder a marcação custa uma duplicata que a pessoa
+  // vê, enquanto devolver erro aqui faria o chamador reenviar o texto todo.
+  if (pedido.pautaId) {
+    const { error: erroPauta } = await admin
+      .from("pautas")
+      .update({ estado: "virou_materia", article_id: criada.id })
+      .eq("id", pedido.pautaId);
+    if (erroPauta) {
+      console.error("[ingestao] pauta não marcada:", erroPauta.message);
+    }
   }
 
   console.info(`[ingestao] matéria ${criada.id} recebida: ${pedido.titulo}`);

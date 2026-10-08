@@ -30,7 +30,17 @@ export interface PedidoDeIngestao {
   resumo: string | null;
   seoTitulo: string | null;
   seoDescricao: string | null;
+  /** De onde veio a matéria. Nulo é o caminho manual e o do agente externo. */
+  origem: "release" | "primaria" | "derivada" | null;
+  fonteOriginalUrl: string | null;
+  fonteOriginalNome: string | null;
+  /** A pauta que originou a matéria, para marcá-la como usada. */
+  pautaId: string | null;
+  /** Endereço http(s) ou caminho do próprio site (começa com uma barra). */
+  capaUrl: string | null;
 }
+
+const ORIGENS: readonly string[] = ["release", "primaria", "derivada"];
 
 export type Validacao =
   | { ok: true; pedido: PedidoDeIngestao }
@@ -89,6 +99,43 @@ export function validarPedido(corpo: unknown): Validacao {
     );
   }
 
+  const origem = typeof c.origem === "string" ? c.origem.trim() : "";
+  if (origem && !ORIGENS.includes(origem)) {
+    return recusar(
+      `Origem "${origem}" não existe.`,
+      `Use uma destas em \`origem\`: ${ORIGENS.join(", ")} — ou omita o campo.`
+    );
+  }
+
+  const fonteUrl = typeof c.fonteOriginalUrl === "string" ? c.fonteOriginalUrl.trim() : "";
+  if (fonteUrl && !/^https?:\/\//i.test(fonteUrl)) {
+    return recusar(
+      "O endereço de origem precisa começar com http:// ou https://.",
+      "Envie `fonteOriginalUrl` como endereço completo."
+    );
+  }
+
+  // A mesma regra que a check constraint do banco impõe — mas aqui ela devolve
+  // uma mensagem que o agente consegue ler e corrigir, em vez de um 500 cru.
+  if (origem === "derivada" && !fonteUrl) {
+    return recusar(
+      "Matéria derivada precisa dizer de onde veio.",
+      "Envie `fonteOriginalUrl` com o endereço da cobertura de origem, ou use outra `origem`."
+    );
+  }
+
+  // Caminho do site OU endereço http(s). `//host` fica de fora: o navegador o
+  // lê como endereço externo com o protocolo da página.
+  const capaUrl = typeof c.capaUrl === "string" ? c.capaUrl.trim() : "";
+  const capaValida =
+    /^https?:\/\//i.test(capaUrl) || (capaUrl.startsWith("/") && !capaUrl.startsWith("//"));
+  if (capaUrl && !capaValida) {
+    return recusar(
+      "O endereço da capa não é válido.",
+      "Envie `capaUrl` começando com http://, https:// ou uma barra (caminho do próprio site), ou omita o campo."
+    );
+  }
+
   return {
     ok: true,
     pedido: {
@@ -99,6 +146,11 @@ export function validarPedido(corpo: unknown): Validacao {
       resumo: opcional(c.resumo),
       seoTitulo: opcional(c.seoTitulo),
       seoDescricao: opcional(c.seoDescricao),
+      origem: (origem || null) as PedidoDeIngestao["origem"],
+      fonteOriginalUrl: fonteUrl || null,
+      fonteOriginalNome: opcional(c.fonteOriginalNome),
+      pautaId: opcional(c.pautaId),
+      capaUrl: capaUrl || null,
     },
   };
 }

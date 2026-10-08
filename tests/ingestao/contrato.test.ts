@@ -131,3 +131,85 @@ describe("o esquema que o Astra recebe não pode divergir do portal", () => {
     expect(noDoc.sort()).toEqual([...CATEGORIAS_ACEITAS].sort());
   });
 });
+
+describe("procedência no contrato de entrada", () => {
+  const base = {
+    titulo: "Um título que serve",
+    categoria: "regulacao",
+    corpoMarkdown: "Um parágrafo com texto suficiente para passar.",
+  };
+
+  it("pedido sem procedência continua válido — é o caminho manual e o do Astra", () => {
+    const r = validarPedido(base);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.pedido.origem).toBeNull();
+    expect(r.ok && r.pedido.capaUrl).toBeNull();
+    expect(r.ok && r.pedido.pautaId).toBeNull();
+  });
+
+  it("derivada SEM fonte é recusada aqui, com mensagem legível", () => {
+    // Se escapar, quem recusa é a check constraint do Postgres, e o agente
+    // recebe um 500 cru em vez de saber o que corrigir.
+    const r = validarPedido({ ...base, origem: "derivada" });
+    expect(r.ok).toBe(false);
+    expect(r.ok === false && r.comoCorrigir).toMatch(/fonteOriginalUrl/);
+  });
+
+  it("derivada COM fonte passa e grava nome e endereço", () => {
+    const r = validarPedido({
+      ...base,
+      origem: "derivada",
+      fonteOriginalUrl: "https://cqcs.com.br/n/1",
+      fonteOriginalNome: "CQCS",
+    });
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.pedido.fonteOriginalUrl).toBe("https://cqcs.com.br/n/1");
+    expect(r.ok && r.pedido.fonteOriginalNome).toBe("CQCS");
+  });
+
+  it("origem inventada é recusada e diz quais existem", () => {
+    const r = validarPedido({ ...base, origem: "copiada" });
+    expect(r.ok).toBe(false);
+    expect(r.ok === false && r.comoCorrigir).toMatch(/release/);
+  });
+
+  it("endereço de origem precisa ser http", () => {
+    const r = validarPedido({
+      ...base,
+      origem: "derivada",
+      fonteOriginalUrl: "javascript:alert(1)",
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("release e primaria não exigem fonte", () => {
+    for (const o of ["release", "primaria"]) {
+      expect(validarPedido({ ...base, origem: o }).ok, o).toBe(true);
+    }
+  });
+
+  it("pautaId vem aparado, e vazio vira nulo", () => {
+    const r = validarPedido({ ...base, pautaId: "  abc  " });
+    expect(r.ok && r.pedido.pautaId).toBe("abc");
+    const vazio = validarPedido({ ...base, pautaId: "   " });
+    expect(vazio.ok && vazio.pedido.pautaId).toBeNull();
+  });
+
+  describe("capaUrl", () => {
+    it("aceita http, https e caminho absoluto do site", () => {
+      for (const capa of ["https://x.com/a.png", "http://x.com/a.png", "/capas/regulacao.jpg"]) {
+        const r = validarPedido({ ...base, capaUrl: capa });
+        expect(r.ok, capa).toBe(true);
+        expect(r.ok && r.pedido.capaUrl).toBe(capa);
+      }
+    });
+
+    it("recusa outra coisa, dizendo como corrigir", () => {
+      for (const capa of ["javascript:alert(1)", "capas/a.png", "//evil.com/a.png", "data:image/png;base64,AA"]) {
+        const r = validarPedido({ ...base, capaUrl: capa });
+        expect(r.ok, capa).toBe(false);
+        expect(r.ok === false && r.comoCorrigir).toMatch(/capaUrl/);
+      }
+    });
+  });
+});

@@ -102,6 +102,21 @@ paths:
                 seoDescricao:
                   type: string
                   description: Descrição para buscador, até 160 caracteres.
+                origem:
+                  type: string
+                  description: >
+                    De onde veio a matéria. Omita se você mesmo apurou.
+                    "derivada" EXIGE fonteOriginalUrl.
+                  enum: [release, primaria, derivada]
+                fonteOriginalUrl:
+                  type: string
+                  description: Endereço da cobertura de origem, quando a matéria derivou dela.
+                fonteOriginalNome:
+                  type: string
+                  description: Nome do veículo de origem. Sem ele, o crédito usa o domínio.
+                capaUrl:
+                  type: string
+                  description: Imagem de capa. Endereço http(s) ou caminho do site começando com barra.
       responses:
         "201":
           description: Matéria criada e aguardando revisão

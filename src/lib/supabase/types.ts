@@ -166,6 +166,10 @@ export interface Database {
           updated_by: string | null;
           created_at: string;
           updated_at: string;
+          origem: "release" | "primaria" | "derivada" | null;
+          fonte_original_url: string | null;
+          fonte_original_nome: string | null;
+          precisa_checagem: boolean;
         };
         Insert: {
           id?: string;
@@ -193,6 +197,10 @@ export interface Database {
           published_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          origem?: "release" | "primaria" | "derivada" | null;
+          fonte_original_url?: string | null;
+          fonte_original_nome?: string | null;
+          precisa_checagem?: boolean;
         };
         Update: {
           slug?: string;
@@ -216,6 +224,10 @@ export interface Database {
           seo_description?: string | null;
           updated_by?: string | null;
           updated_at?: string;
+          origem?: "release" | "primaria" | "derivada" | null;
+          fonte_original_url?: string | null;
+          fonte_original_nome?: string | null;
+          precisa_checagem?: boolean;
         };
         Relationships: [
           {
